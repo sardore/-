@@ -26,7 +26,8 @@ if a%5==0:
 five=a//5
 b=a%5
 if b%2==0:
-    coin.append(five+b//2)
+    print(five+b//2)
+    exit()
 
 
 # 5원을 남기고 5코인과 2코인 또는 2코인만으로
@@ -34,12 +35,9 @@ five=a//5-1
 a=a%5+5
 
 if a%2==0:
-    coin.append(five+a//2)
-
-#출력
-if coin!=[]:
-    print(min(coin))
+    print(five+a//2)
+    exit()
 
 # 불가능
-else:
-    print(-1)
+
+print(-1)
