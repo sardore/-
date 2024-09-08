@@ -38,7 +38,7 @@ if a%2==0:
 
 #출력
 if coin!=[]:
-    print(max(coin))
+    print(min(coin))
 
 # 불가능
 else:
