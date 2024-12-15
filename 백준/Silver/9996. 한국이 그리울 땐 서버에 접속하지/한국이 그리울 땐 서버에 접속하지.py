@@ -1,13 +1,8 @@
-import re, sys
-input = sys.stdin.readline
-n = int(input())
-s,e = input().rstrip().split("*")
-pt = re.compile(s+".*"+e+"+")
-
-for i in range(n):
-    string = input().rstrip()
-    a = pt.search(string)
-    if a and a.group() == string:
+n=int(input())
+a=list(input().split("*"))
+for _ in range(n):
+    b=input()
+    if b.startswith(a[0]) and b.endswith(a[1]) and len(b)>=len(a[0]+a[1]):
         print("DA")
-    else:
-        print("NE")
+        continue
+    print("NE")
