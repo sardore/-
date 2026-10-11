@@ -1,14 +1,16 @@
 // 게임 규칙 전체. DOM 의존 없음(노드에서 그대로 시뮬레이션 가능).
-import { RACES, CLASSES, PEXP, MAXLV, MAXDEPTH, QUEST1, MONSTERS, MIDX, KINDS, KIDX, TVW, FLAVORS, EGOS, ARTS, SPELLS, SHOPS, TVNAME, FEEL_D, FEEL_L } from './data.js';
-import { T, F, walk, opaque, DIRS, genDungeon, genTown, fov, line, flow } from './map.js';
+import { RACES, CLASSES, PEXP, MAXLV, MAXDEPTH, QUEST1, MONSTERS, MIDX, KINDS, KIDX, TVW, FLAVORS, EGOS, ARTS, SPELLS, SHOPS, TVNAME, FEEL_D, FEEL_L, BIOMES, biomeOf, PERKS } from './data.js';
+import { T, F, walk, opaque, DIRS, genDungeon, genTown, fov, line, flow, isShop } from './map.js';
 
 for (const m of MONSTERS) { m.F = new Set(m.f.split(' ')); const e = m.f.match(/erratic(\d+)/); m.err = e ? +e[1] : 0; }
 const EGO = Object.fromEntries(EGOS.map(e => [e.id, e])), ART = Object.fromEntries(ARTS.map(a => [a.id, a]));
 const EQUIP = new Set(['weapon', 'bow', 'body', 'shield', 'helm', 'gloves', 'boots', 'cloak', 'light', 'ring', 'amulet']);
 const ARMOR = new Set(['body', 'shield', 'helm', 'gloves', 'boots', 'cloak']);
 const TVORD = ['weapon', 'bow', 'ammo', 'body', 'shield', 'helm', 'gloves', 'boots', 'cloak', 'light', 'ring', 'amulet', 'book', 'potion', 'scroll', 'wand', 'rod', 'flask', 'food'];
-const ELN = { fire: '화염', cold: '냉기', pois: '독', magic: '마력', dark: '암흑', elec: '번개' }, ELC = { fire: '#ff7a2b', cold: '#9fe0ff', pois: '#8fe05a', magic: '#c9a8ff', dark: '#8a5ad6', elec: '#ffe14a' };
-const TM = { fast: '가속', slow: '둔화', blind: '실명', conf: '혼란', afraid: '공포', para: '마비', pois: '중독', hero: '영웅심', bers: '광전사', bless: '축복', oppFire: '화염 저항', oppCold: '냉기 저항', seeInv: '투명 감지' };
+const ELN = { fire: '화염', cold: '냉기', pois: '독', magic: '마력', dark: '암흑', elec: '번개', holy: '신성' }, ELC = { fire: '#ff7a2b', cold: '#9fe0ff', pois: '#8fe05a', magic: '#c9a8ff', dark: '#8a5ad6', elec: '#ffe14a', holy: '#fff2a8' };
+const TM = { fast: '가속', slow: '둔화', blind: '실명', conf: '혼란', afraid: '공포', para: '마비', pois: '중독', hero: '영웅심', bers: '광전사', bless: '축복', oppFire: '화염 저항', oppCold: '냉기 저항', seeInv: '투명 감지', stealthUp: '은신', venom: '맹독 도포', shield: '성역' };
+const GOODTM = new Set(['fast', 'hero', 'bers', 'bless', 'oppFire', 'oppCold', 'seeInv', 'stealthUp', 'venom', 'shield']);
+export const isGoodTm = k => GOODTM.has(k);
 export const TMNAME = TM;
 const sg = n => (n >= 0 ? '+' : '') + n;
 export function josa(w, pair) {
@@ -20,24 +22,25 @@ const gain = s => s >= 0 ? 10 + s : Math.max(2, 10 + s / 2);
 const dist = (ax, ay, bx, by) => Math.max(Math.abs(ax - bx), Math.abs(ay - by));
 
 export class Game {
-  constructor(o = {}) { this.fx = []; this.auto = null; this.shop = -1; this.onSave = null; if (o.load) this.fromJSON(o.load); else this.init(o); }
+  constructor(o = {}) { this.fx = []; this.sq = []; this.auto = null; this.shop = -1; this.onSave = null; if (o.load) this.fromJSON(o.load); else this.init(o); }
   /* ---------- 난수 ---------- */
   r() { const a = this.seed = (this.seed + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
   ri(n) { return n <= 0 ? 0 : Math.floor(this.r() * n); }
   rr(a, b) { return a + this.ri(b - a + 1); }
   dice(d, s) { let t = 0; for (let i = 0; i < d; i++) t += 1 + this.ri(s); return t; }
+  snd(n) { if (this.sq.length < 24) this.sq.push(n); }
   msg(s, c) { const l = this.log; if (l.length && l[l.length - 1].s === s) l[l.length - 1].n = (l[l.length - 1].n || 1) + 1; else l.push({ s, c: c || '', t: this.pturn }); if (l.length > 160) l.splice(0, 40); this.fresh = (this.fresh || 0) + 1; }
 
   init(o) {
-    this.seed = (o.seed ?? (Date.now() & 0x7fffffff)) | 0; this.turn = 0; this.pturn = 0; this.depth = 0; this.maxDepth = 0; this.log = []; this.known = {}; this.deadU = {}; this.arts = {}; this.recall = 0; this.deep = 0; this.won = false; this.dead = false; this.cause = ''; this.mid = 1; this.kills = 0; this.pfrac = 0;
+    this.seed = (o.seed ?? (Date.now() & 0x7fffffff)) | 0; this.turn = 0; this.pturn = 0; this.depth = 0; this.maxDepth = 0; this.log = []; this.known = {}; this.deadU = {}; this.arts = {}; this.recall = 0; this.deep = 0; this.won = false; this.dead = false; this.cause = ''; this.mid = 1; this.kills = 0; this.pfrac = 0; this.perkPending = 0; this.perkOffer = null; this.home = []; this.claimed = {}; this.lore = {}; this.founts = {};
     this.flav = {};
     for (const tv in FLAVORS) { const pool = FLAVORS[tv].slice(); for (const k of KINDS) if (k.tv === tv) this.flav[k.id] = pool.splice(this.ri(pool.length), 1)[0] || '낡은'; }
     const rc = RACES[o.race] || RACES.human, cl = CLASSES[o.cls] || CLASSES.warrior, st = {};
     for (const s of ['str', 'int', 'dex', 'con']) st[s] = 12 + rc[s] + cl[s];
-    this.p = { name: o.name || '이름 없는 자', race: o.race || 'human', cls: o.cls || 'warrior', lv: 1, exp: 0, gold: 150, st, hp: 1, mp: 0, x: 0, y: 0, energy: 100, food: 9000, inv: [], eq: {}, tm: {}, target: 0, hpf: 0, mpf: 0, fx: 0, fy: -1 };
+    this.p = { name: o.name || '이름 없는 자', race: o.race || 'human', cls: o.cls || 'warrior', lv: 1, exp: 0, gold: 150, st, hp: 1, mp: 0, x: 0, y: 0, energy: 100, food: 9000, inv: [], eq: {}, tm: {}, perks: {}, target: 0, hpf: 0, mpf: 0, fx: 0, fy: -1 };
     for (const [id, n] of cl.kit) { const it = this.mk(id, n || 1), k = KINDS[it.k]; this.known[id] = 1; if (EQUIP.has(k.tv) && !this.p.eq[this.slotFor(it)]) this.p.eq[this.slotFor(it)] = it; else this.p.inv.push(it); }
     this.calc(); this.p.hp = this.p.d.mhp; this.p.mp = this.p.d.mmp;
-    this.msg(`${this.p.name}, ${rc.name} ${cl.name}. 구덩이 아래 30층에 어둠의 군주가 있다.`, 'y');
+    this.msg(`${this.p.name}, ${rc.name} ${cl.name}. 구덩이 아래 ${MAXDEPTH}층에 어둠의 군주가 있다.`, 'y');
     this.enter(0, 'start');
   }
 
@@ -72,7 +75,7 @@ export class Game {
     const N = { speed: '속도', stealth: '은밀', light: '광원', str: '힘', int: '지능', dex: '민첩', con: '체질', ac: '방어', th: '명중', td: '피해' }, FL = { rFire: '화염 저항', rCold: '냉기 저항', rPois: '독 저항', freeAct: '마비·둔화 면역', seeInv: '투명 감지', regen: '재생', telepathy: '텔레파시', pConf: '혼란 면역', pBlind: '실명 면역', teleport: '가끔 제멋대로 순간이동' };
     const nums = Object.keys(P).filter(x => N[x]).map(x => `${N[x]} ${sg(P[x])}`), fl = Object.keys(P).filter(x => FL[x]).map(x => FL[x]);
     if (nums.length) out.push(nums.join(', ')); if (fl.length) out.push(fl.join(', '));
-    const D = { p_clw: '체력 20 회복, 실명·중독 치료', p_csw: '체력 50 회복, 혼란·중독 치료', p_heal: '체력 300 회복, 모든 상태이상 치료', p_mana: '마나 완전 회복', p_speed: '잠시 속도 +10', p_hero: '공포 면역, 명중 상승', p_bers: '명중 대폭 상승, 방어 감소', p_enl: '층 전체 지도', s_phase: '가까이 순간이동', s_tele: '멀리 순간이동', s_recall: '잠시 뒤 마을↔최대 도달층 이동', s_deep: '잠시 뒤 3층 아래로', s_map: '주변 지도', s_treas: '주변 물건 탐지', s_life: '주변 괴물 탐지', s_light: '방을 밝힘', s_weapon: '들고 있는 무기 강화', s_armor: '입은 방어구 강화', s_bless: '방어·명중 소폭 상승', s_charge: '마법봉 재충전', w_mud: '벽을 허문다', w_tele: '대상을 멀리 보낸다', ration: '허기를 채운다', flask: '던지면 화염 피해(2d6, 범위)', rod_light: '방을 밝힘(재사용)', rod_det: '괴물 탐지(재사용)', rod_treas: '물건 탐지(재사용)' };
+    const D = { p_clw: '체력 20 회복, 실명·중독 치료', p_csw: '체력 50 회복, 혼란·중독 치료', p_heal: '체력 300 회복, 모든 상태이상 치료', p_mana: '마나 완전 회복', p_speed: '잠시 속도 +10', p_hero: '공포 면역, 명중 상승', p_bers: '명중 대폭 상승, 방어 감소', p_enl: '층 전체 지도', s_phase: '가까이 순간이동', s_tele: '멀리 순간이동', s_recall: '잠시 뒤 마을↔최대 도달층 이동', s_deep: '잠시 뒤 3층 아래로', s_map: '주변 지도', s_treas: '주변 물건 탐지', s_life: '주변 괴물 탐지', s_light: '방을 밝힘', s_weapon: '들고 있는 무기 강화', s_armor: '입은 방어구 강화', s_bless: '방어·명중 소폭 상승', s_charge: '마법봉 재충전', w_mud: '벽을 허문다', w_tele: '대상을 멀리 보낸다', ration: '허기를 채운다', flask: '던지면 화염 피해(2d6, 범위)', rod_light: '방을 밝힘(재사용)', rod_det: '괴물 탐지(재사용)', rod_treas: '물건 탐지(재사용)', p_star: '체력 완전 회복, 모든 상태이상 치료', rod_heal: '체력 120 회복(재사용, 오래 걸림)', rod_recall: '귀환(재사용)' };
     if (D[k.id]) out.push(D[k.id]); if (k.tv === 'book') out.push(SPELLS.filter(s => s.book === k.id).map(s => `${s.name}(Lv${s.lv})`).join(', '));
     return out;
   }
@@ -88,6 +91,7 @@ export class Game {
     inv.push(it); inv.sort((a, b) => TVORD.indexOf(KINDS[a.k].tv) - TVORD.indexOf(KINDS[b.k].tv) || a.k - b.k); return true;
   }
   makeItem(level, q = 0, tvs) {
+    if (q === 0 && this.p && this.p.perks && this.p.perks.lucky && this.r() < 0.07 * this.p.perks.lucky) q = 1;
     if ((q >= 1 && this.r() < (q === 2 ? 0.22 : 0.05)) || this.r() < level / 900) { const c = ARTS.filter(a => !this.arts[a.id] && a.lv <= level + 2); if (c.length) { const a = c[this.ri(c.length)]; this.arts[a.id] = 1; return { k: KIDX[a.k], n: 1, a: a.id, th: a.th || 0, td: a.td || 0, ta: a.ta || 0, pv: a.pv }; } }
     if (this.r() < 0.06) level += 2 + this.ri(6);
     const good = ['weapon', 'bow', 'body', 'shield', 'helm', 'gloves', 'boots', 'cloak', 'ring', 'amulet', 'wand', 'rod'];
@@ -118,6 +122,11 @@ export class Game {
       if (s === 'weapon') { d.wth = it.th || 0; d.wtd = it.td || 0; } else if (s === 'bow') { d.bth = it.th || 0; d.btd = it.td || 0; } else if (k.tv !== 'ring' && k.tv !== 'amulet') { d.th += it.th || 0; d.td += it.td || 0; }
     }
     for (const x of ['seeInv', 'pBlind', 'regen']) if (rc[x]) fl[x] = 1;
+    const pk = p.perks || (p.perks = {});
+    st.str += 2 * (pk.might || 0); st.dex += 2 * (pk.agile || 0); st.int += 2 * (pk.wise || 0); st.con += 2 * (pk.hardy || 0);
+    d.speed += 2 * (pk.swift || 0); d.ac += 12 * (pk.thick || 0); d.stealth += 2 * (pk.sneaky || 0);
+    if (pk.fireward) fl.rFire = 1; if (pk.frostward) fl.rCold = 1; if (pk.venomward) fl.rPois = 1; if (pk.clear) fl.pConf = 1; if (pk.freebody) fl.freeAct = 1; if (pk.sight) { fl.seeInv = 1; d.light += 1; } if (pk.regen) fl.regen = 1;
+    if (tm.stealthUp > 0) d.stealth += 4; if (tm.shield > 0) d.ac += 25;
     Object.assign(d, st);
     d.th += Math.floor((st.dex - 12) / 2); d.td += Math.max(-2, Math.floor((st.str - 12) / 2));
     if (tm.fast > 0) d.speed += 10; if (tm.slow > 0) d.speed -= 10;
@@ -125,26 +134,35 @@ export class Game {
     if (tm.seeInv > 0) fl.seeInv = 1;
     if (p.food < 1000) d.speed -= 5;
     d.ac = Math.max(0, d.ac);
-    d.mhp = Math.max(1, Math.round(20 + p.lv * (cl.hd + rc.hd + (st.con - 10) * 0.25)));
-    d.mmp = cl.mp ? Math.max(0, Math.round(3 + p.lv * (cl.mp + (st.int - 10) * 0.14))) : 0;
+    d.mhp = Math.max(1, Math.round((20 + p.lv * (cl.hd + rc.hd + (st.con - 10) * 0.25)) * (1 + 0.12 * (pk.tough || 0))));
+    d.mmp = Math.round((cl.mp ? Math.max(0, 3 + p.lv * (cl.mp + (st.int - 10) * 0.14)) : cl.sp[0] + p.lv * cl.sp[1]) * (1 + 0.25 * (pk.focus || 0)));
+    d.crit = 4 + p.lv * 0.4 + 8 * (pk.sharp || 0);
     d.mel = cl.mel[0] + cl.mel[1] * p.lv; d.bow = cl.bow[0] + cl.bow[1] * p.lv; d.save = Math.min(90, cl.save[0] + cl.save[1] * p.lv);
-    d.blows = p.cls === 'warrior' ? 2 + (p.lv >= 15) + (p.lv >= 30) + (st.dex >= 18) : 1 + (p.cls === 'ranger' && p.lv >= 25) + (st.dex >= 20);
-    d.shots = p.cls === 'ranger' ? 1 + p.lv / 20 : 1;
+    d.blows = (p.cls === 'warrior' ? 2 + (p.lv >= 15) + (p.lv >= 30) + (st.dex >= 18) : 1 + ((p.cls === 'ranger' || p.cls === 'priest') && p.lv >= 25) + (p.cls === 'rogue' && p.lv >= 12) + (p.cls === 'rogue' && p.lv >= 28) + (st.dex >= 20)) + (pk.cleave || 0);
+    d.shots = (p.cls === 'ranger' ? 1 + p.lv / 20 : p.cls === 'rogue' ? 1 + p.lv / 50 : 1) + 0.5 * (pk.quick || 0);
     const w = p.eq.weapon; if (w) { [d.dd, d.ds] = this.wdice(w); d.brand = (w.a && ART[w.a].brand) || (w.e && EGO[w.e].brand); d.slay = [...(w.a && ART[w.a].slay || []), ...(w.e && EGO[w.e].slay || [])]; } else { d.dd = 1; d.ds = 2; d.brand = null; d.slay = []; }
     p.d = d; if (p.hp > d.mhp) p.hp = d.mhp; if (p.mp > d.mmp) p.mp = d.mmp;
   }
   gainExp(n) {
     const p = this.p; p.exp += n;
-    while (p.lv < MAXLV && p.exp >= this.need(p.lv)) { const old = p.d.mhp; p.lv++; this.calc(); p.hp += p.d.mhp - old; this.msg(`레벨 ${p.lv}!`, 'y'); const nw = SPELLS.filter(s => s.lv === p.lv && p.cls === 'mage'); for (const s of nw) this.msg(`새 주문을 익힐 수 있다: ${s.name}`, 'b'); }
+    while (p.lv < MAXLV && p.exp >= this.need(p.lv)) { const old = p.d.mhp; p.lv++; this.calc(); p.hp += p.d.mhp - old; this.msg(`레벨 ${p.lv}!`, 'y'); this.fx.push({ t: 'lvl', x: p.x, y: p.y }); this.snd('level'); if (p.lv % 5 === 0) this.perkPending++; const nw = SPELLS.filter(s => s.lv === p.lv && (s.cls || 'mage') === p.cls); for (const s of nw) this.msg(`새 ${CLASSES[p.cls].mp ? '주문' : '기술'}: ${s.name}`, 'b'); }
   }
+
+  perkOptions() {
+    if (this.perkOffer || this.perkPending <= 0) return this.perkOffer;
+    const pk = this.p.perks, cls = this.p.cls, pool = PERKS.filter(x => (pk[x.id] || 0) < x.max && !(x.id === 'arcane' && (cls === 'warrior' || cls === 'rogue')) && !(x.id === 'hunter' && !this.p.eq.bow) && !(x.id === 'quick' && !this.p.eq.bow)), out = [];
+    while (out.length < 3 && pool.length) out.push(pool.splice(this.ri(pool.length), 1)[0].id);
+    this.perkOffer = out; return out;
+  }
+  choosePerk(i) { const o = this.perkOffer; if (!o || !o[i]) return false; const pk = this.p.perks; pk[o[i]] = (pk[o[i]] || 0) + 1; this.perkOffer = null; this.perkPending--; const old = this.p.d.mhp; this.calc(); this.p.hp += Math.max(0, this.p.d.mhp - old); this.msg(`특성을 얻었다: ${PERKS.find(x => x.id === o[i]).name}`, 'y'); if (this.onSave) this.onSave(); return true; }
 
   /* ---------- 층 ---------- */
   I(x, y) { return y * this.map.w + x; }
   enter(depth, how) {
     this.depth = depth; if (depth > this.maxDepth) this.maxDepth = depth;
     const quest = depth === QUEST1 && !this.deadU['검은 부관 모르단'];
-    const g = depth === 0 ? genTown(this) : genDungeon(depth, this, { noDown: depth >= MAXDEPTH || quest });
-    this.map = { w: g.w, h: g.h, t: g.t, f: g.f, town: depth === 0 }; this.traps = {}; this.mons = []; this.items = []; this.mmap = new Map(); this.alloc(); this.auto = null; this.shop = -1; this.changed = true;
+    const bio = BIOMES[biomeOf(depth)], g = depth === 0 ? genTown(this) : genDungeon(depth, this, { noDown: depth >= MAXDEPTH || quest, caveP: bio.caveP, pool: bio.pool, poolP: bio.poolP, noCave: quest || depth >= MAXDEPTH });
+    this.map = { w: g.w, h: g.h, t: g.t, f: g.f, town: depth === 0 }; this.traps = {}; this.founts = {}; this.mons = []; this.items = []; this.mmap = new Map(); this.alloc(); this.auto = null; this.shop = -1; this.changed = true;
     const p = this.p; let k = how === 'down' && g.downs.length ? g.downs[this.ri(g.downs.length)] : (how === 'up' || how === 'down') && g.ups.length ? g.ups[this.ri(g.ups.length)] : depth === 0 ? g.downs[0] : g.plain();
     p.x = k % g.w; p.y = (k / g.w) | 0; p.target = 0;
     if (depth === 0) this.stock();
@@ -160,24 +178,30 @@ export class Game {
       const TR = ['door', 'tele', 'dart', 'summon', 'fire'];
       for (let n = 0, cnt = 2 + this.ri(3 + (depth >> 2)); n < cnt; n++) { const c = this.randCell(); if (c >= 0 && g.t[c] === T.FLOOR && dist(c % g.w, (c / g.w) | 0, p.x, p.y) > 2) { g.t[c] = T.TRAP; this.traps[c] = TR[this.ri(TR.length)]; } }
       for (const c of g.spots.trap) { g.t[c] = T.TRAP; this.traps[c] = TR[1 + this.ri(4)]; }
-      let dg = g.spots.mon.length ? 20 : 0, lt = 0;
+      if (g.pit && g.pit.length) {     // 소굴: 한 종류의 괴물이 가득 찬 방
+        const fam = {}; for (let i = 0; i < MONSTERS.length; i++) { const r = MONSTERS[i]; if (r.lv <= depth + 2 && r.lv >= depth - 12 && !r.F.has('unique') && !r.F.has('never') && !r.F.has('breed')) (fam[r.g] = fam[r.g] || []).push(i); }
+        const gs = Object.keys(fam).filter(k => fam[k].length >= 1), gl = gs[this.ri(gs.length)];
+        if (gl) { for (const c of g.pit) if (this.r() < 0.55) this.spawn(fam[gl][this.ri(fam[gl].length)], c % g.w, (c / g.w) | 0, true, true); for (let n = 0; n < 2; n++) { const c = g.pit[this.ri(g.pit.length)]; this.items.push({ x: c % g.w, y: (c / g.w) | 0, it: this.makeItem(depth + 2, 1) }); } this.pitG = gl; }
+      }
+      let dg = (g.spots.mon.length ? 20 : 0) + (g.pit && g.pit.length ? 35 : 0), lt = 0;
       for (const m of this.mons) { const r = MONSTERS[m.r]; dg += Math.max(0, r.lv - depth + 2) ** 2 * (r.F.has('unique') ? 3 : 1); }
       for (const o of this.items) if (o.it) lt += o.it.a ? 4000 : Math.min(3000, this.value(o.it));
       this.feel = { d: dg < 6 ? 0 : dg < 20 ? 1 : dg < 45 ? 2 : dg < 90 ? 3 : dg < 180 ? 4 : 5, l: lt < 300 ? 0 : lt < 1200 ? 1 : lt < 3500 ? 2 : lt < 8000 ? 3 : 4, shown: false };
-      this.msg(`지하 ${depth}층. ${FEEL_D[this.feel.d]}.`, this.feel.d >= 4 ? 'r' : 'd');
+      if ((depth - 1) % 8 === 0 && depth === this.maxDepth && how !== 'recall') this.msg(`— ${bio.name} —`, 'v');
+      this.msg(`지하 ${depth}층(${bio.name}). ${FEEL_D[this.feel.d]}.`, this.feel.d >= 4 ? 'r' : 'd');
       if (quest) this.msg('무거운 기척이 이 층을 누르고 있다. 내려가는 계단이 보이지 않는다.', 'v');
       if (depth === MAXDEPTH) this.msg('구덩이의 바닥이다. 어둠의 군주가 여기 있다.', 'v');
     }
-    this.calc(); this.updateView(); if (this.onSave) this.onSave();
+    this.snd('stairs'); this.calc(); this.updateView(); if (this.onSave) this.onSave();
   }
   alloc() { const n = this.map.w * this.map.h; this.los = new Uint8Array(n); this.seen = new Uint8Array(n); this.fl = new Int16Array(n); this.tmpf = new Int16Array(n); }
   randCell() { const m = this.map; for (let n = 0; n < 300; n++) { const k = this.ri(m.w * m.h); if ((m.t[k] === T.FLOOR || m.t[k] === T.GRASS) && !(m.f[k] & F.VAULT) && !this.mmap.has(k) && !(k === this.I(this.p.x, this.p.y))) return k; } return -1; }
-  goldAmt(lv) { return Math.round((12 + this.ri(30)) * (1 + lv * 0.55)); }
+  goldAmt(lv) { return Math.round((12 + this.ri(30)) * (1 + lv * 0.55) * (1 + 0.4 * ((this.p && this.p.perks && this.p.perks.lucky) || 0))); }
   pickRace(level) {
     const base = level; if (this.r() < 0.1) level += 1 + this.ri(2 + (level >> 2));
-    const c = [], ws = []; let tot = 0;
+    const c = [], ws = [], pref = BIOMES[biomeOf(this.depth)].pref; let tot = 0;
     for (let i = 0; i < MONSTERS.length; i++) { const r = MONSTERS[i]; if (r.lv > level || r.F.has('quest')) continue; if (r.F.has('unique') && (r.lv > base + 1 || this.deadU[r.name] || this.mons.some(m => m.r === i))) continue;
-      const w = (1 / r.rar) * (r.F.has('unique') ? 0.3 : 1) * (r.lv < level - 9 ? 0.25 : r.lv >= level - 3 ? 1.7 : 1); c.push(i); ws.push(w); tot += w; }
+      const w = (1 / r.rar) * (r.F.has('unique') ? 0.3 : 1) * (r.lv < level - 9 ? 0.25 : r.lv >= level - 3 ? 1.7 : 1) * (pref.some(x => r.F.has(x)) ? 2.2 : 1); c.push(i); ws.push(w); tot += w; }
     let x = this.r() * tot, i = 0; while (i < c.length - 1 && (x -= ws[i]) > 0) i++; return c[i];
   }
   spawn(ri, x, y, sleepy, solo) {
@@ -191,7 +215,7 @@ export class Game {
   near(x, y, rad) { const m = this.map; for (let n = 0; n < 40; n++) { const nx = x + this.rr(-rad, rad), ny = y + this.rr(-rad, rad); if (nx < 1 || ny < 1 || nx >= m.w - 1 || ny >= m.h - 1) continue; const k = this.I(nx, ny); if (walk(m.t[k]) && m.t[k] !== T.TRAP && !this.mmap.has(k) && !(nx === this.p.x && ny === this.p.y)) return k; } return -1; }
   monAt(x, y) { return this.mmap.get(this.I(x, y)); }
   stock() {
-    this.shops = SHOPS.map((s, i) => { if (!s.stock) { const out = [], lv = Math.max(8, this.maxDepth + 4); for (let n = 0; n < 7; n++) out.push({ it: this.makeItem(lv, 1), bm: 1 }); return out; }
+    this.shops = SHOPS.map((s, i) => { if (s.home || s.guild) return []; if (!s.stock) { const out = [], lv = Math.max(8, this.maxDepth + 4); for (let n = 0; n < 7; n++) out.push({ it: this.makeItem(lv, 1), bm: 1 }); return out; }
       return s.stock.filter(() => this.r() < 0.9).map(([id, n]) => { const it = this.mk(id, n); if (EQUIP.has(KINDS[it.k].tv) && KINDS[it.k].pv) it.pv = KINDS[it.k].pv[0] + 2; return { it }; }); });
     for (let n = 0; n < 3; n++) { const c = this.randCell(); if (c >= 0) this.spawn(MIDX[['자칼', '좀도둑', '과일박쥐'][n]], c % this.map.w, (c / this.map.w) | 0, true, true); }
   }
@@ -230,6 +254,7 @@ export class Game {
     let exp = false; for (const k in tm) if (tm[k] > 0 && --tm[k] <= 0) { delete tm[k]; exp = true; if (TM[k] && k !== 'para') this.msg(`${TM[k]} 효과가 끝났다.`, 'd'); if (k === 'para') { tm.paraImm = 4; this.msg('다시 움직일 수 있다.'); } }
     if (exp) this.calc();
     if (tm.pois > 0) { p.hp -= 1; if (p.hp <= 0) return this.die('중독'); }
+    if (this.map.t[this.I(p.x, p.y)] === T.LAVA && this.pturn % 2 === 0) { this.hurt(this.dice(2, 8) + this.depth, 'fire', '용암', '용암 속에 서 있다'); if (this.dead) return; }
     p.food -= 1 + (d.fl.regen ? 1 : 0);
     if (p.food === 2000 || p.food === 1999) this.msg('배가 고프다.', 'o'); if (p.food === 1000 || p.food === 999) { this.msg('굶주려서 몸이 느려진다.', 'r'); this.calc(); }
     if (p.food <= 0) { p.food = 0; p.hp -= 1; if (this.pturn % 10 === 0) this.msg('굶어 죽어 간다!', 'r'); if (p.hp <= 0) return this.die('굶주림'); }
@@ -248,7 +273,7 @@ export class Game {
   }
   tick() {
     this.turn++; const p = this.p;
-    if (!this.flT || this.flT !== this.pturn + ':' + p.x + ':' + p.y) { const t = this.map.t; flow(this.map, [this.I(p.x, p.y)], k => walk(t[k]) || t[k] === T.DOOR, 36, this.fl); this.flT = this.pturn + ':' + p.x + ':' + p.y; }
+    if (!this.flT || this.flT !== this.pturn + ':' + p.x + ':' + p.y) { const t = this.map.t; flow(this.map, [this.I(p.x, p.y)], k => (walk(t[k]) && t[k] !== T.LAVA) || t[k] === T.DOOR, 36, this.fl); this.flT = this.pturn + ':' + p.x + ':' + p.y; }
     for (let i = 0, n = this.mons.length; i < n; i++) { const m = this.mons[i]; if (m.dead || m.sleep > 0) continue;
       m.energy += gain(MONSTERS[m.r].spd - (m.slow > 0 ? 10 : 0));
       for (let g = 0; m.energy >= 100 && !m.dead && !this.dead && !this.changed && g < 4; g++) { m.energy -= 100; this.monTurn(m); } }
@@ -263,7 +288,7 @@ export class Game {
   hurt(dmg, el, src, verb) {
     const p = this.p, fl = p.d.fl, tm = p.tm; dmg = Math.max(0, dmg);
     if (el === 'fire') { if (fl.rFire) dmg /= 3; if (tm.oppFire > 0) dmg /= 3; } else if (el === 'cold') { if (fl.rCold) dmg /= 3; if (tm.oppCold > 0) dmg /= 3; } else if (el === 'pois') { if (fl.rPois) dmg /= 3; else tm.pois = Math.min(9, (tm.pois || 0) + 2 + this.ri(3)); }
-    dmg = Math.round(dmg); p.hp -= dmg; this.disturb(); this.fx.push({ t: 'num', x: p.x, y: p.y, s: '-' + dmg, c: '#ff6a6a' }); if (verb) this.msg(`${verb} (${dmg}).`, 'o');
+    dmg = Math.round(dmg); p.hp -= dmg; this.disturb(); this.fx.push({ t: 'num', x: p.x, y: p.y, s: '-' + dmg, c: '#ff6a6a', big: dmg > p.d.mhp * 0.25 }); this.snd('hurt'); if (verb) this.msg(`${verb} (${dmg}).`, 'o');
     if (p.hp <= 0) { this.die(src); return dmg; }
     if (p.hp < p.d.mhp * 0.3 && !this.warned) { this.warned = true; this.msg('*** 체력이 위험하다! ***', 'r'); } else if (p.hp >= p.d.mhp * 0.3) this.warned = false;
     return dmg;
@@ -271,10 +296,10 @@ export class Game {
   save() { return this.ri(100) < this.p.d.save; }
   setTm(k, n, text) { const tm = this.p.tm, fl = this.p.d.fl;
     if (k === 'para' && (fl.freeAct || tm.paraImm > 0 || tm.para > 0)) return false; if (k === 'slow' && fl.freeAct) return false; if (k === 'conf' && fl.pConf) return false; if (k === 'blind' && fl.pBlind) return false; if (k === 'afraid' && (tm.hero > 0 || tm.bers > 0)) return false;
-    tm[k] = Math.max(tm[k] || 0, n); if (text) this.msg(text, ['fast', 'hero', 'bers', 'bless', 'oppFire', 'oppCold', 'seeInv'].includes(k) ? 'b' : 'r'); this.calc(); if (k !== 'fast' && k !== 'hero' && k !== 'bers' && k !== 'bless' && k !== 'oppFire' && k !== 'oppCold' && k !== 'seeInv') this.disturb(); return true; }
-  heal(n) { const p = this.p, b = p.hp; p.hp = Math.min(p.d.mhp, p.hp + n); if (p.hp > b) this.fx.push({ t: 'num', x: p.x, y: p.y, s: '+' + (p.hp - b), c: '#7dffb0' }); }
+    tm[k] = Math.max(tm[k] || 0, n); if (text) this.msg(text, GOODTM.has(k) ? 'b' : 'r'); this.calc(); if (!GOODTM.has(k)) this.disturb(); return true; }
+  heal(n, quiet) { const p = this.p, b = p.hp; p.hp = Math.min(p.d.mhp, p.hp + Math.round(n)); if (p.hp > b && !(quiet && p.hp - b < 3)) this.fx.push({ t: 'num', x: p.x, y: p.y, s: '+' + (p.hp - b), c: '#7dffb0' }); }
   cure(...ks) { for (const k of ks) delete this.p.tm[k]; this.calc(); }
-  die(src) { if (this.dead) return; this.dead = true; this.cause = src; this.auto = null; this.p.hp = Math.min(this.p.hp, 0); this.msg(`당신은 죽었다. (${src})`, 'r'); }
+  die(src) { if (this.dead) return; this.snd('death'); this.dead = true; this.cause = src; this.auto = null; this.p.hp = Math.min(this.p.hp, 0); this.msg(`당신은 죽었다. (${src})`, 'r'); }
   tele(d, who) {
     const m = this.map, e = who || this.p; let best = -1;
     for (let n = 0; n < 200; n++) { const k = this.randCell(); if (k < 0) continue; const dd = dist(k % m.w, (k / m.w) | 0, e.x, e.y); if (dd <= d && dd >= Math.min(d / 2, 6)) { best = k; break; } if (best < 0) best = k; }
@@ -286,20 +311,30 @@ export class Game {
   /* ---------- 전투 ---------- */
   mult(r, brand, slay) { let m = 1; if (brand) m = r.F.has('im' + brand) ? 1 : r.F.has('hurt' + brand) ? 3.5 : 2.5; for (const s of slay || []) if (r.F.has(s)) m = Math.max(m, s === 'evil' || s === 'animal' ? 2 : 3); return m; }
   hitRoll(chance, ac) { const k = this.ri(100); if (k < 12) return true; if (k >= 95) return false; return chance > 0 && this.ri(Math.max(1, chance)) >= ac * 0.67; }
+  strike(m, o = {}) {      // 근접 한 방. o: {mult, auto, crit, label}
+    const p = this.p, d = p.d, r = MONSTERS[m.r], asleep = m.sleep > 0;
+    this.fx.push({ t: 'atk', id: 'p', x: m.x, y: m.y });
+    if (!(o.auto || asleep) && !this.hitRoll(d.mel + (d.th + d.wth) * 3, r.ac)) { this.msg(`${josa(r.name, '을/를')} 빗맞혔다.`, 'd'); this.snd('miss'); return 0; }
+    const brand = d.brand || (p.tm.venom > 0 ? 'pois' : null), crit = !!o.crit || asleep || this.ri(100) < d.crit; let tag = '';
+    let dmg = this.dice(d.dd, d.ds) * this.mult(r, brand, d.slay) + d.td + d.wtd;
+    if (asleep && p.cls === 'rogue') { dmg *= 3; tag = '암습! '; }
+    if (crit) dmg = dmg * 1.5 + 5;
+    dmg = Math.max(1, Math.round(dmg * (o.mult || 1)));
+    const dealt = Math.min(dmg, m.hp);
+    this.hitMon(m, dmg, null, `${tag}${josa(r.name, '을/를')} ${o.label || (crit ? '강하게 공격했다' : '공격했다')}`);
+    if (p.perks.vamp && dealt > 0) this.heal(Math.max(1, Math.round(dealt * 0.06 * p.perks.vamp)), true);
+    return dmg;
+  }
   attack(m) {
-    const p = this.p, d = p.d, r = MONSTERS[m.r];
+    const p = this.p;
     if (p.tm.afraid > 0) { this.msg('겁에 질려 공격할 수 없다!', 'r'); return false; }
-    for (let b = 0; b < d.blows && !m.dead; b++) {
-      if (!this.hitRoll(d.mel + (d.th + d.wth) * 3, r.ac)) { this.msg(`${josa(r.name, '을/를')} 빗맞혔다.`, 'd'); continue; }
-      let dmg = this.dice(d.dd, d.ds) * this.mult(r, d.brand, d.slay) + d.td + d.wtd, crit = this.ri(100) < 4 + p.lv * 0.4;
-      if (crit) dmg = dmg * 1.5 + 5; dmg = Math.max(1, Math.round(dmg));
-      this.hitMon(m, dmg, null, `${josa(r.name, '을/를')} ${crit ? '강하게 ' : ''}공격했다`);
-    }
+    for (let b = 0; b < p.d.blows && !m.dead; b++) this.strike(m);
     return true;
   }
   hitMon(m, dmg, el, verb) {
     const r = MONSTERS[m.r]; if (m.dead) return;
-    if (el) { if (r.F.has('im' + el)) { dmg = Math.round(dmg / 6); } else if (r.F.has('hurt' + el)) dmg = Math.round(dmg * 1.5); if ((el === 'dark') && r.F.has('undead')) dmg = Math.round(dmg / 4); }
+    if (el) { if (r.F.has('im' + el)) { dmg = Math.round(dmg / 6); } else if (r.F.has('hurt' + el)) dmg = Math.round(dmg * 1.5); if ((el === 'dark') && r.F.has('undead')) dmg = Math.round(dmg / 4); if (el === 'holy') dmg = Math.round(dmg * (r.F.has('undead') ? 2 : r.F.has('evil') || r.F.has('demon') ? 1.5 : 0.8)); }
+    this.snd('hit');
     m.hp -= dmg; if (m.sleep > 0) { m.sleep = 0; } m.energy = Math.min(m.energy, 99);
     this.fx.push({ t: 'num', x: m.x, y: m.y, s: String(dmg), c: '#ffffff' });
     if (m.hp <= 0) { this.msg(`${verb} (${dmg}). ${josa(r.name, '이/가')} ${r.F.has('undead') || r.F.has('nofear') && !r.F.has('evil') ? '부서졌다' : '죽었다'}.`, 'g'); this.kill(m); return; }
@@ -307,12 +342,13 @@ export class Game {
     if (!r.F.has('nofear') && !m.fear && m.hp < m.mhp * 0.2 && this.ri(100) < 45) { m.fear = 8 + this.ri(10); if (m.vis) this.msg(`${josa(r.name, '이/가')} 겁에 질려 달아난다!`, 'o'); }
   }
   kill(m) {
-    const r = MONSTERS[m.r], p = this.p; m.dead = true; this.mmap.delete(this.I(m.x, m.y)); this.kills++; if (p.target === m.id) p.target = 0;
+    const r = MONSTERS[m.r], p = this.p; m.dead = true; this.mmap.delete(this.I(m.x, m.y)); this.kills++; if (p.target === m.id) p.target = 0; this.lore[m.r] = (this.lore[m.r] || 0) + 1; this.fx.push({ t: 'die', x: m.x, y: m.y, r: m.r }); this.snd('kill');
     this.gainExp(Math.max(r.exp ? 1 : 0, Math.round(r.exp * r.lv / p.lv * 10) / 10));
     if (r.F.has('unique')) { this.deadU[r.name] = 1; this.msg(`${josa(r.name, '을/를')} 쓰러뜨렸다!`, 'y'); }
     const n = r.dr && this.r() < r.dr ? (r.n || 1) : 0;
     for (let i = 0; i < n; i++) { const c = i === 0 ? this.I(m.x, m.y) : this.near(m.x, m.y, 2); if (c < 0) continue; const x = c % this.map.w, y = (c / this.map.w) | 0;
       if (r.gold || (!r.q && this.r() < 0.55)) this.items.push({ x, y, gold: this.goldAmt(r.lv) * (r.gold ? 3 : 1), seen: 1 }); else this.items.push({ x, y, it: this.makeItem(Math.max(this.depth, r.lv), r.q || 0), seen: 1 }); }
+    if (r.F.has('unique')) this.snd('rare');
     if (r.F.has('final')) { this.won = true; this.msg('어둠의 군주가 무너졌다. 구덩이에 처음으로 빛이 든다. 당신이 이겼다!', 'y'); if (this.onSave) this.onSave(); }
     else if (r.F.has('quest')) { const k = this.I(m.x, m.y); this.map.t[k] = T.DOWN; delete this.traps[k]; this.msg('아래로 내려가는 계단이 모습을 드러냈다.', 'y'); }
   }
@@ -324,9 +360,10 @@ export class Game {
   // 발사체. src: 'p' 또는 몬스터. o: {el, dmg, rad, beam, name}
   project(src, tx, ty, o) {
     const p = this.p, byP = src === 'p', sx = byP ? p.x : src.x, sy = byP ? p.y : src.y, cells = [], hits = [], c = ELC[o.el] || '#fff';
+    if (byP && p.perks.arcane) o = { ...o, dmg: o.dmg * (1 + 0.15 * p.perks.arcane) };
     let ex = sx, ey = sy;
     for (const [x, y] of line(sx, sy, tx, ty)) { if (opaque(this.map.t[this.I(x, y)])) break; ex = x; ey = y; cells.push([x, y]); const mm = this.monAt(x, y); if (byP && mm) { if (o.beam) hits.push([mm, 1]); else break; } if (!byP && x === p.x && y === p.y) break; }
-    this.fx.push({ t: 'bolt', cells, c });
+    this.fx.push({ t: 'bolt', cells, c, el: o.el, sx, sy }); this.snd(o.rad ? 'boom' : 'zap');
     if (o.rad) { this.fx.push({ t: 'ball', x: ex, y: ey, r: o.rad, c });
       if (byP) { for (const m of this.mons) { if (m.dead) continue; const dd = dist(m.x, m.y, ex, ey); if (dd <= o.rad && this.clear(ex, ey, m.x, m.y)) hits.push([m, dd === 0 ? 1 : dd === 1 ? 0.65 : 0.4]); } }
       else { const dd = dist(p.x, p.y, ex, ey); if (dd <= o.rad) this.hurt(o.dmg * (dd === 0 ? 1 : dd === 1 ? 0.65 : 0.4), o.el, o.name, `${ELN[o.el] || '충격'}에 휩싸였다`); } }
@@ -369,6 +406,7 @@ export class Game {
   }
   monAttack(m, r) {
     const p = this.p; if (dist(m.x, m.y, p.x, p.y) > 1) return;
+    this.fx.push({ t: 'atk', id: m.id, x: p.x, y: p.y });
     for (const [bd, bs, eff] of r.bl) {
       if (this.dead || this.changed) return;
       if (!this.hitRoll(60 + r.lv * 4, p.d.ac)) { if (m.vis && bd) this.msg(`${josa(r.name, '이/가')} 헛쳤다.`, 'd'); continue; }
@@ -411,7 +449,7 @@ export class Game {
     out.push(`속도 ${sg(r.spd)} · 방어 ${r.ac} · 공격 ${r.bl.map(([d, s, e]) => (d ? `${d}d${s}` : '') + (e ? `[${({ pois: '독', fire: '화염', cold: '냉기', para: '마비', drain: '흡수', steal: '절도', scare: '공포', conf: '혼란', blind: '실명' })[e]}]` : '')).join(', ')}`);
     if (r.sp) out.push(`주문(1/${r.sp[0]}): ` + r.sp.slice(1).map(s => { const [k, a] = s.split(':'); return ({ blink: '점멸', tport: '도주', teleto: '끌어당김', heal: '치유', scare: '공포', conf: '혼란', blind: '실명', hold: '마비', slow: '둔화', drain_mana: '마나 흡수', summon: '소환', summon_undead: '망자 소환', summon_demon: '악마 소환', wound: '저주', mind: '정신 공격', arrow: '화살', bolt: ELN[a] + ' 화살', ball: ELN[a] + ' 구', breath: ELN[a] + ' 숨결' })[k]; }).join(', '));
     const tags = [['invis', '투명'], ['pass', '벽 통과'], ['breed', '증식'], ['never', '움직이지 않음'], ['undead', '망자'], ['imfire', '화염 면역'], ['imcold', '냉기 면역'], ['impois', '독 면역'], ['hurtcold', '냉기에 약함']].filter(([f]) => r.F.has(f)).map(x => x[1]);
-    if (tags.length) out.push(tags.join(' · ')); if (r.desc) out.push(r.desc);
+    if (tags.length) out.push(tags.join(' · ')); if (r.desc) out.push(r.desc); if (this.lore[m.r]) out.push(`지금까지 ${this.lore[m.r]}마리 처치`);
     return out;
   }
 
@@ -421,21 +459,57 @@ export class Game {
     if (p.tm.conf > 0 && this.ri(100) < 40) [dx, dy] = DIRS[this.ri(8)];
     const nx = p.x + dx, ny = p.y + dy, k = this.I(nx, ny), tt = mp.t[k], m = this.mmap.get(k); p.fx = dx; p.fy = dy;
     if (m) { if (!this.attack(m)) { this.disturb(); return false; } this.endTurn(); return true; }
-    if (tt === T.DOOR) { mp.t[k] = T.OPEN; this.msg('문을 열었다.', 'd'); this.endTurn(); return true; }
+    if (tt === T.DOOR) { mp.t[k] = T.OPEN; this.msg('문을 열었다.', 'd'); this.snd('door'); this.endTurn(); return true; }
     if (tt === T.RUBBLE) { if (this.ri(3) === 0) { mp.t[k] = T.FLOOR; this.msg('돌무더기를 치웠다.', 'd'); } else this.msg('돌무더기를 치우는 중…', 'd'); this.endTurn(); return true; }
     if (!walk(tt)) { mp.f[k] |= F.KNOWN; this.disturb(); return false; }
-    p.x = nx; p.y = ny; this.arrive(); if (!this.changed) this.endTurn(); return true;
+    p.x = nx; p.y = ny; this.snd('step'); this.arrive(); if (!this.changed && !this.dead) this.endTurn(); else if (this.dead) this.updateView(); return true;
   }
   arrive() {
     const p = this.p, k = this.I(p.x, p.y), tt = this.map.t[k];
     if (tt === T.TRAP) this.trap(k);
     if (this.changed || this.dead) return;
     for (let i = this.items.length - 1; i >= 0; i--) { const o = this.items[i]; if (o.x !== p.x || o.y !== p.y) continue;
-      if (o.gold) { p.gold += o.gold; this.msg(`금화 ${o.gold}닢을 주웠다.`, 'y'); this.items.splice(i, 1); }
-      else { const nm = this.name(o.it); if (this.addInv(o.it)) { this.msg(`${josa(nm, '을/를')} 주웠다.`, o.it.a || o.it.e ? 'y' : ''); this.items.splice(i, 1); if (o.it.a || o.it.e) this.disturb(); } else { this.msg(`${josa(nm, '이/가')} 있지만 가방이 가득 찼다.`, 'o'); o.skip = 1; this.disturb(); } } }
+      if (o.gold) { p.gold += o.gold; this.msg(`금화 ${o.gold}닢을 주웠다.`, 'y'); this.items.splice(i, 1); this.snd('gold'); }
+      else { const nm = this.name(o.it); if (this.addInv(o.it)) { this.msg(`${josa(nm, '을/를')} 주웠다.`, o.it.a || o.it.e ? 'y' : ''); this.items.splice(i, 1); this.snd(o.it.a || o.it.e ? 'rare' : 'pick'); if (o.it.a || o.it.e) this.disturb(); } else { this.msg(`${josa(nm, '이/가')} 있지만 가방이 가득 찼다.`, 'o'); o.skip = 1; this.disturb(); } } }
     const t2 = this.map.t[k];
-    if (t2 >= T.SHOP) { this.shop = t2 - T.SHOP; this.disturb(); }
+    if (t2 === T.CHEST) this.openChest(k);
+    else if (t2 === T.LAVA) { this.hurt(this.dice(3, 8) + this.depth, 'fire', '용암', '용암이 살을 태운다'); if (this.dead) return; }
+    else if (t2 === T.FOUNTAIN && this.auto !== 'travel') this.msg('샘이 있다. 마셔 볼 수 있다.', 'b');
+    else if (t2 === T.ALTAR && this.auto !== 'travel') this.msg('오래된 제단이 있다. 기도할 수 있다.', 'b');
+    if (isShop(t2)) { this.shop = t2 - T.SHOP; this.disturb(); }
     else if (t2 === T.DOWN && this.auto !== 'travel') this.msg('내려가는 계단이 있다.', 'd'); else if (t2 === T.UP && this.auto !== 'travel') this.msg('올라가는 계단이 있다.', 'd');
+  }
+  openChest(k) {
+    const p = this.p, lv = this.depth + 2; this.map.t[k] = T.FLOOR; this.disturb(); this.snd('chest');
+    if (this.ri(100) < 18) { this.msg('상자에 함정이 있었다!', 'r'); if (this.ri(2)) { this.hurt(this.dice(3, 6) + this.depth, 'fire', '상자 함정', '폭발했다'); if (this.dead) return; } else for (let i = 0; i < 2 + this.ri(2); i++) { const c = this.near(p.x, p.y, 2); if (c >= 0) this.spawn(this.pickRace(this.depth + 1), c % this.map.w, (c / this.map.w) | 0, false, true); } }
+    else this.msg('보물상자를 열었다!', 'y');
+    const g = this.goldAmt(lv) * 3; p.gold += g; this.msg(`금화 ${g}닢을 얻었다.`, 'y');
+    for (let i = 0, n = 1 + this.ri(3); i < n; i++) { const c = i === 0 ? k : this.near(p.x, p.y, 1); if (c >= 0) this.items.push({ x: c % this.map.w, y: (c / this.map.w) | 0, it: this.makeItem(lv, this.ri(100) < 45 ? 1 : 0), seen: 1 }); }
+    for (let i = this.items.length - 1; i >= 0; i--) { const o = this.items[i]; if (o.x === p.x && o.y === p.y && o.it) { const nm = this.name(o.it); if (this.addInv(o.it)) { this.msg(`${josa(nm, '을/를')} 주웠다.`, o.it.a || o.it.e ? 'y' : ''); this.items.splice(i, 1); } } }
+  }
+  hereFeature() { const tt = this.map.t[this.I(this.p.x, this.p.y)]; return tt === T.FOUNTAIN ? 'fountain' : tt === T.ALTAR ? 'altar' : null; }
+  interact() {
+    const p = this.p, k = this.I(p.x, p.y), tt = this.map.t[k]; this.changed = false;
+    if (tt === T.FOUNTAIN) {
+      const r = this.ri(100); this.msg('샘물을 마셨다.', 'b'); this.snd('drink');
+      if (r < 28) { this.heal(Math.round(p.d.mhp * 0.4)); this.msg('상처가 아문다.', 'g'); } else if (r < 44) { p.mp = p.d.mmp; this.msg('기운이 차오른다.', 'b'); } else if (r < 56) { this.cure('pois', 'blind', 'conf', 'afraid', 'slow'); this.msg('머리가 맑아진다.', 'g'); }
+      else if (r < 66) this.setTm('fast', 20 + this.ri(10), '몸이 가벼워졌다!'); else if (r < 74) this.detect(); else if (r < 82) { p.food = Math.min(15000, p.food + 3000); this.msg('배가 든든하다.'); }
+      else if (r < 92) { this.hurt(this.dice(2, 6), 'pois', '오염된 샘물', '물이 썩어 있었다'); } else this.msg('그냥 물이다.');
+      this.founts[k] = (this.founts[k] || 0) + 1; if (this.founts[k] >= 3 || this.ri(100) < 30) { this.map.t[k] = T.FLOOR; this.msg('샘이 말라 버렸다.', 'd'); }
+      if (!this.dead) this.endTurn(); return true;
+    }
+    if (tt === T.ALTAR) {
+      const r = this.ri(100); this.msg('제단 앞에 무릎을 꿇었다.', 'b'); this.snd('pray'); this.map.t[k] = T.FLOOR;
+      if (r < 25) { this.heal(9999); this.cure('pois', 'blind', 'conf', 'afraid', 'slow'); p.mp = p.d.mmp; this.msg('온몸이 새것처럼 가볍다.', 'y'); }
+      else if (r < 45) { this.setTm('bless', 250); this.setTm('hero', 250, '오래 지속될 가호를 받았다.'); }
+      else if (r < 62) { const w = p.eq.weapon || p.eq.bow; if (w) { const n = 1 + this.ri(2); w.th = (w.th || 0) + n; w.td = (w.td || 0) + n; this.msg(`${josa(this.name(w), '이/가')} 빛난다.`, 'y'); } else this.msg('빈손에 온기가 스친다.'); this.calc(); }
+      else if (r < 76) { const c = Object.values(p.eq).filter(x => x && ARMOR.has(KINDS[x.k].tv)); if (c.length) { const a = c[this.ri(c.length)]; a.ta = (a.ta || 0) + 1 + this.ri(2); this.msg(`${josa(this.name(a), '이/가')} 빛난다.`, 'y'); } this.calc(); }
+      else if (r < 88) { this.mapArea(20); this.detect(); this.detectItems(); }
+      else if (r < 95) { this.gainExp(this.need(p.lv) * 0.15 + 20); this.msg('깨달음을 얻었다.', 'y'); }
+      else { const s = ['str', 'int', 'dex', 'con'][this.ri(4)]; p.st[s] = Math.min(25, p.st[s] + 1); this.calc(); this.msg(`${({ str: '힘', int: '지능', dex: '민첩', con: '체질' })[s]}이 영구히 올랐다!`, 'y'); }
+      this.msg('제단이 먼지로 흩어졌다.', 'd'); this.endTurn(); return true;
+    }
+    return false;
   }
   trap(k) {
     const kind = this.traps[k], p = this.p; delete this.traps[k]; this.map.t[k] = T.FLOOR; this.disturb();
@@ -453,46 +527,92 @@ export class Game {
     this.msg('여기엔 계단이 없다.'); return false;
   }
   pickup() { const p = this.p; let any = false; this.changed = false; for (const o of this.items) if (o.x === p.x && o.y === p.y) { o.skip = 0; any = true; } if (!any) { this.msg('주울 것이 없다.'); return; } this.arrive(); this.endTurn(); }
-  fire() {
-    this.changed = false; const p = this.p, bow = p.eq.bow; if (!bow) { this.msg('활이 없다.'); return false; }
-    const bk = KINDS[bow.k], ai = p.inv.findIndex(i => KINDS[i.k].tv === 'ammo' && KINDS[i.k].ammo === bk.ammo); if (ai < 0) { this.msg(`${josa(bk.name, '으로/로')} 쏠 ${bk.ammo === 'arrow' ? '화살' : '쇠구슬'}이 없다.`); return false; }
+  ammoIdx() { const bow = this.p.eq.bow; if (!bow) return -1; const a = KINDS[bow.k].ammo; return this.p.inv.findIndex(i => KINDS[i.k].tv === 'ammo' && KINDS[i.k].ammo === a); }
+  canShoot() {
+    const p = this.p, bow = p.eq.bow; if (!bow) { this.msg('활이 없다.'); return false; }
+    if (this.ammoIdx() < 0) { const bk = KINDS[bow.k]; this.msg(`${josa(bk.name, '으로/로')} 쏠 ${bk.ammo === 'arrow' ? '화살' : '쇠구슬'}이 없다.`); return false; }
     if (p.tm.blind > 0 || p.tm.conf > 0) { this.msg('지금은 조준할 수 없다.'); return false; }
-    const m = this.target(); if (!m) { this.msg('보이는 대상이 없다.'); return false; }
-    const am = p.inv[ai], r = MONSTERS[m.r], d = p.d, dd = dist(m.x, m.y, p.x, p.y), [ad, as] = this.wdice(am), mult = bk.mult + (bow.e && EGO[bow.e].mult || 0) + (bow.a && ART[bow.a].mult || 0);
-    this.fx.push({ t: 'bolt', cells: line(p.x, p.y, m.x, m.y), c: '#e8d8a8' });
-    const one = { ...am, n: 1 }; am.n--; if (am.n <= 0) p.inv.splice(ai, 1);
-    if (this.hitRoll(d.bow + (d.th + d.bth + (am.th || 0)) * 3 - dd, r.ac)) { const crit = this.ri(100) < 5 + p.lv * 0.3; let dmg = (this.dice(ad, as) + (am.td || 0) + d.btd) * mult; if (crit) dmg = dmg * 1.5 + 5; this.hitMon(m, Math.max(1, Math.round(dmg)), null, `${josa(r.name, '을/를')} ${crit ? '정통으로 ' : ''}맞혔다`); }
-    else this.msg(`${KINDS[am.k].name}이 빗나갔다.`, 'd');
-    if (this.ri(100) >= 35) { const c = m.dead ? this.I(m.x, m.y) : this.near(m.x, m.y, 1); if (c >= 0) { const x = c % this.map.w, y = (c / this.map.w) | 0, ex = this.items.find(o => o.x === x && o.y === y && o.it && this.same(o.it, one)); if (ex) ex.it.n++; else this.items.push({ x, y, it: one, seen: 1 }); } }
-    this.endTurn(Math.round(100 / d.shots)); return true;
+    return true;
   }
-  spellFail(s) { const p = this.p; return Math.max(5, Math.min(95, Math.round(s.fail - 3 * (p.lv - s.lv) - (p.d.int - 12) * 2))); }
-  spellsKnown() { const p = this.p; if (p.cls !== 'mage') return []; return SPELLS.filter(s => p.inv.some(i => KINDS[i.k].id === s.book)); }
+  shoot(m, o = {}) {       // 한 발. o: {mult, hit, slow}
+    const p = this.p, bow = p.eq.bow, ai = this.ammoIdx(); if (ai < 0 || !bow) return false;
+    const bk = KINDS[bow.k], am = p.inv[ai], r = MONSTERS[m.r], d = p.d, dd = dist(m.x, m.y, p.x, p.y), [ad, as] = this.wdice(am), mult = bk.mult + (bow.e && EGO[bow.e].mult || 0) + (bow.a && ART[bow.a].mult || 0);
+    this.fx.push({ t: 'bolt', cells: line(p.x, p.y, m.x, m.y), c: '#e8d8a8', el: 'arrow', sx: p.x, sy: p.y }); this.snd('shoot');
+    const one = { ...am, n: 1 }; am.n--; if (am.n <= 0) p.inv.splice(ai, 1);
+    const asleep = m.sleep > 0;
+    if (asleep || this.hitRoll(d.bow + (d.th + d.bth + (am.th || 0)) * 3 - dd + (o.hit || 0), r.ac)) { const crit = asleep || this.ri(100) < d.crit + 1; let dmg = (this.dice(ad, as) + (am.td || 0) + d.btd) * mult * (o.mult || 1) * (1 + 0.15 * (p.perks.hunter || 0)); if (asleep && p.cls === 'rogue') dmg *= 2; if (crit) dmg = dmg * 1.5 + 5; this.hitMon(m, Math.max(1, Math.round(dmg)), null, `${josa(r.name, '을/를')} ${crit ? '정통으로 ' : ''}맞혔다`); if (o.slow && !m.dead) m.slow = 12; }
+    else this.msg(`${KINDS[am.k].name}이 빗나갔다.`, 'd');
+    if (this.ri(100) >= 35) { const c = m.dead ? this.I(m.x, m.y) : this.near(m.x, m.y, 1); if (c >= 0) { const x = c % this.map.w, y = (c / this.map.w) | 0, ex = this.items.find(q => q.x === x && q.y === y && q.it && this.same(q.it, one)); if (ex) ex.it.n++; else this.items.push({ x, y, it: one, seen: 1 }); } }
+    return true;
+  }
+  fire() {
+    this.changed = false; if (!this.canShoot()) return false;
+    const m = this.target(); if (!m) { this.msg('보이는 대상이 없다.'); return false; }
+    this.shoot(m); this.endTurn(Math.round(100 / this.p.d.shots)); return true;
+  }
+  spellCost(s) { return Math.max(1, Math.ceil(s.mp * (1 - 0.2 * (this.p.perks.thrift || 0)))); }
+  spellFail(s) { const p = this.p, caster = !!CLASSES[p.cls].mp; return Math.max(caster ? 5 : 2, Math.min(95, Math.round(s.fail - 3 * (p.lv - s.lv) - (caster ? (p.d.int - 12) * 2 : 0)))); }
+  spellsKnown() { const p = this.p; return SPELLS.filter(s => (s.cls || 'mage') === p.cls); }
+  hasSpell(s) { const p = this.p; return (s.cls || 'mage') === p.cls && (!s.book || p.inv.some(i => KINDS[i.k].id === s.book)); }
   cast(id) {
-    this.changed = false; const p = this.p, s = SPELLS.find(x => x.id === id); if (!s || p.cls !== 'mage') return false;
-    if (!p.inv.some(i => KINDS[i.k].id === s.book)) { this.msg('그 주문이 적힌 마법서가 없다.'); return false; }
+    this.changed = false; const p = this.p, s = SPELLS.find(x => x.id === id), res = CLASSES[p.cls].res; if (!s || (s.cls || 'mage') !== p.cls || this.dead) return false;
+    if (!this.hasSpell(s)) { this.msg('그 주문이 적힌 마법서가 없다.'); return false; }
     if (p.lv < s.lv) { this.msg(`레벨 ${s.lv}가 되어야 쓸 수 있다.`); return false; }
-    if (p.tm.blind > 0 || p.tm.conf > 0) { this.msg('지금은 마법서를 읽을 수 없다.'); return false; }
-    if (p.mp < s.mp) { this.msg('마나가 부족하다.'); return false; }
-    let m = null; if (s.aim) { m = this.target(); if (!m) { this.msg('보이는 대상이 없다.'); return false; } }
-    p.mp -= s.mp;
-    if (this.ri(100) < this.spellFail(s)) { this.msg('주문에 집중하지 못했다.', 'o'); this.endTurn(); return true; }
-    const L = p.lv;
-    if (id === 'missile') this.project('p', m.x, m.y, { el: 'magic', dmg: this.dice(3 + Math.floor(L / 5), 4) });
-    else if (id === 'detect') this.detect();
-    else if (id === 'phase') this.tele(8);
-    else if (id === 'light') this.lightRoom();
-    else if (id === 'stink') this.project('p', m.x, m.y, { el: 'pois', dmg: 10 + (L >> 1), rad: 2 });
-    else if (id === 'frost') this.project('p', m.x, m.y, { el: 'cold', dmg: this.dice(6 + Math.floor(L / 4), 8) });
-    else if (id === 'fireball') this.project('p', m.x, m.y, { el: 'fire', dmg: 55 + L * 2, rad: 2 });
-    else if (id === 'teleport') this.tele(80);
-    else if (id === 'lightning') this.project('p', m.x, m.y, { el: 'elec', dmg: this.dice(6 + Math.floor(L / 4), 8), beam: 1 });
-    else if (id === 'haste') this.setTm('fast', 20 + L, '몸이 가벼워졌다!');
-    else if (id === 'resist') { this.setTm('oppFire', 20 + this.ri(20)); this.setTm('oppCold', 20 + this.ri(20), '원소에 대한 저항력이 생겼다.'); }
-    else if (id === 'mana') this.project('p', m.x, m.y, { el: 'magic', dmg: 150 + L * 3, rad: 3 });
-    else if (id === 'banish') { this.msg(`${josa(MONSTERS[m.r].name, '이/가')} 사라졌다.`); this.tele(80, m); }
-    else if (id === 'enlight') this.mapAll();
-    this.endTurn(); return true;
+    if (s.book && (p.tm.blind > 0 || p.tm.conf > 0)) { this.msg('지금은 마법서를 읽을 수 없다.'); return false; }
+    const cost = this.spellCost(s); if (p.mp < cost) { this.msg(`${josa(res, '이/가')} 부족하다.`); return false; }
+    if (s.bow && !this.canShoot()) return false;
+    let m = null; if (s.aim) { m = this.target(); if (!m) { this.msg('보이는 대상이 없다.'); return false; } if (s.adj && dist(m.x, m.y, p.x, p.y) > 1) { this.msg('바로 옆의 적에게만 쓸 수 있다.'); return false; } }
+    if ((id === 'w_bash' || id === 'g_stab' || id === 'w_charge' || id === 'g_shadow') && p.tm.afraid > 0) { this.msg('겁에 질려 공격할 수 없다!', 'r'); return false; }
+    p.mp -= cost;
+    if (this.ri(100) < this.spellFail(s)) { this.msg(CLASSES[p.cls].mp ? '주문에 집중하지 못했다.' : '기술이 빗나갔다.', 'o'); this.endTurn(); return true; }
+    const L = p.lv, R = MONSTERS, around = () => this.mons.filter(o => !o.dead && dist(o.x, o.y, p.x, p.y) <= 1), inView = () => this.mons.filter(o => !o.dead && o.direct);
+    let cost2 = 100; this.fx.push({ t: 'cast', x: p.x, y: p.y, c: CLASSES[p.cls].mp ? '#c9a8ff' : '#ffd27a' });
+    switch (id) {
+      case 'missile': this.project('p', m.x, m.y, { el: 'magic', dmg: this.dice(3 + Math.floor(L / 5), 4) }); break;
+      case 'detect': case 'r_sense': this.detect(); break;
+      case 'phase': this.tele(8); break; case 'light': this.lightRoom(); break;
+      case 'stink': this.project('p', m.x, m.y, { el: 'pois', dmg: 10 + (L >> 1), rad: 2 }); break;
+      case 'frost': this.project('p', m.x, m.y, { el: 'cold', dmg: this.dice(6 + Math.floor(L / 4), 8) }); break;
+      case 'fireball': this.project('p', m.x, m.y, { el: 'fire', dmg: 55 + L * 2, rad: 2 }); break;
+      case 'teleport': this.tele(80); break;
+      case 'lightning': this.project('p', m.x, m.y, { el: 'elec', dmg: this.dice(6 + Math.floor(L / 4), 8), beam: 1 }); break;
+      case 'haste': this.setTm('fast', 20 + L, '몸이 가벼워졌다!'); break;
+      case 'resist': case 'p_sanct': if (id === 'p_sanct') this.setTm('shield', 20 + (L >> 1), '성스러운 방벽이 감싼다.'); this.setTm('oppFire', 20 + this.ri(20)); this.setTm('oppCold', 20 + this.ri(20), id === 'resist' ? '원소에 대한 저항력이 생겼다.' : null); break;
+      case 'mana': this.project('p', m.x, m.y, { el: 'magic', dmg: 150 + L * 3, rad: 3 }); break;
+      case 'banish': this.msg(`${josa(R[m.r].name, '이/가')} 사라졌다.`); this.tele(80, m); break;
+      case 'enlight': this.mapAll(); break;
+      case 'w_bash': this.strike(m, { mult: 2.2, auto: 1, label: '강타했다' }); if (!m.dead) m.energy -= 100; break;
+      case 'w_charge': case 'g_shadow': {
+        if (id === 'g_shadow') { const c = this.near(m.x, m.y, 1); if (c >= 0) { p.x = c % this.map.w; p.y = (c / this.map.w) | 0; } }
+        else { let n = 0; for (const [x, y] of line(p.x, p.y, m.x, m.y)) { if (x === m.x && y === m.y) break; const k = this.I(x, y); if (!walk(this.map.t[k]) || this.map.t[k] === T.LAVA || this.mmap.has(k) || ++n > 6) break; p.x = x; p.y = y; } }
+        this.flT = null; this.fx.push({ t: 'dash', x: p.x, y: p.y });
+        if (dist(m.x, m.y, p.x, p.y) <= 1) this.strike(m, { mult: id === 'w_charge' ? 1.6 : 1.5, auto: 1, label: id === 'w_charge' ? '들이받았다' : '등 뒤에서 찔렀다' }); else this.msg('닿지 못했다.', 'd'); break; }
+      case 'w_whirl': { const a = around(); if (!a.length) this.msg('허공을 갈랐다.', 'd'); for (const o of a) this.strike(o, { mult: 1.3, label: '휩쓸었다' }); break; }
+      case 'w_shout': { let n = 0; for (const o of this.mons) if (!o.dead && dist(o.x, o.y, p.x, p.y) <= 7 && !R[o.r].F.has('nofear') && (!R[o.r].F.has('unique') || this.ri(3) === 0)) { o.fear = 6 + this.ri(6); o.sleep = 0; n++; } this.msg(n ? `함성에 ${n}마리가 움찔했다!` : '함성이 메아리친다.', 'y'); this.cure('afraid'); this.setTm('hero', 20 + L, null); break; }
+      case 'w_second': this.heal(p.d.mhp * 0.35); this.cure('pois', 'blind', 'conf', 'afraid', 'slow'); this.msg('이를 악물고 다시 일어선다.', 'y'); break;
+      case 'w_frenzy': this.cure('afraid'); this.setTm('bers', 12 + (L >> 2)); this.setTm('fast', 12 + (L >> 2), '눈앞이 붉게 물든다!'); break;
+      case 'r_aimed': this.shoot(m, { mult: 2, hit: 40 }); break;
+      case 'r_poison': this.shoot(m, { mult: 1.5, slow: 1 }); break;
+      case 'r_volley': for (let i = 0; i < 3; i++) { if (m.dead) m = this.target(); if (!m || this.ammoIdx() < 0) break; this.shoot(m); } break;
+      case 'r_rain': { const ts = this.mons.filter(o => !o.dead && o.direct && dist(o.x, o.y, m.x, m.y) <= 2).slice(0, 5); this.fx.push({ t: 'ball', x: m.x, y: m.y, r: 2, c: '#e8d8a8' }); for (const o of ts) { if (this.ammoIdx() < 0) break; this.shoot(o, { mult: 1.2 }); } break; }
+      case 'r_hide': case 'g_vanish': { for (const o of inView()) if (dist(o.x, o.y, p.x, p.y) > 1 || id === 'g_vanish') { if (!R[o.r].F.has('unique') || this.ri(2)) o.sleep = 30 + this.ri(20); } if (id === 'r_hide') this.setTm('stealthUp', 30 + L, '기척을 지웠다.'); else { this.msg('연기처럼 사라졌다.', 'b'); this.tele(10); } break; }
+      case 'g_stab': this.strike(m, { mult: 2, auto: 1, crit: 1, label: '급소를 찔렀다' }); break;
+      case 'g_sense': this.detectItems(); for (const k in this.traps) this.map.f[k] |= F.KNOWN; break;
+      case 'g_smoke': for (const o of around()) o.conf = 4 + this.ri(3); this.msg('연막이 퍼진다.', 'b'); this.tele(6); break;
+      case 'g_steal': { const r = R[m.r]; if (m.robbed) { this.msg('이미 털어 간 상대다.'); break; } if (r.F.has('animal') || r.F.has('nofear') && !r.F.has('evil')) { this.msg('훔칠 것이 없다.'); break; }
+        if (m.sleep > 0 || this.ri(100) < 55 + L) { const g = this.goldAmt(r.lv) * 2; p.gold += g; m.robbed = 1; this.msg(`금화 ${g}닢을 슬쩍했다.`, 'y'); this.snd('gold'); } else { m.sleep = 0; this.msg(`${josa(r.name, '이/가')} 눈치챘다!`, 'o'); } break; }
+      case 'g_venom': this.setTm('venom', 30 + L, '칼날에 독을 발랐다.'); break;
+      case 'p_bless': this.setTm('bless', 20 + L, '가호가 느껴진다.'); break;
+      case 'p_smite': this.project('p', m.x, m.y, { el: 'holy', dmg: this.dice(3 + Math.floor(L / 4), 5) }); break;
+      case 'p_cure': this.heal(15 + L * 2); this.cure('pois', 'blind'); break;
+      case 'p_detect': { let n = 0; for (const o of this.mons) if (R[o.r].F.has('evil') && dist(o.x, o.y, p.x, p.y) <= 26) { o.det = 4; n++; } this.msg(n ? `악한 기척 ${n}개를 느꼈다.` : '악한 기척이 없다.', 'b'); break; }
+      case 'p_light': this.lightRoom(); this.updateView(); for (const o of inView()) if (R[o.r].F.has('undead')) this.hitMon(o, this.dice(2, 8) + L, 'holy', `${josa(R[o.r].name, '이/가')} 빛에 타들어 간다`); break;
+      case 'p_turn': { let n = 0; for (const o of inView()) if (R[o.r].F.has('undead')) { if (!R[o.r].F.has('unique')) o.fear = 10 + this.ri(6); this.hitMon(o, L, 'holy', `${josa(R[o.r].name, '이/가')} 움츠러든다`); n++; } if (!n) this.msg('보이는 망자가 없다.'); break; }
+      case 'p_heal2': this.heal(150 + L * 3); this.cure('pois', 'blind', 'conf', 'afraid', 'slow'); break;
+      case 'p_orb': this.project('p', m.x, m.y, { el: 'holy', dmg: 60 + L * 2, rad: 2 }); break;
+      case 'p_recall': if (!this.recall) { this.recall = 15 + this.ri(20); this.msg('공기가 팽팽해진다. 곧 끌려갈 것이다.', 'b'); } break;
+    }
+    if (!this.changed && !this.dead) this.endTurn(cost2); return true;
   }
   detect() { let n = 0; for (const m of this.mons) if (dist(m.x, m.y, this.p.x, this.p.y) <= 26) { m.det = 4; n++; } this.msg(n ? `괴물 ${n}마리의 기척을 느꼈다.` : '주변에 괴물이 없다.', 'b'); }
   detectItems() { let n = 0; for (const o of this.items) if (dist(o.x, o.y, this.p.x, this.p.y) <= 26) { o.seen = 1; n++; } this.msg(n ? `물건 ${n}개의 위치를 알았다.` : '주변에 아무것도 없다.', 'b'); }
@@ -512,11 +632,13 @@ export class Game {
     let m = null; if (aimed) { m = this.target(); if (!m) { this.msg('보이는 대상이 없다.'); return false; } }
     if (tv === 'wand') { if (it.ch <= 0) { this.msg('충전이 남아 있지 않다.'); return false; } it.ch--; }
     const was = this.isKnown(it); this.known[id] = 1; const nm = this.name({ ...it, n: 1 }, true);
+    this.snd(tv === 'potion' ? 'drink' : tv === 'scroll' ? 'read' : 'use');
     this.msg(tv === 'potion' ? `${josa(nm, '을/를')} 마셨다.` : tv === 'scroll' ? `${josa(nm, '을/를')} 읽었다.` : tv === 'food' ? `${josa(nm, '을/를')} 먹었다.` : tv === 'flask' ? '기름병을 던졌다.' : `${josa(nm, '을/를')} 사용했다.`, was ? '' : 'b');
     const stat = (s, n) => { p.st[s] = Math.min(25, p.st[s] + 1); this.calc(); this.msg(`${n}이 영구히 올랐다!`, 'y'); };
     switch (id) {
       case 'p_clw': this.heal(20); this.cure('blind', 'pois'); break; case 'p_csw': this.heal(50); this.cure('blind', 'conf', 'pois'); break;
-      case 'p_heal': this.heal(300); this.cure('blind', 'conf', 'pois', 'afraid', 'slow'); break; case 'p_mana': p.mp = p.d.mmp; this.msg('마나가 차오른다.', 'b'); break;
+      case 'p_heal': this.heal(300); this.cure('blind', 'conf', 'pois', 'afraid', 'slow'); break; case 'p_star': this.heal(9999); this.cure('blind', 'conf', 'pois', 'afraid', 'slow'); break;
+      case 'rod_heal': this.heal(120); this.cure('pois', 'blind'); break; case 'rod_recall': this.recall = 15 + this.ri(20); this.msg('공기가 팽팽해진다. 곧 끌려갈 것이다.', 'b'); break; case 'p_mana': p.mp = p.d.mmp; this.msg('마나가 차오른다.', 'b'); break;
       case 'p_speed': this.setTm('fast', 20 + this.ri(15), '몸이 가벼워졌다!'); break; case 'p_hero': this.cure('afraid'); this.heal(10); this.setTm('hero', 25 + this.ri(25), '용기가 솟는다!'); break;
       case 'p_bers': this.cure('afraid'); this.heal(15); this.setTm('bers', 25 + this.ri(25), '피가 끓어오른다!'); break;
       case 'p_rfire': this.setTm('oppFire', 30 + this.ri(20), '불이 두렵지 않다.'); break; case 'p_rcold': this.setTm('oppCold', 30 + this.ri(20), '추위가 두렵지 않다.'); break;
@@ -543,7 +665,7 @@ export class Game {
       case 'ration': p.food = Math.min(15000, p.food + 6000); this.calc(); break;
       case 'flask': this.project('p', m.x, m.y, { el: 'fire', dmg: this.dice(2, 6), rad: 1 }); break;
     }
-    if (tv === 'rod') it.t = 20 + this.ri(15); else if (tv !== 'wand') { it.n--; if (it.n <= 0) p.inv.splice(p.inv.indexOf(it), 1); }
+    if (tv === 'rod') it.t = (id === 'rod_heal' ? 70 : id === 'rod_recall' ? 200 : 20) + this.ri(15); else if (tv !== 'wand') { it.n--; if (it.n <= 0) p.inv.splice(p.inv.indexOf(it), 1); }
     if (!this.changed && !this.dead) this.endTurn(); return true;
   }
   wield(i) {
@@ -567,6 +689,11 @@ export class Game {
     this.known[KINDS[it.k].id] = 1; p.gold += pr; this.msg(`${josa(this.name({ ...it, n: q }), '을/를')} ${pr}닢에 팔았다.`, 'y'); it.n -= q; if (it.n <= 0) p.inv.splice(i, 1); if (this.onSave) this.onSave(); return true;
   }
 
+  store(i) { const p = this.p, it = p.inv[i]; if (!it) return false; if (this.home.length >= 30 && !this.home.some(o => this.same(o, it))) { this.msg('보관함이 가득 찼다.'); return false; } p.inv.splice(i, 1); const s = this.home.find(o => this.same(o, it)); if (s) s.n += it.n; else this.home.push(it); if (this.onSave) this.onSave(); return true; }
+  retrieve(i) { const it = this.home[i]; if (!it) return false; if (!this.addInv(it)) { this.msg('가방이 가득 찼다.'); return false; } this.home.splice(i, 1); if (this.onSave) this.onSave(); return true; }
+  bounties() { const out = []; for (const r of MONSTERS) { if (!r.F.has('unique') || r.F.has('final')) continue; if (r.lv > this.maxDepth + 8 && !this.deadU[r.name]) continue; out.push({ name: r.name, lv: r.lv, g: r.g, c: r.c, gold: r.lv * r.lv * 12 + 100, dead: !!this.deadU[r.name], claimed: !!this.claimed[r.name] }); } return out.sort((a, b) => a.lv - b.lv); }
+  claim(name) { const b = this.bounties().find(x => x.name === name); if (!b || !b.dead || b.claimed) return false; this.claimed[name] = 1; this.p.gold += b.gold; this.msg(`현상금 ${b.gold}닢을 받았다: ${name}`, 'y'); this.snd('gold'); if (b.lv >= 9) { const it = this.makeItem(b.lv + 3, 1); const nm = this.name(it); if (this.addInv(it)) this.msg(`덤으로 ${josa(nm, '을/를')} 받았다.`, 'y'); else this.items.push({ x: this.p.x, y: this.p.y, it, seen: 1, skip: 1 }); } if (this.onSave) this.onSave(); return true; }
+
   /* ---------- 자동 행동 ---------- */
   danger() { return this.mons.some(m => !m.dead && m.direct && dist(m.x, m.y, this.p.x, this.p.y) < 14 && !(this.depth === 0 && m.sleep > 0)); }
   start(kind, dest) {
@@ -578,10 +705,10 @@ export class Game {
     if (++this.autoN > 600 || p.tm.blind > 0 || p.tm.conf > 0) { this.disturb(); return false; }
     if (kind === 'rest') { const bad = ['pois', 'afraid', 'slow'].some(k => p.tm[k] > 0); if (p.hp >= p.d.mhp && p.mp >= p.d.mmp && !bad) { this.disturb(); this.msg('휴식을 마쳤다.', 'd'); return false; } if (p.food < 1000) { this.disturb(); this.msg('배가 고파 쉴 수 없다.', 'o'); return false; } p.resting = true; this.auto = 'rest'; this.changed = false; this.endTurn(); return !!this.auto; }
     const m = this.map, t = m.t, f = m.f, srcs = [], pk = this.I(p.x, p.y), full = p.inv.length >= 22;
-    const ok = k => (f[k] & F.KNOWN) && (walk(t[k]) || t[k] === T.DOOR || t[k] === T.RUBBLE) && t[k] !== T.TRAP;
+    const ok = k => (f[k] & F.KNOWN) && (walk(t[k]) || t[k] === T.DOOR || t[k] === T.RUBBLE) && t[k] !== T.TRAP && t[k] !== T.LAVA;
     if (kind === 'travel') srcs.push(this.dest);
     else { for (const o of this.items) if (o.seen && !o.skip && (o.gold || !full)) { const k = this.I(o.x, o.y); if (k !== pk && !(f[k] & F.VAULT && false)) srcs.push(k); }
-      for (let k = m.w; k < t.length - m.w; k++) { if (!ok(k) || k === pk) continue; const x = k % m.w, y = (k / m.w) | 0; for (const [dx, dy] of DIRS) { const q = this.I(x + dx, y + dy); if (!(f[q] & F.KNOWN)) { srcs.push(k); break; } } } }
+      for (let k = m.w; k < t.length - m.w; k++) { if (!ok(k) || k === pk) continue; if (t[k] === T.CHEST) { srcs.push(k); continue; } const x = k % m.w, y = (k / m.w) | 0; for (const [dx, dy] of DIRS) { const q = this.I(x + dx, y + dy); if (!(f[q] & F.KNOWN)) { srcs.push(k); break; } } } }
     if (!srcs.length) { this.disturb(); if (kind === 'explore') this.msg('더 탐험할 곳이 없다. 계단으로 가자.', 'd'); return false; }
     flow(m, srcs, k => ok(k) || k === pk, 400, this.tmpf);
     const cur = this.tmpf[pk]; if (cur >= 32000) { this.disturb(); this.msg(kind === 'travel' ? '거기까지 가는 길을 모른다.' : '더 탐험할 곳이 없다. 계단으로 가자.', 'd'); return false; }
@@ -596,12 +723,13 @@ export class Game {
 
   /* ---------- 저장 ---------- */
   toJSON() {
-    const o = {}; for (const k of ['seed', 'turn', 'pturn', 'depth', 'maxDepth', 'known', 'deadU', 'arts', 'recall', 'deep', 'won', 'dead', 'cause', 'mid', 'kills', 'pfrac', 'flav', 'p', 'traps', 'items', 'shops', 'feel']) o[k] = this[k];
-    o.mons = this.mons.filter(m => !m.dead); o.log = this.log.slice(-40); o.map = { w: this.map.w, h: this.map.h, town: this.map.town, t: Array.from(this.map.t), f: Array.from(this.map.f) }; o.v = 1;
+    const o = {}; for (const k of ['seed', 'turn', 'pturn', 'depth', 'maxDepth', 'known', 'deadU', 'arts', 'recall', 'deep', 'won', 'dead', 'cause', 'mid', 'kills', 'pfrac', 'flav', 'p', 'traps', 'items', 'shops', 'feel', 'perkPending', 'perkOffer', 'home', 'claimed', 'lore', 'founts']) o[k] = this[k];
+    o.mons = this.mons.filter(m => !m.dead); o.log = this.log.slice(-40); o.map = { w: this.map.w, h: this.map.h, town: this.map.town, t: Array.from(this.map.t), f: Array.from(this.map.f) }; o.v = 2;
     return JSON.parse(JSON.stringify(o));
   }
   fromJSON(o) {
     Object.assign(this, JSON.parse(JSON.stringify(o))); this.map.t = Uint8Array.from(o.map.t); this.map.f = Uint8Array.from(o.map.f); this.mmap = new Map(); for (const m of this.mons) this.mmap.set(this.I(m.x, m.y), m);
+    for (const k of ['home', 'claimed', 'lore', 'founts']) if (!this[k]) this[k] = k === 'home' ? [] : {}; if (!this.perkPending) this.perkPending = 0; if (!this.p.perks) this.p.perks = {};
     this.alloc(); this.calc(); this.updateView();
   }
 }

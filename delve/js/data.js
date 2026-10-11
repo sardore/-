@@ -6,15 +6,27 @@ export const RACES = {
   troll: { name: '하프트롤', str: 4, int: -4, dex: -2, con: 3, hd: 2, stealth: -2, expf: 125, regen: 1, desc: '힘과 체력이 압도적이고 상처가 빨리 아문다.' },
 };
 export const CLASSES = {
-  warrior: { name: '전사', str: 3, int: -2, dex: 2, con: 2, hd: 11, mel: [70, 4.5], bow: [55, 4], save: [18, 1], stealth: 0, mp: 0, desc: '여러 번 휘두르고 오래 버틴다. 주문 없음.',
+  warrior: { name: '전사', str: 3, int: -2, dex: 2, con: 2, hd: 11, mel: [70, 4.5], bow: [55, 4], save: [18, 1], stealth: 0, mp: 0, sp: [4, 0.6], res: '기력', desc: '여러 번 휘두르고 오래 버틴다. 주문 없음.',
     kit: [['cutlass'], ['softleather'], ['leathershield'], ['cap'], ['p_clw', 4], ['torch'], ['ration', 4], ['flask', 5], ['s_phase', 2], ['s_recall', 1]] },
-  mage: { name: '마법사', str: -3, int: 3, dex: 0, con: -2, hd: 5, mel: [30, 1.5], bow: [20, 1.5], save: [30, 1.3], stealth: 2, mp: 1.3, desc: '약하지만 마법서의 주문으로 멀리서 끝낸다.',
+  mage: { name: '마법사', str: -3, int: 3, dex: 0, con: -2, hd: 5, mel: [30, 1.5], bow: [20, 1.5], save: [30, 1.3], stealth: 2, mp: 1.3, res: 'MP', desc: '약하지만 마법서의 주문으로 멀리서 끝낸다.',
     kit: [['dagger'], ['robe'], ['book1'], ['p_clw', 3], ['torch'], ['ration', 4], ['flask', 8], ['s_phase', 4], ['s_recall', 1]] },
-  ranger: { name: '레인저', str: 0, int: 1, dex: 2, con: -1, hd: 7.5, mel: [56, 3], bow: [72, 4.5], save: [28, 1], stealth: 3, mp: 0, desc: '활의 달인. 은밀하고 한 턴에 여러 발을 쏜다.',
+  ranger: { name: '레인저', str: 0, int: 1, dex: 2, con: -1, hd: 7.5, mel: [56, 3], bow: [72, 4.5], save: [28, 1], stealth: 3, mp: 0, sp: [3, 0.7], res: '기력', desc: '활의 달인. 은밀하고 한 턴에 여러 발을 쏜다.',
     kit: [['dagger'], ['shortbow'], ['arrow', 50], ['softleather'], ['p_clw', 3], ['torch'], ['ration', 4], ['flask', 3], ['s_phase', 2], ['s_recall', 1]] },
+  priest: { name: '사제', str: -1, int: 2, dex: -1, con: 1, hd: 7, mel: [45, 2.5], bow: [30, 2], save: [32, 1.4], stealth: 2, mp: 1.15, res: 'MP', desc: '치유와 신성 주문. 망자와 악한 존재에게 특히 강하다.',
+    kit: [['mace'], ['softleather'], ['buckler'], ['p_clw', 3], ['torch'], ['ration', 4], ['flask', 4], ['s_phase', 2], ['s_recall', 1]] },
+  rogue: { name: '도적', str: 0, int: 1, dex: 3, con: -1, hd: 7.5, mel: [62, 3.5], bow: [60, 3.5], save: [28, 1.1], stealth: 5, mp: 0, sp: [3, 0.8], res: '기력', desc: '가장 조용하다. 잠든 적을 암습하면 3배 피해. 훔치고 사라진다.',
+    kit: [['rapier'], ['sling'], ['shot', 40], ['softleather'], ['cloak'], ['p_clw', 3], ['torch'], ['ration', 4], ['flask', 5], ['s_phase', 3], ['s_recall', 1]] },
 };
 export const PEXP = [10, 25, 45, 70, 100, 140, 200, 280, 380, 500, 650, 850, 1100, 1400, 1800, 2300, 2900, 3600, 4400, 5400, 6800, 8400, 10200, 12500, 17500, 25000, 35000, 50000, 75000, 100000, 150000, 200000, 275000, 350000, 450000, 550000, 700000, 850000, 1000000, 1250000, 1500000, 1800000, 2100000, 2400000, 2700000, 3000000, 3500000, 4000000, 4500000];
-export const MAXLV = 50, MAXDEPTH = 30, QUEST1 = 20;
+export const MAXLV = 50, MAXDEPTH = 40, QUEST1 = 20;
+export const BIOMES = [
+  { name: '옛 광산', pool: 'water', poolP: 0.25, caveP: 0.3, pref: [] },
+  { name: '지하묘지', pool: null, poolP: 0, caveP: 0.05, pref: ['undead'] },
+  { name: '얼음 동굴', pool: 'water', poolP: 0.6, caveP: 0.45, pref: ['imcold'] },
+  { name: '용암 굴', pool: 'lava', poolP: 0.75, caveP: 0.35, pref: ['imfire', 'demon', 'dragon'] },
+  { name: '심연', pool: 'lava', poolP: 0.3, caveP: 0.2, pref: ['demon', 'undead'] },
+];
+export const biomeOf = d => Math.max(0, Math.min(4, Math.floor((d - 1) / 8)));
 
 /* ---------- 몬스터 ---------- */
 const C = { w: '#e8e8e8', gy: '#9a9aa8', r: '#ff5a5a', o: '#ff9a3a', y: '#ffe14a', g: '#6fd66f', lg: '#b6ff7a', b: '#5a9aff', lb: '#8fd0ff', v: '#c06bff', p: '#ff8fd0', br: '#b08050', dk: '#6a6a8a', t: '#5ad1c0' };
@@ -76,7 +88,54 @@ export const MONSTERS = [
   M('D', '고룡(화염)', C.r, 28, 3, 10, 1000, 100, [[1, 10], [1, 10], [4, 10]], 5000, { f: 'dragon evil imfire', sleep: 70, sp: [6, 'breath:fire', 'blind', 'conf'], dr: 1, q: 2, n: 3 }),
   M('D', '고룡(냉기)', C.w, 28, 3, 10, 1000, 100, [[1, 10], [1, 10], [4, 10]], 5000, { f: 'dragon evil imcold', sleep: 70, sp: [6, 'breath:cold', 'blind', 'conf'], dr: 1, q: 2, n: 3 }),
   M('Z', '심연 사냥개', C.v, 29, 2, 20, 150, 60, [[2, 8], [2, 8], [2, 8]], 900, { f: 'animal impois', grp: 5, sleep: 0, sp: [8, 'breath:dark'] }),
+  M('J', '흰 뱀', C.w, 1, 1, -10, 8, 50, [[1, 2]], 2, { f: 'animal', sleep: 99 }),
+  M('a', '병정개미', C.br, 1, 1, 0, 6, 10, [[1, 5]], 3, { f: 'animal', sleep: 10 }),
+  M('i', '끈적이', C.lg, 2, 1, 0, 10, 8, [[1, 3]], 3, { f: 'erratic25 nofear', sleep: 10 }),
+  M('J', '독사', C.g, 3, 1, 0, 14, 30, [[1, 4, 'pois']], 10, { f: 'animal', sleep: 60 }),
+  M('F', '큰 잠자리', C.lb, 3, 1, 10, 6, 12, [[1, 4]], 8, { f: 'animal erratic50', sleep: 10 }),
+  M('s', '해골 코볼트', C.w, 4, 1, 0, 22, 26, [[1, 8]], 12, { f: 'undead evil nofear impois', sleep: 40 }),
+  M('B', '까마귀', C.dk, 4, 1, 10, 9, 14, [[1, 4], [1, 4]], 10, { f: 'animal erratic25', sleep: 0 }),
+  M('f', '살쾡이', C.o, 5, 1, 10, 14, 24, [[1, 4], [1, 4]], 18, { f: 'animal', sleep: 10 }),
+  M('o', '오크 주술사', C.v, 7, 1, 0, 22, 30, [[1, 6]], 40, { f: 'evil orc', sleep: 20, sp: [4, 'blink', 'bolt:magic:2d6', 'scare'], dr: 0.8 }),
+  M('q', '멧돼지', C.br, 8, 1, 10, 40, 30, [[1, 10], [1, 8]], 40, { f: 'animal', grp: 2, sleep: 20 }),
+  M('R', '동굴 악어', C.g, 9, 1, 0, 70, 50, [[2, 6], [2, 8]], 60, { f: 'animal', sleep: 40 }),
+  M('s', '해골 오크', C.w, 10, 1, 0, 45, 36, [[2, 5], [2, 5]], 45, { f: 'undead evil orc nofear impois', grp: 3, sleep: 40 }),
+  M('$', '기는 금화', C.y, 10, 2, 0, 60, 36, [[2, 5], [3, 5, 'pois']], 40, { f: 'nofear impois', sleep: 10, dr: 1, gold: 1 }),
+  M('c', '대왕 지네', C.o, 11, 1, 10, 50, 30, [[1, 8], [1, 8, 'pois']], 60, { f: 'animal', sleep: 30 }),
+  M('j', '노란 젤리', C.y, 12, 1, 0, 120, 1, [[1, 8, 'pois']], 130, { f: 'never nofear impois', sleep: 99, sp: [15, 'drain_mana'] }),
+  M('p', '광전사', C.o, 13, 1, 10, 90, 20, [[2, 8], [2, 8]], 90, { f: 'evil', sleep: 10, dr: 0.8 }),
+  M('S', '대왕 타란툴라', C.o, 14, 1, 10, 60, 40, [[1, 6, 'pois'], [1, 6, 'pois'], [1, 6, 'pois']], 120, { f: 'animal impois', sleep: 80 }),
+  M('f', '표범', C.y, 14, 1, 10, 60, 30, [[1, 8], [1, 8], [1, 10]], 90, { f: 'animal', sleep: 10 }),
+  M('m', '붉은 곰팡이', C.r, 15, 1, 0, 77, 16, [[4, 4, 'fire']], 64, { f: 'never nofear imfire', sleep: 0 }),
+  M('s', '해골 트롤', C.w, 16, 1, 0, 90, 55, [[1, 6], [1, 6], [3, 6]], 225, { f: 'undead evil troll nofear impois', sleep: 40 }),
+  M('Y', '설인', C.w, 17, 1, 0, 110, 24, [[1, 6], [1, 6], [1, 6, 'cold']], 180, { f: 'animal imcold', grp: 2, sleep: 10 }),
+  M('p', '암살자', C.dk, 18, 1, 10, 90, 40, [[3, 6, 'pois'], [3, 6, 'pois']], 300, { f: 'evil invis', sleep: 5, dr: 1, q: 1 }),
+  M('E', '얼음 정령', C.lb, 18, 2, 0, 150, 60, [[4, 6, 'cold'], [4, 6, 'cold']], 350, { f: 'nofear imcold hurtfire impois', sleep: 50, sp: [6, 'bolt:cold:6d8'] }),
+  M('X', '바위 포식자', C.br, 19, 2, 0, 100, 80, [[1, 6], [1, 6], [1, 6], [1, 6]], 350, { f: 'pass nofear impois', sleep: 10 }),
+  M('S', '위상 거미', C.lb, 20, 1, 10, 35, 25, [[1, 8], [1, 6, 'pois'], [1, 6, 'pois']], 60, { f: 'animal impois', grp: 5, sleep: 20, sp: [5, 'blink', 'teleto'] }),
+  M('f', '검치호', C.o, 21, 1, 10, 150, 50, [[1, 10], [1, 10], [1, 10], [1, 10]], 240, { f: 'animal', grp: 2, sleep: 10 }),
+  M('h', '암흑 엘프 군주', C.v, 22, 2, 10, 200, 60, [[3, 8], [3, 5]], 700, { f: 'evil', sleep: 10, sp: [4, 'blind', 'conf', 'bolt:cold:6d8', 'bolt:fire:6d8', 'summon'], dr: 1, q: 1, n: 2 }),
+  M('e', '증오의 눈', C.r, 22, 2, 0, 200, 40, [[2, 6, 'para'], [2, 6, 'blind']], 800, { f: 'evil nofear', sleep: 10, sp: [2, 'bolt:fire:6d8', 'bolt:cold:6d8', 'slow', 'conf', 'drain_mana'] }),
+  M('$', '기는 미스릴', C.lb, 22, 3, 10, 160, 50, [[4, 5], [4, 5, 'pois']], 300, { f: 'nofear impois', sleep: 10, dr: 1, gold: 1, n: 2 }),
+  M('u', '화염 악마', C.o, 23, 1, 10, 180, 50, [[2, 8, 'fire'], [2, 8, 'fire']], 500, { f: 'demon evil imfire nofear', sleep: 30, sp: [6, 'bolt:fire:8d8', 'blink', 'summon_demon'], dr: 0.6 }),
+  M('G', '공포의 망령', C.o, 26, 1, 10, 260, 30, [[6, 6], [6, 6], [0, 0, 'drain']], 1200, { f: 'undead evil invis pass imcold impois nofear', sleep: 10, sp: [10, 'bolt:dark:8d8', 'scare', 'hold', 'drain_mana'], dr: 0.6, q: 1 }),
+  M('p', '대마법사', C.r, 28, 2, 10, 300, 60, [[2, 8], [2, 8]], 1800, { f: 'evil', sleep: 10, sp: [2, 'blink', 'tport', 'blind', 'conf', 'bolt:fire:10d8', 'bolt:cold:10d8', 'ball:magic:90', 'summon', 'teleto'], dr: 1, q: 2, n: 2 }),
+  M('V', '흡혈귀 군주', C.b, 29, 2, 10, 650, 70, [[1, 6], [1, 6], [1, 6, 'drain'], [1, 6, 'drain']], 3000, { f: 'undead evil imcold impois nofear', sleep: 10, sp: [7, 'blind', 'hold', 'scare', 'wound:6d8', 'mind:10d8', 'bolt:dark:10d8', 'teleto', 'drain_mana'], dr: 1, q: 2 }),
+  M('D', '고룡(맹독)', C.g, 30, 3, 10, 1000, 100, [[1, 10], [1, 10], [4, 10, 'pois']], 5500, { f: 'dragon evil impois', sleep: 70, sp: [6, 'breath:pois', 'blind', 'conf'], dr: 1, q: 2, n: 3 }),
+  M('P', '폭풍 거인', C.lb, 30, 1, 10, 520, 60, [[4, 10], [4, 10]], 1500, { f: 'evil giant', sleep: 40, sp: [8, 'bolt:magic:10d8', 'blink'], dr: 1, q: 1 }),
+  M('M', '일곱 머리 히드라', C.r, 30, 2, 10, 700, 90, [[3, 10, 'fire'], [3, 10, 'fire'], [3, 10, 'fire'], [3, 10, 'fire']], 3000, { f: 'animal imfire', sleep: 20, sp: [5, 'breath:fire', 'scare', 'bolt:fire:9d8'], dr: 1, gold: 1, n: 2 }),
+  M('T', '불멸의 트롤', C.lb, 31, 1, 10, 700, 80, [[3, 6], [3, 6], [3, 6], [3, 10]], 2000, { f: 'evil troll', grp: 3, sleep: 20, dr: 0.8 }),
+  M('L', '대리치', C.r, 32, 2, 20, 900, 80, [[0, 0, 'drain'], [4, 8], [4, 8]], 8000, { f: 'undead evil imcold impois nofear', sleep: 50, sp: [3, 'blink', 'teleto', 'blind', 'hold', 'scare', 'wound:8d8', 'mind:12d8', 'drain_mana', 'summon_undead', 'bolt:dark:10d8'], dr: 1, q: 2, n: 2 }),
+  M('v', '혼돈 소용돌이', C.v, 32, 1, 20, 180, 30, [[5, 5]], 1400, { f: 'erratic50 nofear impois imfire imcold', sleep: 0, sp: [4, 'breath:dark'] }),
+  M('g', '미스릴 골렘', C.lb, 33, 2, 0, 1000, 110, [[3, 8], [3, 8], [5, 8], [5, 8]], 2500, { f: 'nofear impois imfire imcold', sleep: 10, dr: 1, gold: 1, n: 2 }),
+  M('U', '심연의 군주', C.o, 34, 2, 20, 1500, 110, [[5, 10, 'fire'], [5, 10, 'fire'], [6, 8]], 9000, { f: 'demon evil imfire nofear', sleep: 40, sp: [4, 'breath:fire', 'summon_demon', 'blind', 'conf', 'teleto'], dr: 1, q: 2, n: 2 }),
+  M('Z', '공허 사냥개', C.dk, 35, 2, 20, 220, 80, [[3, 8], [3, 8], [3, 8]], 1800, { f: 'animal impois', grp: 5, sleep: 0, sp: [6, 'breath:dark'] }),
+  M('W', '망령 기사', C.b, 36, 2, 20, 900, 110, [[6, 8], [6, 8], [0, 0, 'drain']], 9000, { f: 'undead evil imcold impois nofear', sleep: 10, sp: [4, 'blind', 'hold', 'scare', 'bolt:dark:12d8', 'wound:10d8', 'teleto', 'summon_undead'], dr: 1, q: 2, n: 2 }),
+  M('D', '태고의 용', C.v, 38, 3, 20, 2000, 130, [[2, 12], [2, 12], [6, 12]], 25000, { f: 'dragon evil imfire imcold impois', sleep: 70, sp: [4, 'breath:fire', 'breath:cold', 'breath:pois', 'blind', 'conf', 'scare'], dr: 1, q: 2, n: 4 }),
   /* 유니크 */
+  M('P', '서리 여왕 일바', C.y, 16, 2, 10, 500, 70, [[3, 8, 'cold'], [3, 8, 'cold'], [2, 8]], 1500, { f: 'evil giant unique imcold', sleep: 20, sp: [4, 'bolt:cold:8d8', 'ball:cold:50', 'slow', 'summon', 'blink'], dr: 1, q: 2, n: 3 }),
+  M('U', '화염 군주 가르모스', C.y, 31, 2, 20, 2400, 120, [[6, 8, 'fire'], [6, 8, 'fire'], [5, 10]], 20000, { f: 'demon evil unique imfire nofear', sleep: 20, sp: [3, 'breath:fire', 'ball:fire:160', 'summon_demon', 'teleto', 'blind', 'scare'], dr: 1, q: 2, n: 4 }),
+  M('W', '공허의 사도 넬', C.y, 36, 2, 20, 2800, 130, [[7, 8], [7, 8], [0, 0, 'drain'], [0, 0, 'drain']], 30000, { f: 'undead evil unique imcold impois nofear', sleep: 10, sp: [3, 'bolt:dark:14d8', 'ball:dark:150', 'hold', 'blind', 'teleto', 'summon_undead', 'drain_mana', 'mind:14d8'], dr: 1, q: 2, n: 4 }),
   M('k', '코볼트 족장 그롭', C.y, 3, 2, 0, 60, 20, [[1, 10], [1, 10]], 90, { f: 'evil unique', sleep: 20, esc: ['코볼트', 4], dr: 1, q: 1, n: 2 }),
   M('C', '회색 늑대 하르', C.lb, 6, 2, 20, 55, 30, [[1, 8], [1, 8]], 80, { f: 'animal unique', sleep: 0, esc: ['늑대', 3] }),
   M('o', '오크 대장 우즈락', C.y, 9, 2, 0, 200, 60, [[1, 12], [1, 12], [1, 10]], 260, { f: 'evil orc unique', sleep: 20, esc: ['검은 오크', 5], dr: 1, q: 1, n: 2 }),
@@ -85,7 +144,7 @@ export const MONSTERS = [
   M('p', '검은 부관 모르단', C.v, 20, 1, 10, 1200, 90, [[5, 5], [5, 5], [0, 0, 'drain']], 5000, { f: 'evil unique quest nofear impois', sleep: 0, sp: [3, 'bolt:dark:8d8', 'ball:fire:80', 'hold', 'scare', 'teleto', 'summon_undead', 'blink'], dr: 1, q: 2, n: 4, desc: '어둠의 군주의 오른팔. 쓰러뜨려야 20층 아래로 가는 계단이 열린다.' }),
   M('D', '고룡 이스카르', C.y, 24, 2, 20, 1500, 110, [[2, 10], [2, 10], [5, 10]], 9000, { f: 'dragon evil unique imfire impois', sleep: 60, sp: [5, 'breath:fire', 'breath:pois', 'scare', 'conf'], dr: 1, q: 2, n: 4 }),
   M('L', '리치 왕 네크타르', C.y, 27, 2, 20, 1700, 100, [[0, 0, 'drain'], [4, 8], [4, 8]], 12000, { f: 'undead evil unique imcold impois nofear', sleep: 30, sp: [2, 'blink', 'teleto', 'hold', 'blind', 'slow', 'wound:8d8', 'bolt:dark:10d8', 'drain_mana', 'summon_undead', 'mind:12d8'], dr: 1, q: 2, n: 4 }),
-  M('&', '어둠의 군주 아즈라크', C.v, 30, 1, 20, 4500, 130, [[6, 10], [6, 10], [6, 10]], 50000, { f: 'evil unique quest final nofear imfire imcold impois', sleep: 0, sp: [3, 'ball:magic:220', 'bolt:dark:12d8', 'blind', 'scare', 'teleto', 'wound:10d8', 'summon', 'summon_undead', 'heal'], dr: 1, q: 2, n: 5, desc: '구덩이의 주인. 이 자를 쓰러뜨리면 끝난다.' }),
+  M('&', '어둠의 군주 아즈라크', C.v, 40, 1, 20, 7000, 140, [[7, 10], [7, 10], [7, 10]], 100000, { f: 'evil unique quest final nofear imfire imcold impois', sleep: 0, sp: [3, 'ball:magic:240', 'bolt:dark:14d8', 'breath:fire', 'blind', 'scare', 'teleto', 'wound:12d8', 'summon', 'summon_undead', 'summon_demon', 'heal'], dr: 1, q: 2, n: 5, desc: '구덩이의 주인. 이 자를 쓰러뜨리면 끝난다.' }),
 ];
 export const MIDX = Object.fromEntries(MONSTERS.map((m, i) => [m.name, i]));
 
@@ -141,6 +200,9 @@ export const KINDS = [
   K('w_sleep', 'wand', '-', C.w, '수면', 4, 300, { ch: [6, 10] }), K('w_mud', 'wand', '-', C.w, '벽 허물기', 7, 300, { ch: [5, 9] }), K('w_cold', 'wand', '-', C.w, '냉기 화살', 11, 800, { ch: [5, 9] }),
   K('w_tele', 'wand', '-', C.w, '추방', 12, 600, { ch: [5, 8] }), K('w_fire', 'wand', '-', C.w, '화염 화살', 14, 1000, { ch: [5, 9] }), K('w_dragon', 'wand', '-', C.w, '용의 숨결', 24, 4000, { ch: [3, 5], w: 1 }),
   K('rod_light', 'rod', '_', C.w, '조명', 6, 500, {}), K('rod_det', 'rod', '_', C.w, '탐지', 10, 900, {}), K('rod_treas', 'rod', '_', C.w, '보물 탐지', 5, 400, {}),
+  K('dragonscale', 'body', '[', C.r, '용비늘 갑옷', 26, 9000, { ac: 30, props: { rFire: 1, rCold: 1 }, w: 2 }), K('shadowcloak', 'cloak', '(', C.dk, '그림자 망토', 20, 2500, { ac: 6, props: { stealth: 2 }, w: 3 }),
+  K('r_pois', 'ring', '=', C.w, '독 저항', 12, 900, { props: { rPois: 1 } }), K('p_star', 'potion', '!', C.w, '완전 치유', 22, 1500, { w: 3 }),
+  K('rod_heal', 'rod', '_', C.w, '치유', 20, 6000, { w: 3 }), K('rod_recall', 'rod', '_', C.w, '귀환', 14, 4000, { w: 3 }),
   K('ration', 'food', ',', C.br, '식량', 0, 3, { w: 8 }), K('flask', 'flask', '!', C.y, '기름병', 1, 4, { w: 8 }),
   K('book1', 'book', '?', C.r, '마법서 [마법 입문]', 1, 25, { w: 1 }), K('book2', 'book', '?', C.o, '마법서 [원소술]', 10, 350, { w: 1 }), K('book3', 'book', '?', C.v, '마법서 [대마법]', 18, 5000, { w: 1 }),
 ];
@@ -174,6 +236,10 @@ export const EGOS = [
   { id: 'speedB', on: ['boots'], name: '속도의', lv: 20, cost: 80000, props: { speed: 6 }, w: 0.15 }, { id: 'protect', on: ['cloak'], name: '보호의', lv: 4, cost: 600, ac: 8 },
 ];
 export const ARTS = [
+  { id: 'dawnmace', k: 'morningstar', name: '여명의 철퇴', lv: 11, dd: 3, ds: 6, th: 10, td: 12, slay: ['evil', 'undead', 'demon'], props: { int: 2, light: 1, seeInv: 1 } },
+  { id: 'whisper', k: 'rapier', name: '속삭이는 칼날', lv: 9, dd: 2, ds: 6, th: 14, td: 9, brand: 'pois', props: { stealth: 3, dex: 2, speed: 2 } },
+  { id: 'sunstone', k: 'a_regen', name: '태양석', lv: 15, props: { regen: 1, rFire: 1, rCold: 1, light: 1, con: 2 } },
+  { id: 'nightveil', k: 'cloak', name: '밤의 장막', lv: 14, ta: 12, props: { stealth: 4, seeInv: 1, rPois: 1 } },
   { id: 'aurel', k: 'longsword', name: '새벽의 검 아우렐리온', lv: 12, dd: 3, ds: 5, th: 12, td: 15, brand: 'fire', slay: ['evil', 'undead'], props: { light: 1, rFire: 1, seeInv: 1 } },
   { id: 'frost', k: 'dagger', name: '서리송곳니', lv: 6, dd: 2, ds: 4, th: 8, td: 10, brand: 'cold', props: { speed: 3, rCold: 1 } },
   { id: 'grund', k: 'maul', name: '산의 망치 그룬드', lv: 16, dd: 5, ds: 5, th: 10, td: 18, slay: ['troll', 'giant', 'dragon'], props: { str: 3, con: 2, freeAct: 1 } },
@@ -186,6 +252,35 @@ export const ARTS = [
   { id: 'aegir', k: 'largeshield', name: '수호방패 아에기르', lv: 13, ta: 18, props: { rFire: 1, rCold: 1, con: 2, regen: 1 } },
 ];
 export const SPELLS = [
+  { id: 'w_bash', cls: 'warrior', name: '강타', lv: 1, mp: 2, fail: 5, aim: 1, adj: 1, desc: '옆의 적에게 반드시 맞는 2.2배 일격. 적이 잠시 멈칫한다.' },
+  { id: 'w_charge', cls: 'warrior', name: '돌진', lv: 5, mp: 3, fail: 5, aim: 1, desc: '6칸 안의 적에게 달려들어 1.6배 일격.' },
+  { id: 'w_whirl', cls: 'warrior', name: '회전베기', lv: 10, mp: 4, fail: 5, desc: '둘러싼 모든 적을 한 번씩 벤다.' },
+  { id: 'w_shout', cls: 'warrior', name: '전투 함성', lv: 15, mp: 5, fail: 5, desc: '가까운 적을 겁주고 자신은 영웅심을 얻는다.' },
+  { id: 'w_second', cls: 'warrior', name: '재기', lv: 22, mp: 8, fail: 5, desc: '체력 35% 회복, 상태이상 해제.' },
+  { id: 'w_frenzy', cls: 'warrior', name: '광란', lv: 30, mp: 12, fail: 5, desc: '잠시 광전사 + 가속.' },
+  { id: 'r_aimed', cls: 'ranger', name: '조준 사격', lv: 1, mp: 2, fail: 5, aim: 1, bow: 1, desc: '명중 보정이 큰 2배 피해 한 발.' },
+  { id: 'r_sense', cls: 'ranger', name: '야수의 감각', lv: 4, mp: 2, fail: 5, desc: '주변 괴물의 위치를 안다.' },
+  { id: 'r_volley', cls: 'ranger', name: '연사', lv: 7, mp: 4, fail: 5, aim: 1, bow: 1, desc: '한 턴에 세 발을 쏜다.' },
+  { id: 'r_poison', cls: 'ranger', name: '독화살', lv: 12, mp: 4, fail: 5, aim: 1, bow: 1, desc: '1.5배 피해, 맞은 적은 느려진다.' },
+  { id: 'r_hide', cls: 'ranger', name: '은신', lv: 18, mp: 6, fail: 5, desc: '은밀이 크게 오르고 멀리 있는 적은 당신을 놓친다.' },
+  { id: 'r_rain', cls: 'ranger', name: '화살비', lv: 26, mp: 10, fail: 5, aim: 1, bow: 1, desc: '대상 주변의 적 모두에게 한 발씩(최대 5발).' },
+  { id: 'g_stab', cls: 'rogue', name: '급소 찌르기', lv: 1, mp: 2, fail: 5, aim: 1, adj: 1, desc: '반드시 치명타인 2배 일격. 잠든 적이면 암습 배율이 겹친다.' },
+  { id: 'g_sense', cls: 'rogue', name: '보물 감각', lv: 3, mp: 2, fail: 5, desc: '주변의 물건과 함정을 찾는다.' },
+  { id: 'g_smoke', cls: 'rogue', name: '연막', lv: 5, mp: 3, fail: 5, desc: '옆의 적을 혼란시키고 가까운 곳으로 사라진다.' },
+  { id: 'g_steal', cls: 'rogue', name: '소매치기', lv: 9, mp: 3, fail: 5, aim: 1, adj: 1, desc: '옆의 적에게서 금화를 훔친다(한 번씩만).' },
+  { id: 'g_shadow', cls: 'rogue', name: '그림자 걸음', lv: 14, mp: 5, fail: 5, aim: 1, desc: '대상 옆으로 순간이동해 1.5배 일격.' },
+  { id: 'g_venom', cls: 'rogue', name: '맹독 도포', lv: 20, mp: 6, fail: 5, desc: '잠시 근접 공격에 독 속성이 붙는다.' },
+  { id: 'g_vanish', cls: 'rogue', name: '소멸', lv: 28, mp: 10, fail: 5, desc: '보이는 적들이 당신을 놓치고, 당신은 자리를 옮긴다.' },
+  { id: 'p_bless', cls: 'priest', name: '축복', lv: 1, mp: 1, fail: 15, desc: '방어와 명중이 조금 오른다.' },
+  { id: 'p_smite', cls: 'priest', name: '응징', lv: 1, mp: 2, fail: 20, aim: 1, desc: '신성 피해. 악한 존재 1.5배, 망자 2배.' },
+  { id: 'p_cure', cls: 'priest', name: '치유', lv: 3, mp: 3, fail: 20, desc: '체력 회복, 중독·실명 치료.' },
+  { id: 'p_detect', cls: 'priest', name: '악 탐지', lv: 5, mp: 2, fail: 22, desc: '주변의 악한 존재를 안다.' },
+  { id: 'p_light', cls: 'priest', name: '성광', lv: 9, mp: 4, fail: 25, desc: '방을 밝히고 보이는 망자를 태운다.' },
+  { id: 'p_turn', cls: 'priest', name: '망자 퇴치', lv: 12, mp: 5, fail: 28, desc: '보이는 망자가 겁먹고 달아난다.' },
+  { id: 'p_sanct', cls: 'priest', name: '성역', lv: 17, mp: 8, fail: 32, desc: '잠시 방어 +25, 화염·냉기 저항.' },
+  { id: 'p_heal2', cls: 'priest', name: '대치유', lv: 22, mp: 12, fail: 35, desc: '체력을 크게 회복하고 모든 상태이상 해제.' },
+  { id: 'p_orb', cls: 'priest', name: '심판의 구', lv: 26, mp: 10, fail: 38, aim: 1, desc: '범위 신성 피해.' },
+  { id: 'p_recall', cls: 'priest', name: '귀환 기도', lv: 30, mp: 15, fail: 40, desc: '귀환의 두루마리와 같은 효과.' },
   { id: 'missile', name: '마법 화살', book: 'book1', lv: 1, mp: 1, fail: 22, aim: 1, desc: '대상에게 마법 피해.' },
   { id: 'detect', name: '괴물 탐지', book: 'book1', lv: 3, mp: 2, fail: 23, desc: '주변의 괴물 위치를 안다.' },
   { id: 'phase', name: '순간이동', book: 'book1', lv: 5, mp: 2, fail: 24, desc: '가까운 곳으로 무작위 이동.' },
@@ -208,6 +303,18 @@ export const SHOPS = [
   { name: '연금술점', c: C.b, stock: [['p_clw', 10], ['p_csw', 5], ['p_hero', 3], ['p_rfire', 3], ['p_rcold', 3], ['p_speed', 2], ['s_phase', 10], ['s_tele', 4], ['s_recall', 5], ['s_life', 5], ['s_map', 3], ['s_light', 5], ['s_bless', 4], ['s_weapon', 1], ['s_armor', 1], ['book1', 2]] },
   { name: '마법상', c: C.r, stock: [['w_missile', 2], ['w_stink', 1], ['w_slow', 1], ['w_sleep', 1], ['w_mud', 1], ['rod_treas', 1], ['rod_light', 1], ['r_prot', 1], ['r_fire', 1], ['r_cold', 1], ['a_conf', 1], ['book2', 1], ['s_charge', 2], ['p_mana', 3]] },
   { name: '암시장', c: C.dk, stock: null },
+  { name: '집', c: C.g, home: 1 },
+  { name: '모험가 길드', c: C.y, guild: 1 },
+];
+export const PERKS = [
+  { id: 'tough', name: '강인함', desc: '최대 체력 +12%', max: 3 }, { id: 'swift', name: '날랜 발', desc: '속도 +2', max: 3 }, { id: 'sharp', name: '예리함', desc: '치명타 확률 +8%', max: 3 },
+  { id: 'arcane', name: '비전 집중', desc: '주문·마법봉 피해 +15%', max: 3 }, { id: 'focus', name: '명상', desc: '최대 MP·기력 +25%', max: 2 }, { id: 'thick', name: '두꺼운 가죽', desc: '방어 +12', max: 3 },
+  { id: 'vamp', name: '흡혈', desc: '근접 피해의 6%만큼 회복', max: 2 }, { id: 'hunter', name: '사냥꾼', desc: '사격 피해 +15%', max: 3 }, { id: 'sneaky', name: '그림자', desc: '은밀 +2', max: 2 },
+  { id: 'lucky', name: '행운', desc: '금화 +40%, 좋은 물건이 더 자주 나온다', max: 2 }, { id: 'fireward', name: '불의 가호', desc: '화염 저항', max: 1 }, { id: 'frostward', name: '서리의 가호', desc: '냉기 저항', max: 1 },
+  { id: 'venomward', name: '해독의 피', desc: '독 저항', max: 1 }, { id: 'clear', name: '맑은 정신', desc: '혼란 면역', max: 1 }, { id: 'freebody', name: '자유로운 몸', desc: '마비·둔화 면역', max: 1 },
+  { id: 'sight', name: '심안', desc: '투명 감지, 광원 +1', max: 1 }, { id: 'regen', name: '재생력', desc: '체력이 두 배로 빨리 찬다', max: 1 }, { id: 'might', name: '괴력', desc: '힘 +2', max: 2 },
+  { id: 'agile', name: '날렵함', desc: '민첩 +2', max: 2 }, { id: 'wise', name: '총명', desc: '지능 +2', max: 2 }, { id: 'hardy', name: '강골', desc: '체질 +2', max: 2 },
+  { id: 'cleave', name: '연격', desc: '근접 공격 횟수 +1', max: 1 }, { id: 'quick', name: '속사', desc: '사격 속도 +0.5발', max: 1 }, { id: 'thrift', name: '절약', desc: '주문·기술 비용 -20%', max: 2 },
 ];
 export const FEEL_D = ['여기는 평온해 보인다', '그다지 위험해 보이지 않는다', '조금 긴장되는 곳이다', '위험한 기운이 감돈다', '몹시 위험한 곳이다', '죽음의 냄새가 난다'];
-export const FEEL_L = ['쓸 만한 건 없을 것 같다', '뭔가 건질 게 있을지도 모른다', '괜찮은 물건이 있을 것 같다', '좋은 보물의 기운이 느껴진다', '대단한 보물이 잠들어 있다'];
+export const FEEL_L0 = 0, FEEL_L = ['쓸 만한 건 없을 것 같다', '뭔가 건질 게 있을지도 모른다', '괜찮은 물건이 있을 것 같다', '좋은 보물의 기운이 느껴진다', '대단한 보물이 잠들어 있다'];
