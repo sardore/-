@@ -1,3 +1,8 @@
+## 🕳️ [구덩이 DELVE — 지금 플레이](https://raw.githack.com/sardore/-/main/delve/index.html)
+
+현대판 Angband. 마을에서 채비하고, 내려갈 때마다 새로 생기는 던전 30층 아래 어둠의 군주에게. 자동 탐험·터치 조작·자동 저장, 죽으면 끝.
+[기획서](delve/DESIGN.md) · [소스](delve/)
+
 ## ⚔️ [쿼텟 아레나 QUARTET ARENA — 지금 플레이](https://raw.githack.com/sardore/-/main/arena/index.html)
 
 4 대 4 자동 전투. 스토리 모드(3장 15스테이지, 영웅 14명 수집·레벨업)와 디버그 모드(아무나 4명씩 골라 붙이기, 200회 시뮬).
