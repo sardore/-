@@ -1,6 +1,6 @@
 ## 🕳️ [구덩이 DELVE — 지금 플레이](https://raw.githack.com/sardore/-/main/delve/index.html)
 
-현대판 Angband. 마을에서 채비하고, 내려갈 때마다 새로 생기는 던전 30층 아래 어둠의 군주에게. 자동 탐험·터치 조작·자동 저장, 죽으면 끝.
+현대판 Angband. 픽셀아트 던전 40층, 지형대 5개, 직업 5개와 기술 43개, 5레벨마다 고르는 특성, 몬스터 112종. 죽으면 끝.
 [기획서](delve/DESIGN.md) · [소스](delve/)
 
 ## ⚔️ [쿼텟 아레나 QUARTET ARENA — 지금 플레이](https://raw.githack.com/sardore/-/main/arena/index.html)
