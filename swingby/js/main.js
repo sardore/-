@@ -1,0 +1,20 @@
+/* 진입점: 초기화와 메인 루프 */
+import { resize, newRun } from './state.js';
+import { step } from './game.js';
+import { draw } from './draw.js';
+import { bindInput } from './input.js';
+import { installDebug } from './debug.js';
+
+window.addEventListener('resize', resize);
+resize();
+newRun();
+bindInput();
+installDebug();
+
+let last = 0;
+function frame(now) {
+  const dt = Math.min(.033, (now - last) / 1000 || 0); last = now;
+  step(dt); draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
