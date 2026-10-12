@@ -5,7 +5,7 @@ const { clone, act, enumerate, info, eTotal, teamUnits, status } = E;
 const STATUS_W = { poison: 18, slow: 12, paralyze: 28, burn: 22, freeze: 30, traitSeal: 14, skillSeal: 30, healSeal: 8 };
 function unitValue(g, u) {
   if (u.dead) return 0;
-  let v = 40 + u.hp + u.shield * 0.8 + u.bar.reduce((n, b) => n + b.n, 0) * 0.8 + eTotal(u) * 11;
+  let v = 40 + u.hp + u.shield * 0.8 + u.bar.reduce((n, b) => n + b.n, 0) * 0.8 + eTotal(u) * 11 + (u.fx.sum || []).reduce((n, x) => n + x.hp, 0) * 0.8;
   for (const [s, d] of Object.entries(u.st)) v -= (STATUS_W[s] || 10) * Math.min(d, 3) * 0.6;
   v += u.defMod * 1.5 + u.atkMod * 1.5; if (u.sched) v += 16; if (u.invul) v += 8;
   return v;

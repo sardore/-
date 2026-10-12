@@ -58,7 +58,12 @@ export function newGame(deckP, deckA, o = {}) {
 function deployInit(g, u, start = false) {
   u.deployed = true; if (!g.t[u.team].rev.includes(u.uid)) g.t[u.team].rev.push(u.uid);
   const sp = def(u).speed || 0; u.delay = sp < 0 ? -sp : 0;
-  def(u).onDeploy?.(g, u, start);
+  def(u).onDeploy?.(g, u, start); HK?.onDeploy?.(g, u, start);
+}
+
+export function transform(g, u, toId) { // 형태 변화: 같은 유닛이 다른 카드로 바뀐다 (HP·에너지·상태는 유지)
+  const c = REG[toId]; if (!c) return; const from = u.name; u.id = toId; u.name = c.name; u.maxHp = c.hp; u.hp = Math.min(u.hp, u.maxHp); u.baseDef = c.def || 0;
+  log(g, `${from} → ${c.name} 로 변화!`, 'turn'); ev(g, 'transform', { uid: u.uid, to: toId }); c.onTransformIn?.(g, u);
 }
 
 /* ───────── 에너지 ───────── */
@@ -111,9 +116,9 @@ export function peekGather(g, u) {
 }
 
 /* ───────── 코스트 / 결제 ───────── */
-export function tokensOf(str = '') { const o = []; for (let i = 0; i < str.length;) { if (str.startsWith('WorB', i)) { o.push('WorB'); i += 4; } else if ('RWB*'.includes(str[i])) { o.push(str[i]); i++; } else i++; } return o; }
-export function effCost(g, u, sk) {
-  let raw = typeof sk.cost === 'function' ? sk.cost(g, u) : sk.cost; let tk = tokensOf(raw);
+export function tokensOf(str = '') { const o = []; for (let i = 0; i < str.length;) { if (str.startsWith('WorB', i)) { o.push('WorB'); i += 4; } else if (str.startsWith('RorB', i)) { o.push('RorB'); i += 4; } else if ('RWB*'.includes(str[i])) { o.push(str[i]); i++; } else i++; } return o; }
+export function effCost(g, u, sk, tgt = null) {
+  let raw = typeof sk.cost === 'function' ? sk.cost(g, u, tgt) : sk.cost; let tk = tokensOf(raw);
   if (u.costCut > 0) { let r = u.costCut; while (r-- > 0 && tk.length) tk.pop(); }
   const gf = g.field; if (gf && gf.kind === 'grand') { if (gf.team === u.team) tk = tk.map(x => (x === 'W' || x === 'B' ? '*' : x)); else tk = tk.map(x => (x === '*' ? 'WorB' : x)); }
   if (status(u, 'poison')) { const pressure = HK?.downPressure?.(g, u.team); tk.push(pressure ? 'B' : gf && gf.kind === 'grand' && gf.team !== u.team ? 'WorB' : '*'); }
@@ -129,14 +134,15 @@ export function planPays(u, tokens, flex = false) { // 가능한 결제 조합 (
   }
   return planPays0(u, tokens);
 }
+export const payPlans = (g, u, tk) => planPays(u, tk, flexOf(g, u));
 const flexOf = (g, u) => !!def(u).flexW && traitOn(g, u);
 function planPays0(u, tokens) {
-  const p = pool(u), need = { R: 0, W: 0, B: 0 }; let any = 0, wb = 0;
-  for (const t of tokens) { if (t === '*') any++; else if (t === 'WorB') wb++; else need[t]++; }
+  const p = pool(u), need = { R: 0, W: 0, B: 0 }; let any = 0, wb = 0, rb = 0;
+  for (const t of tokens) { if (t === '*') any++; else if (t === 'WorB') wb++; else if (t === 'RorB') rb++; else need[t]++; }
   for (const c of COLORS) if (p[c] < need[c]) return [];
   const rest = { R: p.R - need.R, W: p.W - need.W, B: p.B - need.B }, out = [];
-  for (let w = 0; w <= wb; w++) { const b = wb - w; if (rest.W < w || rest.B < b) continue; const r2 = { R: rest.R, W: rest.W - w, B: rest.B - b };
-    for (let r = 0; r <= any; r++) for (let ww = 0; ww + r <= any; ww++) { const bb = any - r - ww; if (r2.R < r || r2.W < ww || r2.B < bb) continue; out.push({ R: need.R + r, W: need.W + w + ww, B: need.B + b + bb }); } }
+  for (let w = 0; w <= wb; w++) for (let rr0 = 0; rr0 <= rb; rr0++) { const b = (wb - w) + (rb - rr0); const r2 = { R: rest.R - rr0, W: rest.W - w, B: rest.B - b }; if (r2.R < 0 || r2.W < 0 || r2.B < 0) continue;
+    for (let r = 0; r <= any; r++) for (let ww = 0; ww + r <= any; ww++) { const bb = any - r - ww; if (r2.R < r || r2.W < ww || r2.B < bb) continue; out.push({ R: need.R + rr0 + r, W: need.W + w + ww, B: need.B + b + bb }); } }
   return out;
 }
 export const canPay = (u, tokens, flex = false) => planPays(u, tokens, flex).length > 0;
@@ -150,8 +156,9 @@ export function autoPlan(g, u, tokens, prefer = null) {
   }
   return best;
 }
-function affordable(left, tk) { const l = { ...left }; let any = 0, wb = 0; for (const t of tk) { if (t === '*') any++; else if (t === 'WorB') wb++; else { if (l[t] < 1) return false; l[t]--; } }
-  for (let i = 0; i < wb; i++) { if (l.W >= 1) l.W--; else if (l.B >= 1) l.B--; else return false; } return l.R + l.W + l.B >= any; }
+function affordable(left, tk) { const l = { ...left }; let any = 0, wb = 0, rb = 0; for (const t of tk) { if (t === '*') any++; else if (t === 'WorB') wb++; else if (t === 'RorB') rb++; else { if (l[t] < 1) return false; l[t]--; } }
+  for (let i = 0; i < wb; i++) { if (l.W >= 1) l.W--; else if (l.B >= 1) l.B--; else return false; }
+  for (let i = 0; i < rb; i++) { if (l.R >= 1) l.R--; else if (l.B >= 1) l.B--; else return false; } return l.R + l.W + l.B >= any; }
 export function spend(g, u, plan) { // 새로 얻은 에너지부터 소비
   const paid = []; for (const c of COLORS) { let n = plan[c] || 0; for (let i = u.e.length - 1; i >= 0 && n > 0; i--) { const e = u.e[i]; if (e.c !== c || e.a < 1 - 1e-6) continue; u.e.splice(i, 1); n--; paid.push(c); } }
   normE(u); ev(g, 'energy', { uid: u.uid, kind: 'spend', plan }); def(u).onEnergy?.(g, u); return paid;
@@ -212,7 +219,7 @@ function incoming(g, src, tgt, n, eff) { // 개별 피해 경감 단계
 }
 export function protectorOf(g, tgt) { return fieldUnits(g, tgt.team).find(x => x !== tgt && def(x).protector && traitOn(g, x) && x.shield > 0) || null; }
 function applyPacket(g, src, tgt, n, eff) {
-  let dealt = 0; const pr = !eff.noProtect ? protectorOf(g, tgt) : null;
+  let dealt = 0; const ab = def(tgt).absorb; if (ab && n > 0 && eff.kind !== 'effect') { n = ab(g, tgt, n, eff); if (n <= 0) { ev(g, 'dmg', { uid: tgt.uid, n: 0 }); return 0; } } const pr = !eff.noProtect ? protectorOf(g, tgt) : null;
   if (pr && n > 0) { const toP = Math.floor(n / 2); const old = pr.shield, ab = Math.min(old, toP); pr.shield -= ab; dealt += ab; log(g, `${pr.name} 특성 · 실드 대신피해: ${tgt.name} ${n - toP}D / 실드 ${toP}D${toP > old ? ' (초과 소멸)' : ''}.`); ev(g, 'dmg', { uid: pr.uid, n: ab, shield: true }); n -= toP; }
   if (tgt.shield > 0) { const old = tgt.shield, ab = Math.min(old, n); tgt.shield -= ab; dealt += ab; ev(g, 'dmg', { uid: tgt.uid, n: ab, shield: true, crit: eff.crit });
     if (eff.shieldMelt && n > old) dealt += hpPortion(g, tgt, n - old, eff); else log(g, `${tgt.name} 실드 ${old} → ${tgt.shield}${n > old ? ' (초과 소멸)' : ''}.`); }
@@ -255,6 +262,7 @@ export function hit(g, src, tgt, eff, sk = null) {
     ev(g, 'hitfx', { src: src.uid, tgt: tgt.uid, skill: sk?.id || null, i: h, crit });
     const got = applyPacket(g, src, tgt, fin, { ...eff, crit }); total += got; src.stat.dealt += got; tgt.stat.taken += got; if (got > 0) g.noDmg = 0;
     if (traitOn(g, tgt) && td.onHit) td.onHit(g, tgt, src, fin, eff);
+    if (got > 0) for (const x of fieldUnits(g, tgt.team)) if (x !== tgt && def(x).onAllyHit && traitOn(g, x)) def(x).onAllyHit(g, x, tgt, got);
     if (td.reflect && traitOn(g, tgt) && eff.kind !== 'effect' && !src.dead) { log(g, `${tgt.name} 특성 · 반사 ${td.reflect}.`); fixed(g, src, td.reflect, `${tgt.name} 반사`); }
     checkDeath(g, tgt, src); checkDeath(g, src, tgt);
   }
@@ -281,8 +289,9 @@ export function checkWinner(g) {
 }
 
 /* ───────── 대상 / 기술 상태 ───────── */
+export const tgtKind = (g, u, sk) => (typeof sk.target === 'function' ? sk.target(g, u) : sk.target || 'enemy');
 export function resolveTargets(g, u, sk) {
-  const t = u.team, e = other(t), tgt = sk.target || 'enemy';
+  const t = u.team, e = other(t), tgt = tgtKind(g, u, sk);
   const ref = x => ({ team: x.team, slot: slotOf(g, x), uid: x.uid });
   switch (tgt) {
     case 'enemy': return fieldUnits(g, e).map(ref);
@@ -323,7 +332,10 @@ export function info(g) { // UI/AI 가 쓰는 현재 차례 설명
   if (u.sched) return { kind: 'auto', why: 'sched', team, slot, uid: u.uid };
   const o = { kind: 'input', team, slot, uid: u.uid, gather: !status(u, 'paralyze') && !(def(u).noGather?.(g, u)), skills: [], switches: [] };
   if (canSwitch(g, u)) for (let i = 0; i < t.bench.length; i++) { const b = t.bench[i] && g.u[t.bench[i]]; if (b && !b.dead) o.switches.push({ bench: i, uid: b.uid, cost: switchCost(u) }); }
-  for (const sk of def(u).skills) { const why = skillBlock(g, u, sk), tk = effCost(g, u, sk); o.skills.push({ id: sk.id, ok: !why, why, tokens: tk, plans: why ? [] : planPays(u, tk, flexOf(g, u)), targets: why ? [] : resolveTargets(g, u, sk), sk, plus: sk.plus || null }); }
+  for (const sk of def(u).skills) {
+    let why = skillBlock(g, u, sk); const tk = effCost(g, u, sk); let targets = why ? [] : resolveTargets(g, u, sk);
+    if (!why && sk.dynCost) { targets = targets.filter(t => canPay(u, effCost(g, u, sk, t.uid ? g.u[t.uid] : null), flexOf(g, u))); if (!targets.length) why = '에너지 부족'; }
+    o.skills.push({ id: sk.id, ok: !why, why, tokens: tk, plans: why ? [] : planPays(u, tk, flexOf(g, u)), targets: why ? [] : targets, sk, plus: sk.plus || null }); }
   o.pass = !o.gather && !o.switches.length && !o.skills.some(x => x.ok);
   return o;
 }
@@ -395,7 +407,7 @@ function runSkill(g, u, sk, a) {
   const tk = a.tokens || effCost(g, u, sk); const plan = a.pay || autoPlan(g, u, tk); if (!plan) return false;
   const tref = a.target || resolveTargets(g, u, sk)[0]; const X = { plan, tokens: tk, extra: a.extra || {}, target: tref, plus: a.plus || null };
   const T = targetObj(g, u, sk, tref);
-  const paidBefore = { R: eWhole(u, 'R'), W: eWhole(u, 'W'), B: eWhole(u, 'B') }; X.paidBefore = paidBefore; X.eBefore = eTotal(u);
+  const paidBefore = { R: eWhole(u, 'R'), W: eWhole(u, 'W'), B: eWhole(u, 'B') }; X.paidBefore = paidBefore; X.eBefore = eTotal(u); X.eSnap = u.e.map(x => ({ ...x }));
   if (!sk.freeze) spend(g, u, plan);
   if (X.plus && (X.plus.R || X.plus.W || X.plus.B)) spend(g, u, X.plus);
   u.stat.skills++; ev(g, 'skill', { uid: u.uid, skill: sk.id, name: sk.name, target: tref?.uid || null, team: u.team, slot: slotOf(g, u), kind: sk.kind || 'attack' });
@@ -407,7 +419,7 @@ function runSkill(g, u, sk, a) {
   def(u).onSkill?.(g, u, sk, X); HK?.onSkill?.(g, u, sk, X); return true;
 }
 function targetObj(g, u, sk, tref) {
-  const tg = sk.target || 'enemy';
+  const tg = tgtKind(g, u, sk);
   if (tg === 'enemyField') return fieldUnits(g, other(u.team)); if (tg === 'field' || tg === 'self' || tg === 'none') return u; if (tg === 'enemySlot') return { team: tref.team, slot: tref.slot };
   return tref && tref.uid ? g.u[tref.uid] : u;
 }
@@ -419,10 +431,12 @@ export function act(g, a) {
   if (a.type === 'gather') { if (!i.gather) return g.ev; ev(g, 'turn', { uid: u.uid, act: 'gather' }); doGather(g, u, a.replace); }
   else if (a.type === 'pass') { if (!i.pass) return g.ev; ev(g, 'turn', { uid: u.uid, act: 'pass' }); log(g, `${u.name}: 할 수 있는 행동이 없어 차례를 넘긴다.`); u.last = 'pass'; }
   else if (a.type === 'switch') { const s = i.switches.find(x => x.bench === a.bench); if (!s) return g.ev; ev(g, 'turn', { uid: u.uid, act: 'switch' }); if (!switchReal(g, u, a.bench, a.pay)) return g.ev; u.last = 'switch'; }
-  else if (a.type === 'skill') { const e = i.skills.find(x => x.id === a.skill); if (!e || !e.ok) return g.ev; const sk = e.sk; let tref = a.target || e.targets[0]; if (!e.targets.some(t => t.slot === tref.slot && t.team === tref.team)) return g.ev; if (a.pay && !e.plans.some(p => COLORS.every(c => p[c] === a.pay[c]))) return g.ev;
+  else if (a.type === 'skill') { const e = i.skills.find(x => x.id === a.skill); if (!e || !e.ok) return g.ev; const sk = e.sk; let tref = a.target || e.targets[0]; if (!e.targets.some(t => t.slot === tref.slot && t.team === tref.team)) return g.ev;
+    let tk = e.tokens, plans = e.plans; if (sk.dynCost) { tk = effCost(g, u, sk, tref.uid ? g.u[tref.uid] : null); plans = payPlans(g, u, tk); if (!plans.length) return g.ev; }
+    if (a.pay && !plans.some(p => COLORS.every(c => p[c] === a.pay[c]))) return g.ev;
     let pay = a.pay || null, plus = null;
-    if (sk.plus) { plus = normPlus(sk, a.plus); const cand = pay ? [pay] : [autoPlan(g, u, e.tokens), ...e.plans].filter(Boolean); pay = cand.find(p => plusFits(u, p, plus)) || null; if (!pay) return g.ev; }
-    if (!runSkill(g, u, sk, { target: tref, pay, plus, extra: a.extra, tokens: e.tokens })) return g.ev; used = true; }
+    if (sk.plus) { plus = normPlus(sk, a.plus); const cand = pay ? [pay] : [autoPlan(g, u, tk), ...plans].filter(Boolean); pay = cand.find(p => plusFits(u, p, plus)) || null; if (!pay) return g.ev; }
+    if (!runSkill(g, u, sk, { target: tref, pay, plus, extra: a.extra, tokens: tk })) return g.ev; used = true; }
   else return g.ev;
   endTurn(g, u, used); autoAdvance(g); return g.ev;
 }
@@ -439,16 +453,22 @@ export function enumerate(g) {
   if (i.pass) out.push({ type: 'pass' });
   if (i.gather) out.push({ type: 'gather' });
   for (const s of i.switches) out.push({ type: 'switch', bench: s.bench });
-  for (const e of i.skills) { if (!e.ok) continue; const sk = e.sk; const exs = sk.choices ? enumChoices(g, u, sk, null) : [{}];
-    let pluses = [null]; if (sk.plus) { const base = autoPlan(g, u, e.tokens); const all = plusCombos(u, sk, base); pluses = all.length > 8 ? [all[0], ...all.filter(p => p.R + p.W + p.B === Math.max(...all.map(q => q.R + q.W + q.B))).slice(0, 3), all[Math.floor(all.length / 2)]] : all; }
+  for (const e of i.skills) { if (!e.ok) continue; const sk = e.sk;     let pluses = [null]; if (sk.plus) { const base = autoPlan(g, u, e.tokens); const all = plusCombos(u, sk, base); pluses = all.length > 8 ? [all[0], ...all.filter(p => p.R + p.W + p.B === Math.max(...all.map(q => q.R + q.W + q.B))).slice(0, 3), all[Math.floor(all.length / 2)]] : all; }
     for (const t of e.targets) { const ex2 = sk.choices ? enumChoices(g, u, sk, t) : [{}]; for (const x of ex2) for (const pl of pluses) out.push({ type: 'skill', skill: sk.id, target: t, extra: x, plus: pl }); } }
   return out;
 }
-function enumChoices(g, u, sk, t) {
-  const sch = sk.choices(g, u, t && t.uid ? g.u[t.uid] : null) || []; let combos = [{}];
-  for (const c of sch) { const vals = c.options ? (c.options.length ? c.options.map(o => o.v) : [-1]) : range(c.min, c.max, c.step || 1).slice(0, 6); const nx = []; for (const b of combos) for (const v of vals) nx.push({ ...b, [c.key]: v }); combos = nx.slice(0, 24); }
+function enumChoices(g, u, sk, t) { // 앞선 답에 따라 선택지가 달라지는 선택도 순서대로 펼친다
+  const tu = t && t.uid ? g.u[t.uid] : null; let combos = [{}];
+  for (let depth = 0; depth < 6; depth++) { const nx = []; let progressed = false;
+    for (const b of combos) { const list = sk.choices(g, u, tu, b) || []; const c = list.find(x => !(x.key in b)); if (!c) { nx.push(b); continue; } progressed = true;
+      const vals = c.options ? (c.options.length ? c.options.map(o => o.v) : [-1]) : range(c.min, c.max, c.step || 1).slice(0, 6); for (const v of vals) nx.push({ ...b, [c.key]: v }); }
+    combos = nx.slice(0, 24); if (!progressed) break; }
   return combos;
 }
 const range = (a, b, s = 1) => { const o = []; for (let x = a; x <= b + 1e-9; x += s) o.push(+x.toFixed(2)); return o; };
 export let HK = null; export const setHooks = h => { HK = h; };
+export function remapIdx(u, snap, idx) { // 지불 전 에너지 목록의 idx 번째가 지불 뒤에는 몇 번째인지 (지불로 사라졌으면 -1)
+  const o = snap[idx]; if (!o) return -1; let k = 0; for (let i = 0; i < idx; i++) if (snap[i].c === o.c && snap[i].a === o.a) k++;
+  const cand = []; u.e.forEach((x, i) => { if (x.c === o.c && x.a === o.a) cand.push(i); }); return cand[k] ?? -1;
+}
 export const API = { COLORS, STATUS_NAME, register, def, other, rnd, rint, pick, U, unitAt, fieldUnits, benchUnits, teamUnits, slotOf, onField, status, traitOn, hasTag, log, ev, notice, eTotal, eCount, eWhole, maxE, normE, gain, removeE, removeEntry, clearE, recolor, tokensOf, effCost, pool, planPays, canPay, autoPlan, spend, addStatus, clearStatuses, heal, addShield, addBarrier, hit, hpPct, fixed, checkDeath, checkWinner, defOf, resolveTargets, protectorOf, ignoresStats, deployUnit };

@@ -1,7 +1,7 @@
 <!doctype html><meta charset=utf-8><style>body{margin:0;background:#1a1330;color:#fff;font:12px sans-serif}.g{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:8px}.c{background:#2a2050;border-radius:10px;padding:4px;text-align:center}svg{width:100%;height:auto;display:block}</style><div class=g id=g></div>
 <script type=module>
 import {renderArt,REG} from '../js/art/lib.js';
-import '../js/art/art1.js';import '../js/art/art2.js';import '../js/art/art3.js';
+import '../js/art/art1.js';import '../js/art/art2.js';import '../js/art/art3.js';import '../js/art/art4.js';
 const q=new URLSearchParams(location.search);const only=q.get('ids');
 for(const id of (only?only.split(','):Object.keys(REG))){const d=document.createElement('div');d.className='c';d.innerHTML=renderArt(id)+id;document.getElementById('g').append(d);}
 </script>

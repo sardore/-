@@ -5,6 +5,7 @@ import { renderArt } from './art/lib.js';
 import './art/art1.js';
 import './art/art2.js';
 import './art/art3.js';
+import './art/art4.js';
 import { chooseAction } from './ai.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -163,6 +164,8 @@ function chipsHtml(u) {
   const c = []; for (const [s, d] of Object.entries(u.st)) c.push(`<span class="sc ${s}">${SHORT[s]}${d}</span>`);
   if (u.atkMod) c.push(`<span class="sc ${u.atkMod > 0 ? 'buff' : 'debuff'}">공${u.atkMod > 0 ? '+' : ''}${u.atkMod}</span>`); if (u.defMod) c.push(`<span class="sc ${u.defMod > 0 ? 'buff' : 'debuff'}">방${u.defMod > 0 ? '+' : ''}${u.defMod}</span>`);
   const bar = u.bar.reduce((n, b) => n + b.n, 0); if (bar) c.push(`<span class="sc shield">보호막${bar}</span>`); if (u.hide) c.push(`<span class="sc shield">숨기×${u.hide}</span>`); if (u.invul) c.push('<span class="sc shield">무적</span>'); if (u.noAtk) c.push('<span class="sc shield">방벽</span>');
+  if (u.fx && u.fx.sum) for (const s of u.fx.sum) c.push(`<span class="sc buff">${s.name} ${s.hp}</span>`);
+  if (u.fx && u.fx.hour != null) { const al = (((u.fx.hour - u.fx.min) % 180) + 180) % 180 === 0; c.push(`<span class="sc ${al ? 'buff' : ''}">⏱${u.fx.hour}°/${u.fx.min}°${al ? ' 정렬' : ''}</span>`); }
   if (u.sched) c.push('<span class="sc buff">예약</span>'); if (u.delay > 0) c.push(`<span class="sc">대기${u.delay}</span>`); return c.join('');
 }
 function barsUpdate(el, u) {
@@ -172,8 +175,8 @@ function barsUpdate(el, u) {
   $('.hpbar b', el).textContent = `${Math.max(0, Math.round(u.hp))}${u.shield ? ` +${u.shield}` : ''}`;
 }
 function ensureUnit(slot, u) {
-  let el = slot.firstElementChild; if (el && el.dataset.uid === u.uid) return el; const c = def(u);
-  slot.classList.remove('empty'); slot.innerHTML = `<div class="unit" data-uid="${u.uid}"><div class="uname"><span class="st">${starTxt(c)}</span>${c.name}</div><div class="artwrap" data-art>${renderArt(u.id)}</div><div class="bars"><div class="hpbar"><i class="sh"></i><i class="hp"></i><i class="bar2"></i><b></b></div></div><div class="pips"></div><div class="chips"></div></div>`; return slot.firstElementChild;
+  let el = slot.firstElementChild; if (el && el.dataset.uid === u.uid && el.dataset.cid === u.id) return el; const c = def(u);
+  slot.classList.remove('empty'); slot.innerHTML = `<div class="unit" data-uid="${u.uid}" data-cid="${u.id}"><div class="uname"><span class="st">${starTxt(c)}</span>${c.name}</div><div class="artwrap" data-art>${renderArt(u.id)}</div><div class="bars"><div class="hpbar"><i class="sh"></i><i class="hp"></i><i class="bar2"></i><b></b></div></div><div class="pips"></div><div class="chips"></div></div>`; return slot.firstElementChild;
 }
 function updateUnit(el, u) {
   barsUpdate(el, u); const p = $('.pips', el), ph = energyHtml(u); if (p._h !== ph) { p.innerHTML = ph; p._h = ph; } const c = $('.chips', el), ch = chipsHtml(u); if (c._h !== ch) { c.innerHTML = ch; c._h = ch; }
@@ -189,7 +192,7 @@ function renderField() {
   for (const team of ['P', 'A']) { const t = v.t[team], bench = $(`.bench[data-team="${team}"]`);
     const list = Object.values(v.u).filter(u => u.team === team && !t.field.includes(u.uid)).sort((a, b) => a.idx - b.idx);
     bench.innerHTML = `<span class="lbl">후열</span>` + list.map(u => `<div class="bch ${u.dead ? 'dead' : ''}" data-b="${u.uid}">${renderArt(u.id, { noShadow: true }).replace('class="art', 'class="art ba')}<div class="bh"><i style="width:${Math.max(0, u.hp) / u.maxHp * 100}%"></i></div></div>`).join('') + `<span class="swc">교체 ${t.sw}/3</span>`; }
-  const f = v.field, fc = $('#fieldchip'); if (f && f.kind === 'grand') { fc.classList.remove('hidden'); fc.textContent = '그랜드필드 · ' + (f.team === 'P' ? '내 진영' : '상대 진영'); fc.className = 'fieldchip ' + (f.team === 'P' ? 'mine' : 'theirs'); } else fc.classList.add('hidden');
+  const f = v.field, fc = $('#fieldchip'); if (f && (f.kind === 'grand' || f.kind === 'aroma')) { fc.classList.remove('hidden'); fc.textContent = (f.kind === 'grand' ? '그랜드필드 · ' : '아로마필드 · ') + (f.team === 'P' ? '내 진영' : '상대 진영'); fc.className = 'fieldchip ' + (f.team === 'P' ? 'mine' : 'theirs'); } else fc.classList.add('hidden');
 }
 function renderOrder() {
   const g = S.g, v = S.view; let h = ''; for (let k = 0; k < 4; k++) { const [team, slot] = g.order[(g.turn + k) % 4], uid = v.t[team].field[slot], u = uid && v.u[uid];
@@ -214,7 +217,7 @@ function renderPanel() {
   i.skills.forEach(e => { const sk = e.sk; const cls = ['sk', e.ok ? '' : 'off', S.sel === e.id ? 'sel' : '', sk.kind || ''].join(' ');
     h += `<button class="${cls}" data-sk="${e.id}"><span class="n"><span>${sk.name}</span><span class="costs">${costHtml(e.tokens, sk.plus)}</span></span><span class="d">${sk.desc}</span>${e.ok ? '' : `<span class="why">${e.why}</span>`}</button>`; });
   const canSw = i.switches.length > 0; const cost = E.switchCost(u);
-  h += `<button class="sk util ${i.gather ? '' : 'off'}" data-act="gather"><span class="n"><span>에너지 모으기</span><span class="costs">${pip('R', 'sm')}${pip('W', 'sm')}${pip('B', 'sm')}</span></span><span class="d">${E.status(u, 'slow') ? '감속: ½개만 얻어' : '무작위 1개 획득'}</span>${i.gather ? '' : '<span class="why">마비</span>'}</button>`;
+  h += `<button class="sk util ${i.gather ? '' : 'off'}" data-act="gather"><span class="n"><span>에너지 모으기</span><span class="costs">${E.gatherColors(g, u).map(k => pip(k, 'sm')).join('')}</span></span><span class="d">${E.status(u, 'slow') ? '감속: ½개만 얻어' : (E.gatherColors(g, u).length === 1 ? E.gatherColors(g, u)[0] + ' 에너지만 획득' : '무작위 1개 획득')}</span>${i.gather ? '' : '<span class="why">마비</span>'}</button>`;
   h += `<button class="sk util ${canSw ? '' : 'off'}" data-act="switch"><span class="n"><span>교체</span><span class="costs">${costHtml(Array(cost).fill('*'))}</span></span><span class="d">후열과 자리 바꾸기 (${g.t[u.team].sw}/3)</span>${canSw ? '' : `<span class="why">${switchWhy(g, u)}</span>`}</button>`;
   if (i.pass) h += `<button class="sk util span2" data-act="pass"><span class="n">차례 넘기기</span><span class="d">할 수 있는 행동이 없어</span></button>`;
   h += '</div>';
@@ -260,10 +263,11 @@ function resolveAction(a) { const r = S.resolve; S.resolve = null; if (r) r(a); 
 
 async function finishSkill(entry, tref) {
   const g = S.g, i = S.cur, u = g.u[i.uid], sk = entry.sk, tu = tref && tref.uid ? g.u[tref.uid] : null; const extra = {};
-  if (sk.choices) for (const ch of sk.choices(g, u, tu)) { const v = await askChoice(ch); if (v === undefined) return; extra[ch.key] = v; }
-  let plus = null; if (sk.plus) { plus = await askPlus(u, entry); if (!plus) return; }
-  let plans = entry.plans; if (plus) plans = plans.filter(p => E.plusFits(u, p, plus)); let pay;
-  if (plans.length > 1) { pay = await askPay(u, plans, entry.tokens, `${sk.name} — 어떤 에너지를 낼까?`); if (!pay) return; } else pay = plans[0];
+  if (sk.choices) for (let guard = 0; guard < 8; guard++) { const ch = (sk.choices(g, u, tu, extra) || []).find(c => !(c.key in extra)); if (!ch) break; const v = await askChoice(ch); if (v === undefined) return; extra[ch.key] = v; }
+  let tokens = entry.tokens, plans = entry.plans; if (sk.dynCost) { tokens = E.effCost(g, u, sk, tu); plans = E.payPlans(g, u, tokens); }
+  let plus = null; if (sk.plus) { plus = await askPlus(u, { ...entry, plans }); if (!plus) return; }
+  if (plus) plans = plans.filter(p => E.plusFits(u, p, plus)); let pay;
+  if (plans.length > 1) { pay = await askPay(u, plans, tokens, `${sk.name} — 어떤 에너지를 낼까?`); if (!pay) return; } else pay = plans[0];
   resolveAction({ type: 'skill', skill: sk.id, target: tref, pay, plus, extra });
 }
 async function askChoice(ch) {
@@ -337,6 +341,7 @@ async function play(evs) {
       case 'dodge': { const el = animOf(e.uid); el?.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-26px) rotate(-8deg)', offset: .4 }, { transform: 'translateX(0)' }], { duration: 380 }); await sleep(250); break; }
       case 'death': { const el = animOf(e.uid); sfx('death'); burst(e.uid, '#ffffff', true); if (el) await el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.4) translateY(30px)' }], { duration: T(650), fill: 'forwards' }).finished.catch(() => 0); const u = v.u[e.uid]; if (u) { u.dead = true; u.hp = 0; } const t = v.t[e.team]; const k = t.field.indexOf(e.uid); if (k >= 0) t.field[k] = null; renderField(); break; }
       case 'deploy': case 'switch': { const team = e.team; v.t[team].field = [...g.t[team].field]; v.t[team].bench = [...g.t[team].bench]; v.t[team].sw = g.t[team].sw; const ins = e.in || e.uid; for (const k of ['out', 'in', 'uid']) if (e[k] && v.u[e[k]]) { v.u[e[k]].e = E.clone(g.u[e[k]].e); v.u[e[k]].st = E.clone(g.u[e[k]].st); } renderField(); popUnit(ins); sfx('pick'); await sleep(420); break; }
+      case 'transform': { const u = v.u[e.uid], r = g.u[e.uid]; if (u && r) { Object.assign(u, { id: r.id, name: r.name, maxHp: r.maxHp, hp: r.hp, baseDef: r.baseDef }); renderField(); popUnit(e.uid); sfx('pick'); setBanner(`${r.name}(으)로 변화!`); await sleep(500); } break; }
       case 'trap': { v.t[e.team].trap = E.clone(g.t[e.team].trap); renderField(); break; }
       case 'field': { v.field = E.clone(g.field); renderField(); sfx('shield'); await sleep(350); break; }
       case 'turn': { if (e.auto === 'delay') { const u = g.u[e.uid]; setBanner(`${u.name} · 출전 준비 중…`); await sleep(350); } else if (e.auto === 'sched') { await sleep(150); } break; }

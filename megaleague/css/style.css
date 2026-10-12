@@ -75,6 +75,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pip.any{background:conic-gradient(var(--R) 0 33%,var(--W) 0 66%,var(--B) 0);}
 .pip.any::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#2a2050;opacity:.9}
 .pip.WorB{background:linear-gradient(90deg,var(--W) 50%,var(--B) 50%)}
+.pip.RorB{background:linear-gradient(90deg,var(--R) 50%,var(--B) 50%)}
 .pip.half{clip-path:inset(0 50% 0 0);margin-right:-7px;margin-left:0}
 .pip.empty{background:transparent;border:2px dashed rgba(255,255,255,.28)}
 .pip.sm{width:12px;height:12px;border-width:1.5px}
