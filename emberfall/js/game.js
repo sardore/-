@@ -140,7 +140,7 @@ export class Game {
     const R = this.lightR();
     if (f.village) { for (let k = 0; k < W * H; k++) if (vis[k]) { light[k] = Math.max(f.slight[k], 0.55); seen[k] = 1; f.explored[k] = 1; } }
     else {
-      shadowcast(f, pl.x, pl.y, Math.ceil(R + 1), (x, y, d2) => { const d = Math.sqrt(d2); if (d > R + 0.7) return; const v = Math.pow(Math.max(0, 1 - d / (R + 0.8)), 1.1); const k = I(x, y); if (v > light[k]) light[k] = v; });
+      shadowcast(f, pl.x, pl.y, Math.ceil(R + 1), (x, y, d2) => { const d = Math.sqrt(d2); if (d > R + 0.7) return; const v = Math.pow(Math.max(0, 1 - d / (R + 0.8)), 0.8); const k = I(x, y); if (v > light[k]) light[k] = v; });
       for (let k = 0; k < W * H; k++) { if (!vis[k]) continue; if (f.slight[k] > light[k]) light[k] = f.slight[k]; if (light[k] >= 0.1) { seen[k] = 1; f.explored[k] = 1; } }
       // 벽은 인접한 보이는 바닥이 있으면 보인다
       for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const k = I(x, y); if (!vis[k] || seen[k]) continue; if (f.t[k] === T.WALL || BLOCK.has(f.p[k])) for (const [dx, dy] of DIRS) if (seen[I(x + dx, y + dy)] && light[I(x + dx, y + dy)] >= 0.1) { seen[k] = 1; f.explored[k] = 1; if (light[k] < 0.1) light[k] = Math.max(light[k], light[I(x + dx, y + dy)] * 0.6); break; } }
@@ -416,7 +416,7 @@ export class Game {
     this.mode = 'dead'; this.dialog = null;
     const words = this.R.pick(cause === '어둠' ? DEATHWORDS.dark : DEATHWORDS.default);
     const keep = run.relics.filter(id => id !== 'feather'); const relic = keep.length ? this.R.pick(keep) : null;
-    meta.ash += run.ash; meta.dead.push({ name: he.name, trait: he.trait, depth: f.depth, depthName: floorName(f.depth), cause: ['어둠', '함정', '불길', '추락'].includes(cause) ? `${cause}에 쓰러졌다.` : `${cause}에게 쓰러졌다.`, words, gen: run.gen, ash: run.ash });
+    meta.ash += run.ash; meta.dead.push({ name: he.name, trait: he.trait, depth: f.depth, depthName: floorName(f.depth), cause: ['어둠', '함정', '불길', '추락', '포기'].includes(cause) ? `${cause}에 쓰러졌다.` : `${cause}에게 쓰러졌다.`, words, gen: run.gen, ash: run.ash });
     meta.remains[f.depth] = { name: he.name, relic, words, ash: 10 + Math.floor(run.ash * 0.3) };
     meta.gen++; meta.heirs = makeHeirs(this.R); meta.heirSel = 0; this.saveMeta(); this.clearRun();
     this.ev('death', { cause, name: he.name, depth: f.depth, ash: run.ash, kills: run.kills, words }); this.ev('sfx', { n: 'death' });

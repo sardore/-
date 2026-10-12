@@ -1,3 +1,8 @@
+## 🔥 [엠버폴 EMBERFALL — 지금 플레이](https://raw.githack.com/sardore/-/main/emberfall/index.html)
+
+재의 등불지기. 이동 하나로 전부 하는 스토리 로그라이트 — 고해상도 픽셀아트와 동적 조명, 구조물이 동굴에 녹아든 던전 5구역, 세대를 잇는 가문 연대기와 3가지 엔딩.
+[기획서](emberfall/DESIGN.md) · [소스](emberfall/)
+
 ## 🕳️ [구덩이 DELVE — 지금 플레이](https://raw.githack.com/sardore/-/main/delve/index.html)
 
 현대판 Angband. 픽셀아트 던전 40층, 지형대 5개, 직업 5개와 기술 43개, 5레벨마다 고르는 특성, 몬스터 112종. 죽으면 끝.
