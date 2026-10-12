@@ -25,7 +25,7 @@
 
 ## 🎮 [스윙바이 SWINGBY — 지금 플레이](https://raw.githack.com/sardore/-/main/swingby/index.html)
 
-원터치 궤도 로그라이트. 터치하면 궤도를 벗어나고, 다음 행성을 스치면 중력에 낚인다.
+원터치 궤도 로그라이트. 터치하면 궤도를 벗어나고, 다음 행성을 스치면 중력에 낚인다. 10행성마다 항성 보스(프록시마 → 시리우스 → … → TON 618)가 등장 — 박치기로 체력을 깎고, 예고된 운석·혜성·블랙홀·행성 붕괴를 피해라.
 [기획서](swingby/DESIGN.md) · [소스](swingby/index.html) · 예비 링크: [htmlpreview](https://htmlpreview.github.io/?https://github.com/sardore/-/blob/main/swingby/index.html)
 
 ---
