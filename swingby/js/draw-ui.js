@@ -24,7 +24,6 @@ export function drawHud() {
   } else txt('보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
   txt('최고 ' + G.best, OX + W - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
   if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W - 14, 50, 12, '#ff9d7a', 'right', 600);
-  if (G.hops === 0 && G.st === 'play' && G.ship.mode === 'orb' && !b) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치! 점선 방향으로 날아갑니다', VW / 2, VH - 70, 16, '#fff'); g.globalAlpha = 1; }
   if (b && b.state !== 'intro') drawBossHud();
 }
 
@@ -97,8 +96,6 @@ export function drawScreens() {
     g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
     txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900);
     txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600);
-    const y = VH * .22 + 84, L = [['터치', '궤도를 벗어나 직진'], ['스치기', '행성 옆을 지나면 포획'], ['서두르기', '한 바퀴 전에 떠나면 콤보'], ['주의', '궤도는 계속 좁아진다'], ['진화', '기체가 점점 크고 강해진다'], ['보스', '항성을 들이받아 쓰러뜨려라']];
-    L.forEach((l, i) => { txt(l[0], VW / 2 - 14, y + i * 30, 15, i === 5 ? '#ff9a8a' : '#ffe27a', 'right', 700); txt(l[1], VW / 2 + 2, y + i * 30, 15, 'rgba(255,255,255,.85)', 'left', 500); });
     g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
@@ -107,7 +104,7 @@ export function drawScreens() {
     txt('TON 618 격파', VW / 2, VH * .28, 44, '#ffe27a', 'center', 900); txt('우주의 끝에서 살아 돌아왔다', VW / 2, VH * .28 + 32, 15, 'rgba(255,255,255,.8)', 'center', 500);
     txt(String(G.score), VW / 2, VH * .28 + 112, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .28 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
-    if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 계속 항해 (더 강한 보스가 기다린다)', VW / 2, VH - 80, 16, '#fff'); }
+    if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 계속', VW / 2, VH - 80, 16, '#fff'); }
     g.globalAlpha = 1;
   }
   if (G.st === 'dead') {

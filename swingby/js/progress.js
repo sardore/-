@@ -32,7 +32,7 @@ export function evolveTo(d) {
   for (const k in d.delta) G.stats[k] = (G.stats[k] || 0) + d.delta[k];
   G.tier = d.t; G.shipId = d.id; G.st = 'play';
   const s = G.ship, col = 'hsl(' + d.L.h + ',95%,66%)'; s.evoT = 1;
-  G.banner = { t: 0, dur: 2.4, a: '기체 진화  Lv ' + d.t, b: d.n, c: col, sub: d.d + (d.dash ? ' · 길게 눌렀다 떼면 돌격' : '') };
+  G.banner = { t: 0, dur: 2.4, a: '기체 진화  Lv ' + d.t, b: d.n, c: col };
   flashScreen(.7, '#fff'); punch(.07); slowmo(.45, .9); shakeAdd(10); vibe([30, 30, 70]);
   burst(s.x, s.y, col, 40, 320); burst(s.x, s.y, '#fff', 22, 240); ringFx(s.x, s.y, '#fff', 6, 170, .7, 5); ringFx(s.x, s.y, col, 6, 120, .55, 3);
   thump(90, 30, .5, .4); noise(.6, .25, 6000, 200); [0, 1, 2, 3].forEach(i => setTimeout(() => beep(520 * Math.pow(1.26, i), .16, 'triangle', .1), i * 90));

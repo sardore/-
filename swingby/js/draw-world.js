@@ -7,6 +7,7 @@ import { drawShip, SHIP_SC } from './ship-art.js';
 import { capOf, o2max } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { txt } from './gfx.js';
+import { flameColor } from './heat.js';
 
 /** 행성마다 고정된 의사난수(0~1): 크레이터·균열 모양에 쓴다 */
 const hash = (p, i) => { const x = Math.sin(p.ph * 12.9898 + i * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -110,7 +111,7 @@ export function drawPlayer() {
   // 꼬리
   const tr = s.trail;
   for (let i = 2; i < tr.length; i += 2) {
-    g.strokeStyle = 'hsla(' + def.L.h + ',90%,72%,' + (i / tr.length * .7) + ')'; g.lineWidth = 1 + i / tr.length * (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8);
+    g.strokeStyle = 'hsla(' + def.L.h + ',90%,72%,' + (i / tr.length * .7) + ')'; g.lineWidth = 1 + i / tr.length * (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
   }
   // 돌격 잔상
@@ -119,10 +120,11 @@ export function drawPlayer() {
     g.shadowColor = 'hsl(' + def.L.h + ',100%,70%)'; g.shadowBlur = 8; drawShip(g, def, 1, T, 1); g.restore();
   }
   g.globalAlpha = 1;
+  if (s.heat) drawFlames(s, hx, hy);
   if (!(s.inv > 0 && Math.floor(T * 20) % 2)) {
     const em = 1 + .9 * s.evoT * s.evoT, jit = s.charging ? s.charge * 1.6 : 0;
     g.save(); g.translate(s.x + (jit ? (Math.random() - .5) * jit * 2 : 0), s.y + (jit ? (Math.random() - .5) * jit * 2 : 0)); g.rotate(Math.atan2(hy, hx));
-    g.shadowColor = 'hsl(' + def.L.h + ',100%,75%)'; g.shadowBlur = (s.mode === 'free' ? 20 : 12) + s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0);
+    g.shadowColor = 'hsl(' + def.L.h + ',100%,75%)'; g.shadowBlur = (s.mode === 'free' ? 20 : 12) + s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6;
     drawShip(g, def, s.mode === 'free' ? 1 : s.charging ? .3 + .7 * s.charge : .3, T, em); g.restore();
   }
   if (s.charging) drawChargeRing(s, def);
@@ -132,6 +134,23 @@ export function drawPlayer() {
     g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(s.x - 16, s.y + 16, 32, 3);
     g.fillStyle = f < .3 ? '#ff6a6a' : '#b8a8ff'; g.fillRect(s.x - 16, s.y + 16, 32 * f, 3);
   }
+}
+
+/** 열기: 기체 뒤로 기체색 불꽃 혀가 일렁인다. 단계가 오를수록 길고 많아진다 */
+function drawFlames(s, hx, hy) {
+  const h = s.heat, T = G.T, n = 2 + h;
+  g.save(); g.translate(s.x, s.y); g.rotate(Math.atan2(-hy, -hx)); // +x 방향이 뒤쪽
+  g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    const f = n === 1 ? 0 : i / (n - 1) - .5, fl = .75 + .25 * Math.sin(T * 26 + i * 2.1), L = (16 + h * 11) * fl * (1 - Math.abs(f) * .7), wd = 4 + h * .9 - Math.abs(f) * 3;
+    const gr = g.createLinearGradient(4, 0, 4 + L, f * 14);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(.25, flameColor(72)); gr.addColorStop(.7, flameColor(52)); gr.addColorStop(1, 'hsla(' + SHIPS[G.shipId].L.h + ',100%,45%,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(3, -wd); g.quadraticCurveTo(4 + L * .5, f * 12 - wd * .6, 4 + L, f * 16); g.quadraticCurveTo(4 + L * .5, f * 12 + wd * .6, 3, wd); g.closePath(); g.fill();
+  }
+  const ag = g.createRadialGradient(0, 0, 2, 0, 0, 22 + h * 5);
+  ag.addColorStop(0, 'hsla(' + SHIPS[G.shipId].L.h + ',100%,65%,' + (.25 + h * .07) + ')'); ag.addColorStop(1, 'hsla(' + SHIPS[G.shipId].L.h + ',100%,55%,0)');
+  g.fillStyle = ag; g.beginPath(); g.arc(0, 0, 22 + h * 5, 0, TAU); g.fill();
+  g.restore();
 }
 
 /** 차지: 기체 쪽으로 오므라드는 링, 가득 차면 맥동 */

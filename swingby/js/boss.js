@@ -1,14 +1,16 @@
 /* 항성 보스전: 아레나 구성, 턴제 예고·공격 패턴, 존(zone) 판정, 피격·박치기, 격파와 진행 */
 import { G, V } from './state.js';
 import { W, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
-import { BOSSES, STAGES, ATK } from './data.js';
+import { BOSSES, STAGES, ATK, BIOMES } from './data.js';
 import { spd, capOf, shipR, ramMul, bossO2 } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, popText, addScore } from './fx.js';
 import { mkPlanet, scheduleFork } from './world.js';
 import { die } from './player.js';
 import { afterBoss } from './progress.js';
+import { heatReset, heatRam, heatMul, flameColor } from './heat.js';
 
+const SWAY_FROM = 1, SWAY_Y = 26;   // 보스가 움직이기 시작하는 스테이지(0부터)와 위아래 흔들림 폭
 export const aliveP = () => G.planets.filter(p => !p.dead);
 
 /* ---------- 시작: 아레나 ---------- */
@@ -20,12 +22,12 @@ export function startBoss() {
   G.arenaCam = P.y - V.VH + 110;
   const by = G.arenaCam + (V.VH < 760 ? 150 : 178) + d.R * .6;
   G.stars = []; G.holes = [];
-  const list = buildArena(P, by, d.R);
+  const list = buildArena(P, by, d.R, stage >= SWAY_FROM ? SWAY_Y : 0);
   P.seen = true; list.sort((a, b) => b.y - a.y); G.planets = list;
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
   const hp = Math.round(d.hp * (1 + .6 * loop));
   G.boss = {
-    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: W / 2, y: by,
+    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: W / 2, y: by, hx: W / 2, hy: by, mt: 0, mv: 1,
     idle: 0, cast: 0, st: 0, state: 'intro', flash: 0, sq: 0, q: [], turn: 0, phase: 0, hitT: 0, last: '', ph: rnd(0, TAU)
   };
   G.bo2max = G.bo2 = bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
@@ -34,8 +36,8 @@ export function startBoss() {
 }
 
 /** 보스로 향하는 직선을 가로막지 않는 행성 배치를 찾는다 */
-function buildArena(P, by, bossR) {
-  const yMin = by + bossR + 50, yMax = P.y + (V.VH < 760 ? 18 : -60);
+function buildArena(P, by, bossR, sway) {
+  const yMin = by + bossR + 50 + sway, yMax = P.y + (V.VH < 760 ? 18 : -60);
   const clear = (p, L) => { // p→보스 선분 근처에 다른 행성이 없어야 한다
     const ax = p.x, ay = p.y, vx = W / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
     for (const q of L) {
@@ -52,7 +54,7 @@ function buildArena(P, by, bossR) {
       const x = rnd(58, W - 58), y = rnd(yMin, Math.max(yMin + 10, yMax));
       if (!L.every(q => Math.hypot(q.x - x, q.y - y) > 118)) continue;
       const gas = L.length === 3, q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : 'n');
-      q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 78 : rnd(54, 64)); q.hue = gas ? 36 : rnd(190, 320); q.seen = true; L.push(q);
+      q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 78 : rnd(54, 64)); q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
     }
     if (L.length >= 4 && L.every(q => clear(q, L))) { list = L; break; }
     if (att === 79) list = L;
@@ -77,7 +79,7 @@ function mkTele(k) {
     o.zs.sort((u, v) => u.x - v.x);
   } else if (k === 'beam') {
     const tg = G.ship.mode === 'orb' && Math.random() < .5 ? G.ship.p : pickOf(al.length ? al : G.planets);
-    o.a = clamp(Math.atan2(tg.y - b.y, tg.x - b.x) + rnd(-.08, .08), .55, PI - .55); o.half = .3; o.len = 950;
+    o.tx = tg.x; o.ty = tg.y; o.jit = rnd(-.08, .08); o.half = .3; o.len = 950; o.a = beamAngle(o, b);
   } else if (k === 'jet') { o.as = [PI / 2 - .82, PI / 2 + .82]; o.half = .24; o.len = 950; }
   else if (k === 'flare') o.r = b.hr + 150 + (b.phase > 0 ? 28 : 0);
   else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60, W - 60); o.y = rnd(ymin + 20, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60)) break; } }
@@ -85,6 +87,9 @@ function mkTele(k) {
   else if (k === 'wind') { o.dir = Math.random() < .5 ? -1 : 1; o.t = 1; }
   return o;
 }
+/** 빔은 보스가 움직여도 목표를 계속 겨눈다 */
+const beamAngle = (o, b) => clamp(Math.atan2(o.ty - b.y, o.tx - b.x) + o.jit, .55, PI - .55);
+
 /** 직전 턴에 한 번 더 강하게 알리는 링 */
 function telePing(a) {
   const c = ATK[a.k].c, b = G.boss;
@@ -135,9 +140,9 @@ function execAttack(a) {
   switch (a.k) {
     case 'meteor': a.zs.forEach((z, i) => zone({ kind: 'meteor', shape: 'c', x: z.x, y: z.y, r: z.r, delay: i * .2, fuse: .95, blast: .3, col: c, pow })); break;
     case 'comet': a.zs.forEach((z, i) => zone({ kind: 'comet', shape: 'c', x: z.x, y: z.y, r: z.r, delay: i * .15, fuse: .62, blast: .22, fade: .6, col: c, pow })); break;
-    case 'beam': zone({ kind: 'beam', shape: 'w', x: b.x, y: b.y, a: a.a, half: a.half, len: a.len, fuse: 1.05, blast: .9, col: c, pow }); break;
-    case 'jet': for (const an of a.as) zone({ kind: 'jet', shape: 'w', x: b.x, y: b.y, a: an, half: a.half, len: a.len, fuse: 1.15, blast: 1, col: c, pow }); break;
-    case 'flare': zone({ kind: 'flare', shape: 'c', x: b.x, y: b.y, r: a.r, fuse: 1.05, blast: .4, fade: 1, col: c, pow }); break;
+    case 'beam': zone({ kind: 'beam', shape: 'w', anchor: true, x: b.x, y: b.y, a: a.a, half: a.half, len: a.len, fuse: 1.05, blast: .9, col: c, pow }); break;
+    case 'jet': for (const an of a.as) zone({ kind: 'jet', shape: 'w', anchor: true, x: b.x, y: b.y, a: an, half: a.half, len: a.len, fuse: 1.15, blast: 1, col: c, pow }); break;
+    case 'flare': zone({ kind: 'flare', shape: 'c', anchor: true, x: b.x, y: b.y, r: a.r, fuse: 1.05, blast: .4, fade: 1, col: c, pow }); break;
     case 'hole': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: 3, r: 16, t: 0, born: 0, pow }); beep(150, .4, 'sawtooth', .12); break;
     case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: 2 }); noise(1.2, .12, 1800, 300); break;
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
@@ -181,7 +186,7 @@ function hurtZone(h, s) {
 export function hurt(x, y, pow = 1) {
   const s = G.ship, b = G.boss; if (s.inv > 0 || G.st !== 'play' || !b) return;
   const dm = b.d.atk * pow * (1 + .15 * b.loop);
-  s.inv = 1.3; G.bo2 -= dm; G.bcombo = 0; G.combo = 0; s.charging = false;
+  s.inv = 1.3; G.bo2 -= dm; G.bcombo = 0; G.combo = 0; s.charging = false; heatReset();
   G.shake = 15; hitstop(.1); flashScreen(.5, '#ff4040'); punch(.06); vibe(70);
   burst(s.x, s.y, '#ff6a6a', 22, 260); sparks(s.x, s.y, '#fff', 12, 320, Math.atan2(s.y - y, s.x - x), .8); ringFx(s.x, s.y, '#ff6a6a', 6, 60, .35, 3);
   thump(140, 35, .3, .4, 'sawtooth'); noise(.3, .3, 5000, 300);
@@ -197,13 +202,14 @@ export function ram() {
   const b = G.boss, s = G.ship;
   const nx0 = s.x - b.x, ny0 = s.y - b.y, L = Math.hypot(nx0, ny0) || 1, nx = nx0 / L, ny = ny0 / L;
   const dashing = s.boost > 1.15, dashMul = dashing ? 1 + .6 * (s.boost - 1) : 1;
-  const dmg = Math.round(26 * ramMul() * (1 + .12 * Math.min(G.bcombo, 6)) * dashMul * (.9 + Math.random() * .2));
+  const dmg = Math.round(26 * ramMul() * (1 + .12 * Math.min(G.bcombo, 6)) * dashMul * heatRam() * (.9 + Math.random() * .2));
   b.hp -= dmg; b.flash = .18; b.sq = 1; b.hitT = .5; s.ramT = .35; s.hitF = true;
   const dot = s.vx * nx + s.vy * ny; let vx = s.vx - 2 * dot * nx, vy = s.vy - 2 * dot * ny;
-  const m = Math.hypot(vx, vy) || 1, v = Math.max(spd() * .75, m * .85);
+  const m = Math.hypot(vx, vy) || 1, v = Math.max(spd() * .75 * heatMul(), m * .85);
   s.vx = vx / m * v; s.vy = vy / m * v; s.x = b.x + nx * (b.hr + shipR() + 5); s.y = b.y + ny * (b.hr + shipR() + 5);
   const col = 'hsl(' + b.d.hue + ',100%,70%)', ang = Math.atan2(ny, nx);
   hitstop(.09 + Math.min(dmg, 40) / 700 + (dashing ? .04 : 0)); shakeAdd(11 + dmg * .12 + (dashing ? 5 : 0)); punch(.05 + (dashing ? .03 : 0)); flashScreen(.28, '#fff'); vibe(35);
+  if (s.heat) sparks(s.x, s.y, flameColor(66), 8 + s.heat * 4, 420, ang, 1.3);
   sparks(s.x, s.y, '#fff', 16, 480, ang, .9); sparks(s.x, s.y, col, 14, 380, ang, 1.2); burst(b.x + nx * b.hr, b.y + ny * b.hr, col, 18, 240);
   ringFx(b.x + nx * b.hr, b.y + ny * b.hr, '#fff', 4, 70, .35, 4); ringFx(b.x, b.y, col, b.hr, b.hr + 60, .5, 3);
   thump(190, 38, .3, .42); noise(.22, .3, 6000, 300); beep(820 + Math.min(G.bcombo, 6) * 60, .05, 'square', .07);
@@ -212,7 +218,7 @@ export function ram() {
   const phases = b.d.kind === 'quasar' ? [.66, .33] : [.5];
   if (b.phase < phases.length && b.hp <= b.max * phases[b.phase] && b.hp > 0) {
     b.phase++;
-    G.banner = { t: 0, dur: 2, a: b.d.kind === 'quasar' && b.phase === 2 ? '최종 형태' : '분노!', b: b.d.n, c: '#ff6a6a', sub: '공격이 늘어난다' };
+    G.banner = { t: 0, dur: 2, a: b.d.kind === 'quasar' && b.phase === 2 ? '최종 형태' : '분노!', b: b.d.n, c: '#ff6a6a' };
     G.shake = 18; flashScreen(.5, '#ff6a6a'); thump(60, 25, 1, .4); noise(1, .3, 1500, 80);
     if (b.q.length < b.d.q + b.phase) queueAttack();
   }
@@ -254,6 +260,7 @@ export function updateBoss(dt) {
     if (b.st > 2.6) finishBoss();
     return;
   }
+  moveBoss(dt, b);
   if (b.cast > 0) {
     b.cast = Math.max(0, b.cast - dt);
     if (Math.random() < dt * 70) { const an = rnd(0, TAU), r = b.R * rnd(2, 3); G.parts.push({ x: b.x + Math.cos(an) * r, y: b.y + Math.sin(an) * r, vx: -Math.cos(an) * r * 2.6, vy: -Math.sin(an) * r * 2.6, t: 0, l: .4, c: G.castO ? G.castO.c : '#fff', s: 3 }); }
@@ -268,6 +275,18 @@ export function updateBoss(dt) {
     }
   }
   G.haz = G.haz.filter(h => !h.dead);
+}
+/** 2스테이지부터 보스가 아레나 안을 천천히 떠다닌다. 보스 위치에서 뻗는 공격(빔·제트·플레어)이 나가는 동안은 멈춰 선다 */
+function moveBoss(dt, b) {
+  if (b.stage < SWAY_FROM) return;
+  const planted = G.haz.some(h => h.anchor && !h.dead && h.t < h.delay + h.fuse + h.blast);
+  b.mv += ((planted ? 0 : 1) - b.mv) * Math.min(1, dt * 5);
+  b.mt += dt * b.mv;
+  const k = b.stage - SWAY_FROM, ease = clamp(b.mt / 2, 0, 1);
+  const ax = Math.min(W / 2 - b.hr - 26, 55 + 22 * k) * ease, ay = Math.min(SWAY_Y, 14 + 4 * k) * ease;
+  b.x = b.hx + ax * Math.sin(b.mt * (.45 + .05 * k) + b.ph);
+  b.y = b.hy + ay * (.5 + .5 * Math.sin(b.mt * (.8 + .07 * k)));    // 위로는 HUD, 아래로는 행성이 있어 아래쪽으로만 흔들린다
+  for (const a of b.q) if (a.k === 'beam') a.a = beamAngle(a, b);
 }
 function updateZone(h, dt, b, s) {
   const t0 = h.delay, t1 = t0 + h.fuse, t2 = t1 + h.blast;

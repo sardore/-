@@ -30,7 +30,7 @@ const shipHsl = d => 'hsl(' + d.L.h + ',90%,68%)';
 function drawEvo() {
   const { top, rects } = pickLayout(), cur = SHIPS[G.shipId], cx = V.VW / 2;
   txt('기체 진화', cx, top + 20, 22, '#fff', 'center', 900);
-  txt('Lv ' + G.tier + ' ' + cur.n + '  →  Lv ' + (G.tier + 1) + (G.tier === 1 ? '  ·  비상 추진기 장착' : ''), cx, top + 42, 13, 'rgba(255,226,122,.9)', 'center', 700);
+  txt('Lv ' + G.tier + ' ' + cur.n + '  →  Lv ' + (G.tier + 1) , cx, top + 42, 13, 'rgba(255,226,122,.9)', 'center', 700);
   g.save(); g.translate(cx - 118, top + 104); g.shadowColor = shipHsl(cur); g.shadowBlur = 18; drawShip(g, cur, .6, G.T, cur.t === 1 ? 2.2 : 2.25 / SHIP_SC[cur.t]); g.restore();
   drawRadar(cx + 78, top + 100, 36, [{ stats: G.stats, color: shipHsl(cur), fill: .22 }], { labels: true, fs: 10 });
   txt('현재 기체', cx - 118, top + 140, 11, 'rgba(255,255,255,.5)', 'center', 600);

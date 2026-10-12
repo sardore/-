@@ -63,11 +63,13 @@ export const ATK = {
  * dec: 궤도 붕괴 속도 배율 (n 일반 · r 적색왜성 · g 가스행성 · a 소행성 · m 거대 암석행성) */
 export const PLANET_DEC = { n: 1, r: 2.2, g: .5, a: 1.7, m: .08 };
 
-/* ---------- 바이옴: 갈림길 이후 다음 보스까지의 행성 스타일 ---------- */
+/* ---------- 바이옴: 갈림길 이후 다음 보스까지의 행성 스타일과 배경 ----------
+ * sc 점수 배율 · ph 일반 행성 색상(hue) 범위
+ * look: sky 하늘 위/아래 색 · haze 구름 색(h,s,l) · cl 구름 세기 · dust 먼지(색, 크기, 떠오르는 속도) · vig 가장자리 어둠/색(색, 세기) */
 export const BIOMES = {
-  normal:  { n: '일반',      c: '#9fb4ff', hue: 230, sc: 1 },
-  belt:    { n: '소행성대',  c: '#e0a878', hue: 28,  sc: 1.25 },
-  nebula:  { n: '가스 성운', c: '#b68aff', hue: 268, sc: .8 },
-  redzone: { n: '적색 지대', c: '#ff7a6a', hue: 4,   sc: 1.4 },
-  void:    { n: '공허대',    c: '#8a8aff', hue: 248, sc: 1.5 }
+  normal:  { n: '일반',      c: '#9fb4ff', hue: 230, sc: 1,    ph: [190, 320], look: { sky: ['#070818', '#0c0a1f'], haze: [230, 60, 45], cl: .05, dust: ['#cfd8ff', 1, 0],    vig: ['#000000', 0] } },
+  belt:    { n: '소행성대',  c: '#e0a878', hue: 28,  sc: 1.25, ph: [18, 48],   look: { sky: ['#1c1006', '#3a230e'], haze: [30, 75, 46],  cl: .13, dust: ['#f0c690', 1.9, -1], vig: ['#4a2400', .4] } },
+  nebula:  { n: '가스 성운', c: '#b68aff', hue: 268, sc: .8,   ph: [265, 325], look: { sky: ['#16063c', '#34105a'], haze: [305, 85, 52], cl: .3,  dust: ['#ecd0ff', 1.1, 1],  vig: ['#7a28b8', .35] } },
+  redzone: { n: '적색 지대', c: '#ff7a6a', hue: 4,   sc: 1.4,  ph: [-14, 22],  look: { sky: ['#2c0507', '#4c0b10'], haze: [4, 92, 48],   cl: .24, dust: ['#ffb070', 1.5, 3],  vig: ['#ff2a14', .38] } },
+  void:    { n: '공허대',    c: '#8a8aff', hue: 248, sc: 1.5,  ph: [222, 268], look: { sky: ['#010105', '#05031a'], haze: [255, 70, 32], cl: .14, dust: ['#8a8aff', .8, 0],   vig: ['#000000', .65] } }
 };

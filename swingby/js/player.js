@@ -8,6 +8,7 @@ import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
 import { shatter, enterFork, commitRoute } from './world.js';
 import { bossTurn, ram } from './boss.js';
+import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 
 export const CHARGE_T = .8;      // 차지가 가득 차는 시간(초)
 const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오는 시간 상수
@@ -58,7 +59,7 @@ export function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, p.R + 12); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
-  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0;
+  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; heatReset();
   p.pulse = 1; p.sq = .55;
   ringFx(p.x, p.y, 'hsla(' + p.hue + ',90%,75%,.9)', p.R, capOf(p) * .9, .5, 3);
   thump(170, 60, .16, .2);
@@ -92,7 +93,7 @@ export function die(why) {
     for (const p of G.planets) { if (p.dead) continue; if (p.y < G.camY + V.VH - 70 && p.y > G.camY + 50 && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
     bp = bp || s.p;
     let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
-    s.mode = 'orb'; s.p = bp; s.r = capOf(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false;
+    s.mode = 'orb'; s.p = bp; s.r = capOf(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
     s.x = bp.x + Math.cos(a) * s.r; s.y = bp.y + Math.sin(a) * s.r;
     if (!G.boss && !bp.seen) { bp.seen = true; G.hops++; }
     if (G.boss) G.bo2 = Math.max(G.bo2, 6);
@@ -127,9 +128,10 @@ export function stepShip(dt) {
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
     if (s.boost > 1.2) dashTrail(dt);
-    if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; beep(170, .05); sparks(6, s.y, '#bfeaff', 7, 220, 0, .8); shakeAdd(2.5); }
-    if (s.x > W - 6 && s.vx > 0) { s.x = W - 6; s.vx *= -1; beep(170, .05); sparks(W - 6, s.y, '#bfeaff', 7, 220, PI, .8); shakeAdd(2.5); }
-    if (boss && s.y < G.camY + 10 && s.vy < 0) { s.y = G.camY + 10; s.vy *= -1; }
+    if (bf) emitFlames(dt);
+    if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; wallHit(6, s.y, 0, bf); }
+    if (s.x > W - 6 && s.vx > 0) { s.x = W - 6; s.vx *= -1; wallHit(W - 6, s.y, PI, bf); }
+    if (boss && s.y < G.camY + 10 && s.vy < 0) { s.y = G.camY + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     for (const p of G.planets) {
@@ -157,14 +159,20 @@ export function stepShip(dt) {
   return true;
 }
 
+/** 옆 벽에 튕김. 보스전에서는 열기가 쌓인다 */
+function wallHit(x, y, dir, bf) {
+  if (bf) { heatUp(x, y, dir); return; }
+  beep(170, .05); sparks(x, y, '#bfeaff', 7, 220, dir, .8); shakeAdd(2.5);
+}
+
 /** 비행 속도 보정: 돌격 속도는 서서히 원래대로, 보스전에서는 바람·블랙홀로 과속하지 않게 */
 function regulateSpeed(dt, base) {
   const s = G.ship, m = Math.hypot(s.vx, s.vy);
   if (s.boost > 1.003) {
     s.boost = 1 + (s.boost - 1) * Math.exp(-dt / DASH_TAU);
-    if (m > 0) { const k = base * s.boost / m; s.vx *= k; s.vy *= k; }
+    if (m > 0) { const k = base * s.boost * heatMul() / m; s.vx *= k; s.vy *= k; }
   } else if (G.boss) {
-    const mx = base * 1.25; if (m > mx) { s.vx *= mx / m; s.vy *= mx / m; }
+    const mx = base * 1.25 * heatMul(); if (m > mx) { s.vx *= mx / m; s.vy *= mx / m; }
   }
 }
 function dashTrail(dt) {

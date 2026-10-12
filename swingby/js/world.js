@@ -3,7 +3,6 @@ import { G } from './state.js';
 import { W, rnd, clamp, shuffle, TAU } from './util.js';
 import { BIOMES, STAGES } from './data.js';
 import { viewTop } from './camera.js';
-import { toast } from './fx.js';
 
 /* ---------- 행성 ---------- */
 /** 바이옴에 맞는 행성 종류를 고른다. 처음 몇 개는 항상 평범한 행성 */
@@ -29,7 +28,7 @@ export function mkPlanet(i, x, y, biome = 'normal', forceType) {
     default: R = rnd(22, 30); ring = 76;
   }
   if (t !== 'm') ring -= Math.min(i * .45, 16) * (t === 'a' ? .5 : 1);
-  const hue = t === 'r' ? 8 : t === 'g' ? (biome === 'nebula' ? rnd(255, 300) : 36) : t === 'a' ? rnd(18, 42) : t === 'm' ? 24 : rnd(190, 320);
+  const hue = t === 'r' ? 8 : t === 'g' ? (biome === 'nebula' ? rnd(255, 300) : 36) : t === 'a' ? rnd(18, 42) : t === 'm' ? 24 : rnd(...BIOMES[biome].ph);
   return { i, x, y, R, cap: R + ring, t, hue, seen: false, ph: rnd(0, TAU), dead: false, re: 0, born: 1, sq: 0, pulse: 0, brittle: t === 'a' };
 }
 
@@ -120,8 +119,7 @@ function buildFork(prev) {
 export function enterFork() {
   const F = G.fork; if (!F || F.state !== 'hub') return;
   F.active = true;
-  G.banner = { t: 0, dur: 1.8, a: '갈림길', b: '항로를 고르자', c: '#ffd9a8', sub: '' };
-  toast('양쪽 항로가 열렸다', '#ffd9a8');
+  G.banner = { t: 0, dur: 1.8, a: 'FORK', b: '갈림길', c: '#ffd9a8' };
 }
 
 /** 항로의 첫 행성에 닿았다: 반대편을 치우고 바이옴·다음 보스를 확정한다 */
