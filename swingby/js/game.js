@@ -30,7 +30,7 @@ function cull() {
 function musicWant() {
   if (G.st === 'dead') return { mode: 'off', bi: 0, phase: 0 };
   const b = G.boss;
-  if (b) return b.state === 'dying' ? { mode: 'off', bi: 0, phase: 0 } : { mode: 'boss', bi: b.bi, phase: b.phase };
+  if (b) return b.state === 'dying' ? { mode: 'off', bi: 0, phase: 0 } : { mode: 'boss', bi: b.stage, phase: b.phase };
   return { mode: 'calm', bi: 0, phase: 0 };
 }
 

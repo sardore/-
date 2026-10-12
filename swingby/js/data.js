@@ -36,10 +36,15 @@ export const BOSSES = [
   { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'giant', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['meteor', 'hole', 'collapse', 'flare'], q: 2, line: '황소의 눈, 늙은 거성' },
   { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 520,  atk: 8.5,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'flare', 'hole', 'meteor'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
   { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'comet', 'hole', 'collapse', 'beam', 'wind', 'flare'], q: 3, line: '곧 폭발할 초거성' },
-  { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 10.5, hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['hole', 'beam', 'jet', 'collapse', 'meteor', 'comet', 'flare', 'wind'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
+  { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['hole', 'beam', 'jet', 'collapse', 'meteor', 'comet', 'flare', 'wind'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
+,
+  { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'giant', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['meteor', 'wind', 'beam', 'collapse'], q: 2, line: '목동자리의 주황빛 거성' },
+  { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['comet', 'beam', 'hole', 'flare'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
+  { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'spike', spk: 6, col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['beam', 'comet', 'flare', 'hole', 'jet'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
+  { n: '에타 카리나',      e: 'ETA CARINAE',      R: 60, hp: 640,  atk: 10,   hue: 14,  kind: 'eta',   col: ['#ffd8b0', '#ff7a30', '#701808'], pat: ['meteor', 'flare', 'collapse', 'hole', 'wind', 'beam'], q: 3, line: '언제 터질지 모르는 극대거성' }
 ];
-/** 스테이지마다 만날 수 있는 보스(BOSSES 인덱스). 2개면 갈림길에서 고른다 */
-export const STAGES = [[0], [1, 2], [3, 4], [5], [6]];
+/** 스테이지마다 만날 수 있는 보스(BOSSES 인덱스). 2개면 갈림길에서 고른다. 한 판에 7스테이지 = 7종을 만난다 */
+export const STAGES = [[0], [1, 2], [7, 8], [3, 4], [9], [5, 10], [6]];
 export const LAST_STAGE = STAGES.length - 1;
 
 /* 공격 패턴: n 짧은 이름, c 색, cast 시전 문구, pow 피해 배율(보스 atk 에 곱한다) */

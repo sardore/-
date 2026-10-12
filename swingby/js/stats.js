@@ -17,6 +17,6 @@ export const o2max = () => 2.6 * pct('o2');
 export const magRange = () => 20 * pct('mag');
 export const ramMul = () => pct('ram');
 /** 보스전 산소 풀: 스테이지·루프에 따라 늘고 산소 능력치가 절반만큼 반영된다 */
-export const bossO2 = (stage, loop) => (24 + 7 * stage + 2 * loop) * (1 + (G.stats.o2 - 100) / 200);
+export const bossO2 = (stage, loop) => (24 + 6 * stage + 2 * loop) * (1 + (G.stats.o2 - 100) / 200);
 /** 점수 배율: 능력치 × 바이옴(보스전 중에는 바이옴 무시) */
 export const scoreMul = () => pct('mult') * (G.boss ? 1 : BIOMES[G.biome].sc);
