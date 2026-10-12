@@ -1,3 +1,8 @@
+## 🐉 [메가리그 MEGA LEAGUE — 지금 플레이](https://raw.githack.com/sardore/-/main/megaleague/index.html)
+
+덱 4장으로 싸우는 2 대 2 에너지 배틀. 기존 메가리그의 캐릭터 스펙만 가져와 엔진·그래픽·화면을 전부 새로 만들었다. 스티커풍 일러스트 캐릭터, 에너지 결제·상태이상·예약 공격·그랜드필드.
+[기획서](megaleague/DESIGN.md) · [소스](megaleague/)
+
 ## 🔥 [엠버폴 EMBERFALL — 지금 플레이](https://raw.githack.com/sardore/-/main/emberfall/index.html)
 
 재의 등불지기. 이동 하나로 전부 하는 스토리 로그라이트 — 고해상도 픽셀아트와 동적 조명, 구조물이 동굴에 녹아든 던전 5구역, 세대를 잇는 가문 연대기와 3가지 엔딩.

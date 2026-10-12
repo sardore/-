@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#171031">
+<title>메가리그 · 2 vs 2</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <section id="s-title" class="screen">
+    <div class="title-bg"></div>
+    <div class="title-art" id="title-art"></div>
+    <div class="title-main">
+      <div class="logo"><span>MEGA</span><b>LEAGUE</b></div>
+      <p class="sub">4장 덱 · 2 vs 2 · 에너지 배틀</p>
+      <div class="title-btns">
+        <button class="btn big gold" id="t-play">대전 시작</button>
+        <button class="btn" id="t-dex">캐릭터 도감</button>
+        <button class="btn ghost" id="t-rules">게임 방법</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-deck" class="screen hidden">
+    <header class="bar"><button class="icon" id="d-back">←</button><h2 id="d-title">덱 구성</h2><span class="spacer"></span></header>
+    <div class="deckrow" id="deckrow"></div>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+    <footer class="foot" id="d-foot">
+      <button class="btn" id="d-rand">랜덤</button>
+      <label class="sel">AI <select id="d-ai"><option value="1">보통</option><option value="2" selected>강함</option><option value="4">매우 강함</option></select></label>
+      <button class="btn gold grow" id="d-go" disabled>대전 시작</button>
+    </footer>
+  </section>
+
+  <section id="s-battle" class="screen hidden">
+    <header class="topbar">
+      <button class="icon" id="b-menu">☰</button>
+      <div class="order" id="order"></div>
+      <button class="icon" id="b-log">📜</button>
+    </header>
+    <div class="arena" id="arena">
+      <div class="side enemy" data-team="A"><div class="bench" data-team="A"></div><div class="slots"><div class="slot" data-team="A" data-slot="0"></div><div class="slot" data-team="A" data-slot="1"></div></div></div>
+      <div class="mid"><div class="banner" id="banner"></div><div class="fieldchip" id="fieldchip"></div></div>
+      <div class="side player" data-team="P"><div class="slots"><div class="slot" data-team="P" data-slot="0"></div><div class="slot" data-team="P" data-slot="1"></div></div><div class="bench" data-team="P"></div></div>
+      <div class="fxlayer" id="fxlayer"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+    <aside class="logdrawer hidden" id="logdrawer"><div class="loghead"><b>전투 기록</b><button class="icon" id="log-close">✕</button></div><div class="loglist" id="loglist"></div></aside>
+  </section>
+</div>
+<div id="modal-root"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
