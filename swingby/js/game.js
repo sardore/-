@@ -3,7 +3,7 @@ import { G } from './state.js';
 import { viewBot, updateCamera } from './camera.js';
 import { stepShip } from './player.js';
 import { updateBoss } from './boss.js';
-import { gen, animatePlanets } from './world.js';
+import { gen, animatePlanets, growField } from './world.js';
 import { checkProgress } from './progress.js';
 import { updateFx } from './fx.js';
 import { musicSet } from './audio.js';
@@ -14,7 +14,7 @@ export function update(dt) {
   if (G.boss) updateBoss(dt);
   if (!stepShip(dt)) return;
   updateCamera(dt);
-  if (!G.boss) { gen(); cull(); }
+  if (!G.boss) { growField(dt); gen(); cull(); }
   if (!G.boss && G.ship.mode === 'orb') checkProgress();
 }
 

@@ -1,6 +1,6 @@
 /* 플레이어 기체: 입력 동작(발사·차지), 포획, 사망, 매 프레임의 이동·충돌 */
 import { G, V } from './state.js';
-import { W, PI, TAU, rnd, save } from './util.js';
+import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
 import { spd, capOf, decRate, o2max, magRange, shipR, curDef } from './stats.js';
 import { viewBot } from './camera.js';
@@ -130,8 +130,8 @@ export function stepShip(dt) {
     if (s.boost > 1.2) dashTrail(dt);
     if (bf) emitFlames(dt);
     if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; wallHit(6, s.y, 0, bf); }
-    if (s.x > W - 6 && s.vx > 0) { s.x = W - 6; s.vx *= -1; wallHit(W - 6, s.y, PI, bf); }
-    if (boss && s.y < G.camY + 10 && s.vy < 0) { s.y = G.camY + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
+    if (s.x > G.w - 6 && s.vx > 0) { s.x = G.w - 6; s.vx *= -1; wallHit(G.w - 6, s.y, PI, bf); }
+    if (boss && s.y < G.arenaCam + 10 && s.vy < 0) { s.y = G.arenaCam + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     for (const p of G.planets) {

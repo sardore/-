@@ -1,6 +1,6 @@
 /* 보스·공격 예고·존·블랙홀·항성풍 그리기 (논리 상태는 읽기만 한다) */
 import { G, V, g } from './state.js';
-import { W, PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
+import { W0, PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
 import { ATK } from './data.js';
 import { txt } from './gfx.js';
 
@@ -77,13 +77,13 @@ export function drawTele(a,b){
   const warn=(x,y,sz)=>{if(!urgent)return;g.globalAlpha=.5+.5*pul;txt('⚠',x,y+sz*.35,sz,c,'center',800);g.globalAlpha=1};
   if(a.k==='meteor'){a.zs.forEach((z,i)=>{shape(circ(z.x,z.y,z.r));warn(z.x,z.y-2,26);cnt(z.x,z.y+z.r*.62,11)})}
   else if(a.k==='comet'){a.zs.forEach(z=>shape(circ(z.x,z.y,z.r)));const z=a.zs[0];if(z)cnt(z.x,z.y,11)}
-  else if(a.k==='beam'){shape(wedge(a.a,a.half,a.len));const d=150;cnt(clamp(b.x+Math.cos(a.a)*d,20,W-20),b.y+Math.sin(a.a)*d)}
+  else if(a.k==='beam'){shape(wedge(a.a,a.half,a.len));const d=150;cnt(clamp(b.x+Math.cos(a.a)*d,20,W0-20),b.y+Math.sin(a.a)*d)}
   else if(a.k==='jet'){for(const an of a.as)shape(wedge(an,a.half,a.len));cnt(b.x,b.y+b.hr+48)}
-  else if(a.k==='flare'){shape(circ(b.x,b.y,a.r));cnt(clamp(b.x+Math.cos(.9)*a.r,22,W-22),b.y+Math.sin(.9)*a.r)}
+  else if(a.k==='flare'){shape(circ(b.x,b.y,a.r));cnt(clamp(b.x+Math.cos(.9)*a.r,22,W0-22),b.y+Math.sin(.9)*a.r)}
   else if(a.k==='hole'){g.strokeStyle=hexA(c,.3);g.lineWidth=1.5;g.setLineDash([4,8]);g.beginPath();g.arc(a.x,a.y,150*gr,0,TAU);g.stroke();g.setLineDash([]);shape(circ(a.x,a.y,34));g.fillStyle='#000';g.beginPath();g.arc(a.x,a.y,10*gr,0,TAU);g.fill();cnt(a.x,a.y-48,11)}
   else if(a.k==='collapse'){const p=a.p;shape(circ(p.x,p.y,a.r));g.strokeStyle=hexA(c,.9*(.5+.5*pul));g.lineWidth=3;g.beginPath();g.arc(p.x,p.y,p.R+6,0,TAU);g.stroke();
     g.strokeStyle=hexA('#ffffff',.6);g.lineWidth=1.5;g.beginPath();g.moveTo(p.x-p.R*.5,p.y-p.R*.8);g.lineTo(p.x+2,p.y-2);g.lineTo(p.x-p.R*.2,p.y+p.R*.6);g.moveTo(p.x+2,p.y-2);g.lineTo(p.x+p.R*.7,p.y+p.R*.3);g.stroke();cnt(p.x,p.y-p.R-18,11)}
-  else if(a.k==='wind'){const x=a.dir>0?0:W;const gg=g.createLinearGradient(x,0,x+a.dir*120,0);gg.addColorStop(0,hexA(c,.22));gg.addColorStop(1,hexA(c,0));g.fillStyle=gg;g.fillRect(a.dir>0?0:W-120,G.camY,120,V.VH);txt(a.dir>0?'▶▶▶':'◀◀◀',a.dir>0?40:W-40,G.camY+V.VH*.5,24,c,'center',800);cnt(a.dir>0?40:W-40,G.camY+V.VH*.5-30)}
+  else if(a.k==='wind'){const x=a.dir>0?0:W0;const gg=g.createLinearGradient(x,0,x+a.dir*120,0);gg.addColorStop(0,hexA(c,.22));gg.addColorStop(1,hexA(c,0));g.fillStyle=gg;g.fillRect(a.dir>0?0:W0-120,G.camY,120,V.VH);txt(a.dir>0?'▶▶▶':'◀◀◀',a.dir>0?40:W0-40,G.camY+V.VH*.5,24,c,'center',800);cnt(a.dir>0?40:W0-40,G.camY+V.VH*.5-30)}
   g.globalAlpha=1;
 }
 function zonePath(h,k){
@@ -140,6 +140,6 @@ export function drawHaz(h){
       g.strokeStyle='rgba(220,170,255,.9)';g.lineWidth=2;for(let k=0;k<5;k++){g.beginPath();g.arc(h.x,h.y,rr0+4+k*6,G.T*3+k*1.3,G.T*3+k*1.3+1.4);g.stroke()}
       g.fillStyle='#000';g.beginPath();g.arc(h.x,h.y,rr0,0,TAU);g.fill();
       txt(String(h.turns),h.x,h.y-rr0-12,14,'#d8b0ff','center',800);break}
-    case 'wind':{const x=h.dir>0?0:W;const gg=g.createLinearGradient(x,0,x+h.dir*100,0);gg.addColorStop(0,'rgba(138,255,200,.2)');gg.addColorStop(1,'rgba(138,255,200,0)');g.fillStyle=gg;g.fillRect(h.dir>0?0:W-100,G.camY,100,V.VH);break}
+    case 'wind':{const x=h.dir>0?0:W0;const gg=g.createLinearGradient(x,0,x+h.dir*100,0);gg.addColorStop(0,'rgba(138,255,200,.2)');gg.addColorStop(1,'rgba(138,255,200,0)');g.fillStyle=gg;g.fillRect(h.dir>0?0:W0-100,G.camY,100,V.VH);break}
   }
 }

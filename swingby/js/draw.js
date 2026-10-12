@@ -1,6 +1,6 @@
 /* 한 프레임 그리기 순서: 배경 → 월드(줌/흔들림 적용) → 화면 효과 → UI → 오버레이 */
 import { G, V, g } from './state.js';
-import { W, rnd } from './util.js';
+import { rnd } from './util.js';
 import { drawBackdrop } from './draw-backdrop.js';
 import { BIOMES } from './data.js';
 import { viewTop, viewBot } from './camera.js';
@@ -16,9 +16,9 @@ export function draw() {
   g.save();
   const sx = G.shake > 0 ? rnd(-G.shake, G.shake) : 0, sy = G.shake > 0 ? rnd(-G.shake, G.shake) : 0;
   const z = (1 + G.zoom) * G.vz;
-  g.translate(VW / 2, VH / 2); g.scale(z, z); g.translate(-VW / 2 + OX + sx, -VH / 2 - G.camY + sy);
+  g.translate(VW / 2, VH / 2); g.scale(z, z); g.translate(-G.w / 2 + sx, -VH / 2 - G.camY + sy);
   const wc = G.biome === 'normal' ? 'rgba(125,211,255,.16)' : BIOMES[G.biome].c + '55'; g.strokeStyle = wc; g.lineWidth = G.biome === 'normal' ? 2 : 3;
-  g.beginPath(); g.moveTo(0, viewTop() - 20); g.lineTo(0, viewBot() + 20); g.moveTo(W, viewTop() - 20); g.lineTo(W, viewBot() + 20); g.stroke();
+  g.beginPath(); g.moveTo(0, viewTop() - 20); g.lineTo(0, viewBot() + 20); g.moveTo(G.w, viewTop() - 20); g.lineTo(G.w, viewBot() + 20); g.stroke();
   drawWorld();
   const b = G.boss;
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }

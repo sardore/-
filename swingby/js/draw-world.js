@@ -1,10 +1,10 @@
 /* 월드 요소 그리기: 행성(종류별)·블랙홀·별·갈림길 안내·기체와 차지 연출 */
 import { G, g } from './state.js';
-import { W, PI, TAU, clamp, easeOut } from './util.js';
+import { PI, TAU, clamp, easeOut } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { capOf, o2max } from './stats.js';
+import { capOf, o2max, fs } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { txt } from './gfx.js';
 import { flameColor } from './heat.js';
@@ -89,7 +89,7 @@ function drawForkGuides() {
     const br = F.branches[side], bm = BIOMES[br.biome], [p0, p1] = br.planets;
     g.setLineDash([6, 9]); g.lineDashOffset = -T * 20; g.strokeStyle = bm.c; g.globalAlpha = .35; g.lineWidth = 2;
     g.beginPath(); g.moveTo(F.hub.x, F.hub.y); g.lineTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
-    const y = p1.y - p1.R - 46, x = clamp((p0.x + p1.x) / 2, 76, W - 76);
+    const y = p1.y - p1.R - 46, x = clamp((p0.x + p1.x) / 2, 76, G.w - 76);
     txt(bm.n, x, y, 21, bm.c, 'center', 900);
     txt('▶ ' + BOSSES[br.bi].n, x, y + 21, 15, 'rgba(255,255,255,.85)', 'center', 700);
   }
@@ -117,18 +117,18 @@ export function drawPlayer() {
   // 돌격 잔상
   for (const gh of s.ghosts) {
     g.save(); g.translate(gh.x, gh.y); g.rotate(gh.a); g.globalAlpha = (1 - gh.t / .32) * .4;
-    g.shadowColor = 'hsl(' + def.L.h + ',100%,70%)'; g.shadowBlur = 8; drawShip(g, def, 1, T, 1); g.restore();
+    g.shadowColor = 'hsl(' + def.L.h + ',100%,70%)'; g.shadowBlur = 8; drawShip(g, def, 1, T, fs()); g.restore();
   }
   g.globalAlpha = 1;
   if (s.heat) drawFlames(s, hx, hy);
   if (!(s.inv > 0 && Math.floor(T * 20) % 2)) {
-    const em = 1 + .9 * s.evoT * s.evoT, jit = s.charging ? s.charge * 1.6 : 0;
+    const em = (1 + .9 * s.evoT * s.evoT) * fs(), jit = s.charging ? s.charge * 1.6 : 0;
     g.save(); g.translate(s.x + (jit ? (Math.random() - .5) * jit * 2 : 0), s.y + (jit ? (Math.random() - .5) * jit * 2 : 0)); g.rotate(Math.atan2(hy, hx));
     g.shadowColor = 'hsl(' + def.L.h + ',100%,75%)'; g.shadowBlur = (s.mode === 'free' ? 20 : 12) + s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6;
     drawShip(g, def, s.mode === 'free' ? 1 : s.charging ? .3 + .7 * s.charge : .3, T, em); g.restore();
   }
   if (s.charging) drawChargeRing(s, def);
-  if (G.stats.shield > 0) { g.strokeStyle = 'rgba(255,157,122,.8)'; g.lineWidth = 1.5; g.beginPath(); g.arc(s.x, s.y, 8 + 8 * SHIP_SC[G.tier], 0, TAU); g.stroke(); }
+  if (G.stats.shield > 0) { g.strokeStyle = 'rgba(255,157,122,.8)'; g.lineWidth = 1.5; g.beginPath(); g.arc(s.x, s.y, (8 + 8 * SHIP_SC[G.tier]) * fs(), 0, TAU); g.stroke(); }
   if (s.mode === 'free' && G.st === 'play' && !G.boss) { // 비행 중 남은 산소
     const f = clamp(1 - s.air / o2max(), 0, 1);
     g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(s.x - 16, s.y + 16, 32, 3);
@@ -176,7 +176,7 @@ export function drawFx() {
   }
   for (const t of G.texts) {
     const pop = t.t < .12 ? 1 + (1 - t.t / .12) * .5 : 1;
-    g.globalAlpha = 1 - t.t * t.t; txt(t.s, clamp(t.x, 60, W - 60), t.y - t.t * 42, (t.sz || 15) * pop, t.c);
+    g.globalAlpha = 1 - t.t * t.t; txt(t.s, clamp(t.x, 60, G.w - 60), t.y - t.t * 42, (t.sz || 15) * pop, t.c);
   }
   g.globalAlpha = 1;
 }

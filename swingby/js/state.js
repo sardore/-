@@ -1,6 +1,6 @@
 /* 캔버스, 화면 크기, 그리고 게임 전체가 공유하는 단일 상태 G.
  * 다른 모듈은 상태를 직접 갖지 않고 모두 G 를 읽고 쓴다. */
-import { W, PI, load } from './util.js';
+import { W0, PI, load } from './util.js';
 import { baseStats, STAGES } from './data.js';
 
 export const cv = document.getElementById('c');
@@ -12,7 +12,7 @@ export function resize() {
   V.DPR = Math.min(window.devicePixelRatio || 1, 2);
   const cw = window.innerWidth, ch = window.innerHeight;
   cv.width = Math.round(cw * V.DPR); cv.height = Math.round(ch * V.DPR);
-  V.S = Math.min(cw / W, ch / 620); V.VW = cw / V.S; V.VH = ch / V.S; V.OX = (V.VW - W) / 2;
+  V.S = Math.min(cw / W0, ch / 620); V.VW = cw / V.S; V.VH = ch / V.S; V.OX = (V.VW - W0) / 2;
 }
 
 /** 한 판(run) 동안만 유지되는 값. newRun() 이 새 객체로 통째로 교체한다 */
@@ -20,8 +20,8 @@ function freshRun() {
   return {
     st: 'title',                       // title · play · pick · clear · dead
     // 월드
-    planets: [], stars: [], holes: [], genY: 0, genI: 0, biome: 'normal', fork: null,
-    camY: 0, vz: 1,                    // vz: 카메라 줌(갈림길에서 시야가 넓어진다)
+    planets: [], stars: [], holes: [], genY: 0, genI: 0, biome: 'normal', fork: null, pat: { k: '', left: 0, side: 1, gap: false },
+    w: W0, camY: 0, vz: 1,             // w: 지금 필드 폭(진행할수록 넓어짐) · vz: 카메라 줌(필드가 넓어지면 줌아웃, 갈림길에서 더)
     // 진행
     score: 0, combo: 0, maxCombo: 0, hops: 0, kills: 0, cleared: false, newBest: false,
     nextOffer: Infinity, nextBoss: 10, nextBi: STAGES[0][0], starChain: 0,
@@ -48,7 +48,7 @@ export const G = Object.assign(freshRun(), {
 export function newRun() {
   Object.assign(G, freshRun());
   const p = {
-    i: 0, x: W / 2, y: 0, R: 26, cap: 110, t: 'n', hue: 205, seen: true, ph: 0,
+    i: 0, x: W0 / 2, y: 0, R: 26, cap: 110, t: 'n', hue: 205, seen: true, ph: 0,
     dead: false, re: 0, born: 1, sq: 0, pulse: 0
   };
   G.planets.push(p); G.genI = 1; G.genY = 0; G.camY = -V.VH * .64;

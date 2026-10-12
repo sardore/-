@@ -1,6 +1,6 @@
 /* 화면 위 UI: HUD, 보스 체력·산소, 배너·시전 문구·토스트, 타이틀/사망/클리어 화면, 음소거 버튼 */
 import { G, V, g } from './state.js';
-import { W, TAU, FONT, clamp, easeOut } from './util.js';
+import { W0, TAU, FONT, clamp, easeOut } from './util.js';
 import { STAGES, ATK, BIOMES } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
@@ -22,8 +22,8 @@ export function drawHud() {
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);
     if (G.biome !== 'normal') { const bm = BIOMES[G.biome]; g.fillStyle = bm.c; g.beginPath(); g.arc(OX + 18, 82, 4, 0, TAU); g.fill(); txt(bm.n, OX + 28, 86, 12, bm.c, 'left', 700); }
   } else txt('보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
-  txt('최고 ' + G.best, OX + W - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
-  if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W - 14, 50, 12, '#ff9d7a', 'right', 600);
+  txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
+  if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W0 - 14, 50, 12, '#ff9d7a', 'right', 600);
   if (b && b.state !== 'intro') drawBossHud();
 }
 

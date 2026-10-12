@@ -1,5 +1,5 @@
 /* 공용 상수·수학·저장 도우미 */
-export const W = 420;                       // 월드 폭(고정). 화면은 이 폭에 맞춰 확대/축소된다
+export const W0 = 420;                      // 기본 월드 폭. 화면(HUD)·보스 아레나는 항상 이 폭이고, 항해 중에는 G.w 로 점점 넓어진다
 export const PI = Math.PI, TAU = Math.PI * 2;
 export const FONT = 'system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
 

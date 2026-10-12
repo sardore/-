@@ -1,6 +1,6 @@
 /* 항성 보스전: 아레나 구성, 턴제 예고·공격 패턴, 존(zone) 판정, 피격·박치기, 격파와 진행 */
 import { G, V } from './state.js';
-import { W, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
+import { W0, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
 import { BOSSES, STAGES, ATK, BIOMES } from './data.js';
 import { spd, capOf, shipR, ramMul, bossO2 } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
@@ -17,6 +17,8 @@ export const aliveP = () => G.planets.filter(p => !p.dead);
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
   const s = G.ship, P = s.p, bi = G.nextBi, d0 = BOSSES[bi];
+  // 아레나는 항상 기본 폭: 필드를 기본 폭으로 되돌리고, 지금 서 있는 행성도 그 안으로 옮긴다
+  P.x = clamp(P.x * W0 / G.w, 70, W0 - 70); G.w = W0; G.vz = 1;
   const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
   const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks });
   G.arenaCam = P.y - V.VH + 110;
@@ -27,7 +29,7 @@ export function startBoss() {
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
   const hp = Math.round(d.hp * (1 + .6 * loop));
   G.boss = {
-    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: W / 2, y: by, hx: W / 2, hy: by, mt: 0, mv: 1,
+    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: W0 / 2, y: by, hx: W0 / 2, hy: by, mt: 0, mv: 1,
     idle: 0, cast: 0, st: 0, state: 'intro', flash: 0, sq: 0, q: [], turn: 0, phase: 0, hitT: 0, last: '', ph: rnd(0, TAU)
   };
   G.bo2max = G.bo2 = bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
@@ -39,7 +41,7 @@ export function startBoss() {
 function buildArena(P, by, bossR, sway) {
   const yMin = by + bossR + 50 + sway, yMax = P.y + (V.VH < 760 ? 18 : -60);
   const clear = (p, L) => { // p→보스 선분 근처에 다른 행성이 없어야 한다
-    const ax = p.x, ay = p.y, vx = W / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
+    const ax = p.x, ay = p.y, vx = W0 / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
     for (const q of L) {
       if (q === p) continue;
       const t = ((q.x - ax) * vx + (q.y - ay) * vy) / len2; if (t <= 0 || t >= 1) continue;
@@ -51,7 +53,7 @@ function buildArena(P, by, bossR, sway) {
   for (let att = 0; att < 80; att++) {
     const L = [P];
     for (let tries = 0; tries < 300 && L.length < 5 + (att % 2); tries++) {
-      const x = rnd(58, W - 58), y = rnd(yMin, Math.max(yMin + 10, yMax));
+      const x = rnd(58, W0 - 58), y = rnd(yMin, Math.max(yMin + 10, yMax));
       if (!L.every(q => Math.hypot(q.x - x, q.y - y) > 118)) continue;
       const gas = L.length === 3, q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : 'n');
       q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 78 : rnd(54, 64)); q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
@@ -69,20 +71,20 @@ function mkTele(k) {
     const n = 2 + (b.phase > 0 ? 1 : 0) + (Math.random() < .4 ? 1 : 0), r = 58 + (b.phase > 0 ? 6 : 0); o.zs = [];
     for (let tr = 0; o.zs.length < n && tr < 80; tr++) {
       let x, y;
-      if (Math.random() < .65 && al.length) { const p = pickOf(al); x = p.x + rnd(-24, 24); y = p.y + rnd(-24, 24); } else { x = rnd(50, W - 50); y = rnd(ymin, ymax); }
-      x = clamp(x, r * .6, W - r * .6); y = clamp(y, ymin, ymax);
+      if (Math.random() < .65 && al.length) { const p = pickOf(al); x = p.x + rnd(-24, 24); y = p.y + rnd(-24, 24); } else { x = rnd(50, W0 - 50); y = rnd(ymin, ymax); }
+      x = clamp(x, r * .6, W0 - r * .6); y = clamp(y, ymin, ymax);
       if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 1.5)) o.zs.push({ x, y, r });
     }
   } else if (k === 'comet') {
     const n = 5 + (b.phase > 0 ? 2 : 0), r = 34; o.zs = [];
-    for (let tr = 0; o.zs.length < n && tr < 120; tr++) { const x = rnd(36, W - 36), y = rnd(ymin, ymax); if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 2.1)) o.zs.push({ x, y, r }); }
+    for (let tr = 0; o.zs.length < n && tr < 120; tr++) { const x = rnd(36, W0 - 36), y = rnd(ymin, ymax); if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 2.1)) o.zs.push({ x, y, r }); }
     o.zs.sort((u, v) => u.x - v.x);
   } else if (k === 'beam') {
     const tg = G.ship.mode === 'orb' && Math.random() < .5 ? G.ship.p : pickOf(al.length ? al : G.planets);
     o.tx = tg.x; o.ty = tg.y; o.jit = rnd(-.08, .08); o.half = .3; o.len = 950; o.a = beamAngle(o, b);
   } else if (k === 'jet') { o.as = [PI / 2 - .82, PI / 2 + .82]; o.half = .24; o.len = 950; }
   else if (k === 'flare') o.r = b.hr + 150 + (b.phase > 0 ? 28 : 0);
-  else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60, W - 60); o.y = rnd(ymin + 20, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60)) break; } }
+  else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60, W0 - 60); o.y = rnd(ymin + 20, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60)) break; } }
   else if (k === 'collapse') { o.p = pickOf(al); o.t = 3; o.r = o.p.R + 78; }
   else if (k === 'wind') { o.dir = Math.random() < .5 ? -1 : 1; o.t = 1; }
   return o;
@@ -271,7 +273,7 @@ export function updateBoss(dt) {
     else if (h.k === 'hole') updateHole(h, dt, s);
     else if (h.k === 'wind') {
       if (s.mode === 'free') s.vx += h.dir * 230 * dt;
-      if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : W + 5, y: G.camY + rnd(0, V.VH), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });
+      if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : W0 + 5, y: G.camY + rnd(0, V.VH), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });
     }
   }
   G.haz = G.haz.filter(h => !h.dead);
@@ -283,7 +285,7 @@ function moveBoss(dt, b) {
   b.mv += ((planted ? 0 : 1) - b.mv) * Math.min(1, dt * 5);
   b.mt += dt * b.mv;
   const k = b.stage - SWAY_FROM, ease = clamp(b.mt / 2, 0, 1);
-  const ax = Math.min(W / 2 - b.hr - 26, 55 + 22 * k) * ease, ay = Math.min(SWAY_Y, 14 + 4 * k) * ease;
+  const ax = Math.min(W0 / 2 - b.hr - 26, 55 + 22 * k) * ease, ay = Math.min(SWAY_Y, 14 + 4 * k) * ease;
   b.x = b.hx + ax * Math.sin(b.mt * (.45 + .05 * k) + b.ph);
   b.y = b.hy + ay * (.5 + .5 * Math.sin(b.mt * (.8 + .07 * k)));    // 위로는 HUD, 아래로는 행성이 있어 아래쪽으로만 흔들린다
   for (const a of b.q) if (a.k === 'beam') a.a = beamAngle(a, b);
