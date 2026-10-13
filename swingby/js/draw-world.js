@@ -8,6 +8,7 @@ import { viewTop, viewBot } from './camera.js';
 import { txt, GFX } from './gfx.js';
 import { flameColor } from './heat.js';
 import { cfg, shipDef, shipOpts, glowOf, heatHsl, hslOf } from './cos.js';
+import { drawCharge } from './charge-fx.js';
 import { drawMonster } from './draw-monster.js';
 import { drawPlanet } from './draw-planet.js';
 import { drawPlanet2 } from './draw-planet2.js';
@@ -122,15 +123,8 @@ function drawFlames(s, hx, hy) {
   g.restore();
 }
 
-/** 차지: 기체 쪽으로 오므라드는 링, 가득 차면 맥동 */
-function drawChargeRing(s, def) {
-  const c = s.charge, col = 'hsl(' + def.L.h + ',100%,' + (70 + 25 * c) + '%)', T = G.T;
-  const r = 46 - 30 * c;
-  g.strokeStyle = col; g.lineWidth = 1.5 + 2.5 * c; g.globalAlpha = .35 + .5 * c;
-  g.beginPath(); g.arc(s.x, s.y, r, 0, TAU); g.stroke();
-  g.globalAlpha = 1; g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.beginPath(); g.arc(s.x, s.y, r + 5, -PI / 2, -PI / 2 + TAU * c); g.stroke();
-  if (c >= 1) { g.globalAlpha = .5 + .5 * Math.sin(T * 24); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(s.x, s.y, 24 + 3 * Math.sin(T * 24), 0, TAU); g.stroke(); g.globalAlpha = 1; }
-}
+/** 차지: 기체 둘레의 충전 링 (디자인·색은 상점에서 바꾼다 — charge-fx.js) */
+const drawChargeRing = (s, def) => drawCharge(s.x, s.y, cfg(), def.L.h, s.charge, G.T);
 
 /** 파티클·링·떠오르는 글자 */
 export function drawFx() {

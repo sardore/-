@@ -12,6 +12,7 @@ import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, titleMenuHi
 export function pointerDown(px, py, key) {
   audioUnlock();
   const x = px / V.S, y = py / V.S;
+  if (G.st === 'play') G.held = true;
   if (!key && x > V.VW - MUTE_HIT && y > V.VH - MUTE_HIT) { toggleMute(); return; }
   switch (G.st) {
     case 'title': if (!key && titleMenuHit(x, y) === 'shop') openShop(); else { G.st = 'play'; beep(520, .1); } break;
@@ -28,6 +29,7 @@ export function pointerDown(px, py, key) {
 }
 /** 뗐을 때. 상점에서는 탭·드래그 판정에 위치가 필요하다 (위치가 없으면 취소) */
 export function pointerUp(px, py) {
+  G.held = false;
   if (G.st === 'shop') shopUp(px == null ? null : px / V.S, py == null ? null : py / V.S);
   else pressEnd();
 }

@@ -13,7 +13,7 @@ export function cfgFor(eq, shipId) {
   return {
     paint: v('paint'), glow: v('glow') ? v('glow').lv : 0, glowcol: v('glowcol') || (dc && dc.glowcol) || null,
     flame: v('flame') || (dc && dc.flame) || null, trail: v('trail') || (dc && dc.trail) || null,
-    land: v('land'), heat: v('heat'), starfx: v('starfx'), decor: dc
+    land: v('land'), charge: v('charge'), chargecol: v('chargecol'), heat: v('heat'), starfx: v('starfx'), decor: dc
   };
 }
 

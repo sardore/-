@@ -31,7 +31,7 @@ function freshRun() {
     ship: null, stats: baseStats(), tier: 1, shipId: 'base',
     // 선택 화면
     cards: [], evoOpts: [], pickMode: 'card', pickTitle: '', pickT: 0,
-    deadT: 0, deadWhy: '', clearT: 0,
+    deadT: 0, deadWhy: '', clearT: 0, held: false,   // 지금 누르고 있는가(비행 중에 미리 눌러 두면 궤도에 안착할 때부터 충전)
     // 보스전
     boss: null, haz: [], bo2: 0, bo2max: 0, arenaTop: 0, arenaBot: 0, bcombo: 0,
     // 연출

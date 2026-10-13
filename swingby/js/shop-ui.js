@@ -11,6 +11,7 @@ import { cfgFor, paintDef, shipOpts, glowOf, hslOf, emitDecor } from './cos.js';
 import { DECOR } from './decor.js';
 import { drawTrail2, drawFxLayers2 } from './draw-fx2.js';
 import { drawAura } from './draw-world.js';
+import { drawCharge } from './charge-fx.js';
 import { stepParts } from './fx.js';
 import { startRun } from './progress.js';
 import { beep } from './audio.js';
@@ -156,6 +157,7 @@ function swatch(it, x, y) {
   const v = it.v || {};
   g.save();
   if (it.slot === 'glow') { g.shadowColor = '#9fd8ff'; g.shadowBlur = GLOW_BLUR[v.lv][1] * .8; g.fillStyle = '#e6f6ff'; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }
+  else if (it.slot === 'charge') { g.translate(x, y); g.scale(.36, .36); drawCharge(0, 0, { charge: v, chargecol: null }, 200, .75, G.T); }
   else if (it.ship) { g.translate(x, y); g.rotate(-.6); drawShip(g, SHIPS[it.ship], .8, G.T, .5, { art: DECOR[it.ship].art }); }
   else if (v.style) { g.strokeStyle = '#d8ecff'; g.lineWidth = 1.2; for (const [dx, dy] of v.style === 'dust' ? [[-7, 4], [1, -5], [8, 3]] : [[-8, 0], [-2, 0], [4, 0]]) { g.globalAlpha = v.style === 'ghost' ? .4 + (dx + 8) / 24 : 1; g.beginPath(); g.moveTo(x + dx - 3, y + dy); g.lineTo(x + dx + 3, y + dy); g.moveTo(x + dx, y + dy - 3); g.lineTo(x + dx, y + dy + 3); g.stroke(); } }
   else if (v.rb) { const gr = g.createLinearGradient(x - 11, y - 11, x + 11, y + 11); ['#ff6a6a', '#ffd24a', '#6aff9a', '#6ac8ff', '#c08aff'].forEach((c, i) => gr.addColorStop(i / 4, c)); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); }
@@ -210,6 +212,7 @@ function drawPreview(R) {
   if (gl.aura) drawAura(gl.col, T, 30);
   g.shadowColor = gl.col; g.shadowBlur = gl.blur; drawShip(g, def, 1, T, ps, o); g.restore();
   drawFxLayers2(P.fxr, P.parts);
+  if (sel && (sel.slot === 'charge' || sel.slot === 'chargecol')) drawCharge(x, y, c, def.L.h, Math.min(1, ((T * .8) % 1.5) / .8), T);   // 충전 링 상품: 충전이 반복해서 차오른다
   g.restore();
   txt('미리보기 · ' + SHIPS[id].n, R.x + 12, R.y + 20, 11, 'rgba(255,255,255,.5)', 'left', 600);
   if (sel && !sel.spec) txt(owned(sel) ? (equipped(sel) ? '장착중' : '보유') : '◆ ' + sel.price, R.x + R.w - 12, R.y + 20, 12, equipped(sel) ? '#7dffaa' : GOLD, 'right', 800);

@@ -12,6 +12,8 @@ export const SLOTS = [
   { k: 'flame',   tab: 'fx',   n: '엔진 불꽃',     note: '엔진이 뿜는 불꽃의 색' },
   { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리' },
   { k: 'land',    tab: 'fx',   n: '착지 링',       note: '행성에 붙을 때 번지는 링' },
+  { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '돌진을 충전할 때 기체 둘레에 그려지는 링의 모양' },
+  { k: 'chargecol', tab: 'fx', n: '충전 링 색',    note: '충전 링의 색. 기본은 기체 색' },
   { k: 'heat',    tab: 'fx',   n: '열기 불꽃',     note: '보스전에서 벽에 튕겨 쌓이는 불꽃' },
   { k: 'starfx',  tab: 'fx',   n: '별 파티클',     note: '별을 먹을 때 터지는 빛' },
   { k: 'paint',   tab: 'ship', n: '도색 (모든 기체)', note: '기체·꼬리·글로우의 기본 색을 바꾼다' }
@@ -25,6 +27,7 @@ const PAL = [ // 팔레트: [id, 이름, 색]
 const PRICES = {
   glowcol: [40, 50, 60, 60, 60, 60, 60, 1200],
   land:    [40, 50, 60, 60, 60, 60, 60, 900],
+  chargecol: [40, 50, 60, 60, 60, 60, 60, 900],
   starfx:  [50, 70, 70, 70, 70, 70, 70, 1000],
   flame:   [350, 400, 250, 250, 250, 300, 200, 1000],
   trail:   [300, 400, 250, 250, 250, 300, 250, 1200],
@@ -40,12 +43,17 @@ export const GLOW_BLUR = [[4, 6], [12, 20], [19, 32], [29, 48]];   // [평소, �
 [['약', 400, '예전 기본 글로우'], ['중', 900, '한층 더 환한 빛'], ['강', 1500, '맥동하는 후광까지']].forEach(([n, price, d], i) =>
   add({ id: 'glow' + (i + 1), tab: 'fx', slot: 'glow', n: '글로우 ' + n, d, price, v: { lv: i + 1 } }));
 
-for (const slot of ['glowcol', 'flame', 'trail', 'land', 'heat', 'starfx']) {
-  const names = { glowcol: '글로우', flame: '불꽃', trail: '꼬리', land: '착지 링', heat: '열기', starfx: '별빛' }[slot];
+for (const slot of ['glowcol', 'flame', 'trail', 'land', 'chargecol', 'heat', 'starfx']) {
+  const names = { glowcol: '글로우', flame: '불꽃', trail: '꼬리', land: '착지 링', chargecol: '충전 링', heat: '열기', starfx: '별빛' }[slot];
   PAL.forEach(([id, n, v], i) => add({ id: slot + '_' + id, tab: 'fx', slot, n: n + ' ' + names, d: v.rb ? '시간에 따라 색이 변한다' : '', price: PRICES[slot][i], v }));
 }
 add({ id: 'trail_dust', tab: 'fx', slot: 'trail', n: '별가루 꼬리', d: '반짝이는 별가루가 흩날린다', price: 1000, v: { style: 'dust' } });
 add({ id: 'trail_ghost', tab: 'fx', slot: 'trail', n: '잔상 분신', d: '비행 중 기체의 잔상이 겹겹이 남는다', price: 1500, v: { style: 'ghost' } });
+
+/* 충전 링 디자인: 그림은 charge-fx.js */
+[['hex', '육각 응축', '돌며 오므라드는 육각형', 600], ['clock', '시계 눈금', '눈금이 차례로 켜진다', 700], ['sonar', '소나 파문', '바깥에서 안으로 파문이 모인다', 800],
+  ['star', '별 문장', '돌며 모이는 오각별', 900], ['orbit', '위성 궤도', '점 여섯 개가 안쪽으로 감겨 든다', 900], ['rune', '룬 링', '반대로 도는 점선 이중 링', 1200], ['petals', '연꽃', '꽃잎이 오므라든다', 1200]]
+  .forEach(([id, n, d, price]) => add({ id: 'charge_' + id, tab: 'fx', slot: 'charge', n: '충전 링: ' + n, d, price, v: { style: id } }));
 
 /* 도색: 기체 색 한 가지 변경 (모든 기체 공용) */
 [['crimson', '진홍', 6, 40], ['amber', '호박', 30, 50], ['emerald', '에메랄드', 140, 60], ['amethyst', '자수정', 275, 60], ['pink', '분홍', 330, 50], ['gold', '황금빛', 46, 500]]
