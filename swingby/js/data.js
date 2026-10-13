@@ -34,7 +34,7 @@ export const BOSSES = [
   { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['collapse', 'flare', 'quake'], q: 2, line: '황소의 눈, 늙은 거성' },
   { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 520,  atk: 8.5,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'meteor', 'pulse'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
   { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'collapse', 'beam', 'flare', 'nova'], q: 3, line: '곧 폭발할 초거성' },
-  { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['beam', 'jet', 'collapse', 'meteor', 'flare', 'sing'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
+  { n: 'TON 618',          e: 'TON 618',          R: 80, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['beam', 'jet', 'collapse', 'meteor', 'flare', 'sing'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
 ,
   { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'swirl', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['beam', 'collapse', 'spiral'], q: 2, line: '목동자리의 주황빛 거성' },
   { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['beam', 'hole', 'twin'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
