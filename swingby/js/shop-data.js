@@ -82,4 +82,4 @@ SPEC_STATS.forEach(s => add({ id: 'sp_' + s.k, tab: 'spec', slot: 'spec', n: s.n
 add({ id: 'sp_shield', tab: 'spec', slot: 'spec', n: '비상 추진기 +1', d: '시작할 때 추진기 1개 (최대 1개)', spec: 'shield', c: '#ff9d7a' });
 
 /** 별 점수 중 별 조각으로 바뀌는 비율 */
-export const SHARD_RATE = .1;
+export const SHARD_RATE = .3;
