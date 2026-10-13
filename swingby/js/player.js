@@ -27,12 +27,14 @@ const canAct = () => G.st === 'play' && G.ship.mode === 'orb' && !(G.boss && G.b
 export function pressStart() {
   if (!canAct()) return;
   const s = G.ship; s.charging = true; s.charge = 0; s.chFull = false;
-  sweep(180, 900, chargeTime(), .07);
+  stopChargeSnd(); chSnd = sweep(180, 900, chargeTime(), .07) || null;
 }
+let chSnd = null;   // 지금 울리는 충전 소리를 끊는 함수
+function stopChargeSnd() { if (chSnd) { chSnd(); chSnd = null; } }
 /** 뗌: 차지 중이었다면 그 세기로 발사 */
 export function pressEnd() {
   const s = G.ship; if (!s || !s.charging) return;
-  const c = s.charge; s.charging = false; s.charge = 0;
+  const c = s.charge; s.charging = false; s.charge = 0; stopChargeSnd();
   if (canAct()) release(c);
 }
 
@@ -129,6 +131,7 @@ export function die(why) {
 /** 기체를 dt 만큼 움직이고 충돌·산소·별을 처리한다. 판이 끝났으면 false */
 export function stepShip(dt) {
   const s = G.ship, v = spd(), boss = G.boss, bf = boss && boss.state === 'fight';
+  if (chSnd && !(s.charging && s.mode === 'orb')) stopChargeSnd();   // 피격·보스 연출 등으로 충전이 풀렸으면 소리도 끈다
   if (s.inv > 0) s.inv -= dt; if (s.ramT > 0) s.ramT -= dt; if (s.grace > 0) s.grace -= dt;
   if (s.evoT > 0) s.evoT = Math.max(0, s.evoT - dt / 1.1);
   for (let i = s.ghosts.length - 1; i >= 0; i--) { s.ghosts[i].t += dt; if (s.ghosts[i].t > .32) s.ghosts.splice(i, 1); }

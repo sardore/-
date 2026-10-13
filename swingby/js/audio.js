@@ -47,6 +47,9 @@ export function sweep(f0, f1, d, vol, type) {
     o.type = type || 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + d);
     ga.gain.setValueAtTime(.001, t); ga.gain.linearRampToValueAtTime(vol || .1, t + d * .25); ga.gain.exponentialRampToValueAtTime(.001, t + d + .04);
     o.connect(ga); ga.connect(AC.destination); o.start(t); o.stop(t + d + .06);
+    return () => { // 도중에 끊는 함수 (짧게 줄여서 딱 소리가 나지 않게)
+      try { const n = AC.currentTime; ga.gain.cancelScheduledValues(n); ga.gain.setValueAtTime(Math.max(.001, ga.gain.value), n); ga.gain.linearRampToValueAtTime(.0001, n + .05); o.stop(n + .06); } catch (e) { /* 이미 끝남 */ }
+    };
   } catch (e) { /* 무시 */ }
 }
 function noiseBuf() {
