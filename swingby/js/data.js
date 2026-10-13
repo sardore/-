@@ -29,18 +29,18 @@ export const CARDS = [
  * kind: 그리는 방식, pat: 쓰는 패턴, q: 동시에 예고해 두는 공격 수, atk: 한 번 맞을 때 깎이는 산소(초) */
 export const BOSSES = [
   { n: '프록시마 센타우리', e: 'PROXIMA CENTAURI', R: 44, hp: 120,  atk: 6,    hue: 10,  kind: 'dwarf', col: ['#ffd9a8', '#ff7a3a', '#8a2208'], pat: ['flare', 'meteor'], q: 1, line: '가장 가까운 이웃 별' },
-  { n: '시리우스',         e: 'SIRIUS',           R: 44, hp: 170,  atk: 6.5,  hue: 205, kind: 'spike', col: ['#ffffff', '#9fd8ff', '#2a62b8'], pat: ['beam', 'comet', 'flare'], q: 2, line: '밤하늘에서 가장 밝은 별' },
-  { n: '베가',             e: 'VEGA',             R: 47, hp: 220,  atk: 6,    hue: 218, kind: 'ring',  col: ['#ffffff', '#b4c8ff', '#4660c8'], pat: ['comet', 'wind', 'collapse', 'beam'], q: 2, line: '빠르게 자전하는 푸른 별' },
-  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['meteor', 'hole', 'collapse', 'flare'], q: 2, line: '황소의 눈, 늙은 거성' },
-  { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 520,  atk: 8.5,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'flare', 'hole', 'meteor'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
-  { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'comet', 'hole', 'collapse', 'beam', 'wind', 'flare'], q: 3, line: '곧 폭발할 초거성' },
-  { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['hole', 'beam', 'jet', 'collapse', 'meteor', 'comet', 'flare', 'wind'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
+  { n: '시리우스',         e: 'SIRIUS',           R: 44, hp: 170,  atk: 6.5,  hue: 205, kind: 'spike', col: ['#ffffff', '#9fd8ff', '#2a62b8'], pat: ['beam', 'comet', 'cross'], q: 2, line: '밤하늘에서 가장 밝은 별' },
+  { n: '베가',             e: 'VEGA',             R: 47, hp: 220,  atk: 6,    hue: 218, kind: 'ring',  col: ['#ffffff', '#b4c8ff', '#4660c8'], pat: ['comet', 'collapse', 'spokes'], q: 2, line: '빠르게 자전하는 푸른 별' },
+  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['collapse', 'flare', 'quake'], q: 2, line: '황소의 눈, 늙은 거성' },
+  { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 520,  atk: 8.5,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'meteor', 'pulse'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
+  { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'collapse', 'beam', 'flare', 'nova'], q: 3, line: '곧 폭발할 초거성' },
+  { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['beam', 'jet', 'collapse', 'meteor', 'flare', 'sing'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
 ,
-  { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'swirl', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['meteor', 'wind', 'beam', 'collapse'], q: 2, line: '목동자리의 주황빛 거성' },
-  { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['comet', 'beam', 'hole', 'flare'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
-  { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'hex', col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['beam', 'comet', 'flare', 'hole', 'jet'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
-  { n: '에타 카리나',      e: 'ETA CARINAE',      R: 60, hp: 640,  atk: 10,   hue: 14,  kind: 'eta',   col: ['#ffd8b0', '#ff7a30', '#701808'], pat: ['meteor', 'flare', 'collapse', 'hole', 'wind', 'beam'], q: 3, line: '언제 터질지 모르는 극대거성' },
-  { n: '포식성 그롬',      e: 'GROM THE DEVOURER', R: 56, hp: 420,  atk: 8,    hue: 125, kind: 'devour', col: ['#d8ffb0', '#4fd84a', '#124a14'], pat: ['meteor', 'hole', 'beam', 'collapse', 'comet'], q: 2, line: '독 행성들의 왕, 닥치는 대로 삼킨다' }
+  { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'swirl', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['beam', 'collapse', 'spiral'], q: 2, line: '목동자리의 주황빛 거성' },
+  { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['beam', 'hole', 'twin'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
+  { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'hex', col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['comet', 'hole', 'jet', 'hex'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
+  { n: '에타 카리나',      e: 'ETA CARINAE',      R: 60, hp: 640,  atk: 10,   hue: 14,  kind: 'eta',   col: ['#ffd8b0', '#ff7a30', '#701808'], pat: ['collapse', 'hole', 'wind', 'beam', 'lobes'], q: 3, line: '언제 터질지 모르는 극대거성' },
+  { n: '포식성 그롬',      e: 'GROM THE DEVOURER', R: 56, hp: 420,  atk: 8,    hue: 125, kind: 'devour', col: ['#d8ffb0', '#4fd84a', '#124a14'], pat: ['meteor', 'hole', 'collapse', 'pool'], q: 2, line: '독 행성들의 왕, 닥치는 대로 삼킨다' }
 ];
 /** 스테이지마다 만날 수 있는 보스(BOSSES 인덱스). 2개면 갈림길에서 고른다. 한 판에 8스테이지 = 8종을 만난다.
  * 4번째(11)는 독 행성 지대의 도전 보스 — 갈림길 없이 지대를 지나 바로 만난다 */
@@ -60,7 +60,19 @@ export const ATK = {
   flare:    { n: '플레어',   c: '#ffe27a', cast: '플레어 폭발',    pow: 1.3 },
   hole:     { n: '블랙홀',   c: '#c88aff', cast: '흡수 블랙홀',    pow: .9, keep: 4 },
   collapse: { n: '행성 붕괴', c: '#ff7a6a', cast: '행성 붕괴',      pow: 1.1 },
-  wind:     { n: '항성풍',   c: '#8affc8', cast: '항성풍',         pow: 0, keep: 4 }
+  wind:     { n: '항성풍',   c: '#8affc8', cast: '항성풍',         pow: 0, keep: 4 },
+  // 고유 패턴: 2번째 보스부터 보스마다 하나씩
+  cross:    { n: '십자 섬광', c: '#9fe0ff', cast: '십자 섬광',      pow: 1.2 },   // 시리우스
+  spokes:   { n: '방사 광선', c: '#8fb0ff', cast: '방사 광선',      pow: 1.1 },   // 베가
+  spiral:   { n: '나선 폭발', c: '#ffc23a', cast: '나선 폭발',      pow: .9 },    // 아크투루스
+  twin:     { n: '쌍성 폭격', c: '#fff2a0', cast: '쌍성 폭격',      pow: 1.1 },   // 폴라리스
+  pool:     { n: '독 웅덩이', c: '#7dff7a', cast: '독 웅덩이',      pow: .8 },    // 포식성 그롬
+  quake:    { n: '지축 균열', c: '#ff9a3a', cast: '지축 균열',      pow: 1.1 },   // 알데바란
+  pulse:    { n: '맥동파',   c: '#ff5a4a', cast: '심장 맥동파',    pow: 1.2 },   // 안타레스
+  hex:      { n: '육각 결정', c: '#7fa8ff', cast: '육각 결정',      pow: 1.1 },   // 리겔
+  nova:     { n: '초신성',   c: '#ff7a2a', cast: '초신성 폭발',    pow: 1.5 },   // 베텔게우스
+  lobes:    { n: '쌍엽 분출', c: '#ff8a50', cast: '쌍엽 분출',      pow: 1.3 },   // 에타 카리나
+  sing:     { n: '특이점',   c: '#d070ff', cast: '특이점 붕괴',    pow: 1.2, keep: 5 }   // TON 618
 };
 
 /* ---------- 행성 종류 ----------

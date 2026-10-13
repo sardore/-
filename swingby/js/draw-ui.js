@@ -12,7 +12,8 @@ export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 
 export function drawHud() {
   const { VW, OX } = V, b = G.boss;
   if (G.st !== 'play' && G.st !== 'pick') return;
-  txt(String(G.score), VW / 2, 54, 40, '#fff', 'center', 800);
+  if (b) txt(String(G.score), OX + 14, 74, 20, '#fff', 'left', 800);   // 보스전: 점수를 작게 왼쪽으로 옮겨 가운데 위쪽을 보스에게 내준다
+  else txt(String(G.score), VW / 2, 54, 40, '#fff', 'center', 800);
   if (G.combo > 1 && !b) txt('x' + G.combo + ' 콤보', VW / 2, 78, 15, '#7dd3ff');
   const sd = SHIPS[G.shipId];
   txt('Lv ' + G.tier + '  ' + sd.n, OX + 14, 30, 14, 'hsl(' + sd.L.h + ',90%,75%)', 'left', 700);
@@ -29,20 +30,21 @@ export function drawHud() {
 }
 
 function drawBossHud() {
-  const b = G.boss, { VW, VH } = V, T = G.T, bw = 300, bx = VW / 2 - bw / 2, by = 92;
+  const b = G.boss, { VW, VH, OX } = V, T = G.T, bw = 240, bx = VW / 2 - bw / 2, by = 52;   // 보스전 HUD: 이름·체력·예고 칩을 위쪽에 촘촘히
   txt(b.d.n, VW / 2 - 6, by - 8, 14, '#fff', 'center', 800);
   g.font = '800 14px ' + FONT; txt('공격 ' + b.d.atk + '초', VW / 2 + 6 + g.measureText(b.d.n).width / 2, by - 8, 11, 'rgba(255,150,130,.9)', 'left', 700);
-  g.fillStyle = 'rgba(255,255,255,.14)'; rr(bx, by, bw, 11, 5); g.fill();
-  const f = clamp(b.hp / b.max, 0, 1); g.fillStyle = b.hitT > 0 ? '#fff' : 'hsl(' + b.d.hue + ',90%,58%)'; rr(bx, by, Math.max(8, bw * f), 11, 5); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2; for (const q of (b.d.kind === 'quasar' ? [.66, .33] : [.5])) { g.beginPath(); g.moveTo(bx + bw * q, by); g.lineTo(bx + bw * q, by + 11); g.stroke(); }
-  txt(Math.max(0, Math.ceil(b.hp)) + ' / ' + b.max, VW / 2, by + 25, 11, 'rgba(255,255,255,.65)', 'center', 600);
+  g.fillStyle = 'rgba(255,255,255,.14)'; rr(bx, by, bw, 10, 5); g.fill();
+  const f = clamp(b.hp / b.max, 0, 1); g.fillStyle = b.hitT > 0 ? '#fff' : 'hsl(' + b.d.hue + ',90%,58%)'; rr(bx, by, Math.max(8, bw * f), 10, 5); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2; for (const q of (b.d.kind === 'quasar' ? [.66, .33] : [.5])) { g.beginPath(); g.moveTo(bx + bw * q, by); g.lineTo(bx + bw * q, by + 10); g.stroke(); }
+  txt(Math.max(0, Math.ceil(b.hp)) + ' / ' + b.max, VW / 2, by + 21, 10, 'rgba(255,255,255,.6)', 'center', 600);
   if (b.state !== 'fight') return;
-  let x = VW / 2 - (b.q.length * 74) / 2 + 37;
+  const cy = by + 30;
+  let x = VW / 2 - (b.q.length * 70) / 2 + 35;
   for (const a of b.q) {
-    const at = ATK[a.k]; rr(x - 34, by + 34, 68, 22, 8); g.fillStyle = 'rgba(10,8,24,.75)'; g.fill(); g.strokeStyle = a.t <= 1 ? '#ff6a6a' : at.c; g.lineWidth = 1.5; g.stroke();
-    txt(at.n + ' ' + a.t, x, by + 49, 12, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 74;
+    const at = ATK[a.k]; rr(x - 32, cy, 64, 20, 8); g.fillStyle = 'rgba(10,8,24,.75)'; g.fill(); g.strokeStyle = a.t <= 1 ? '#ff6a6a' : at.c; g.lineWidth = 1.5; g.stroke();
+    txt(at.n + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
   }
-  if (G.bcombo > 0) txt('연속 충돌 x' + G.bcombo, VW / 2, by + 74, 13, '#ff9d7a', 'center', 700);
+  if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
   // 산소 게이지: 보스전에서는 회복되지 않는다
   const ow = 280, ox = VW / 2 - ow / 2, oy = VH - 44, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
   g.fillStyle = 'rgba(255,255,255,.14)'; rr(ox, oy, ow, 12, 6); g.fill();

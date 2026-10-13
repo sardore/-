@@ -5,6 +5,7 @@ import { fs, arenaK } from './stats.js';
 import { ATK } from './data.js';
 import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
+import { place } from './boss-zones.js';
 
 /* ---------- 작은 도형 도우미: 현재 fillStyle / strokeStyle 로 원을 채우거나 두른다 ---------- */
 const disc = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
@@ -97,9 +98,11 @@ export function drawTele(a, b) {
     case 'beam': { shape(wedge(a.a, a.half, a.len)); const d = 150 * fs(); cnt(clamp(b.x + Math.cos(a.a) * d, 20, G.w - 20), b.y + Math.sin(a.a) * d); break; }
     case 'jet': for (const an of a.as) shape(wedge(an, a.half, a.len)); cnt(b.x, b.y + b.hr + 48); break;
     case 'flare': shape(circ(b.x, b.y, a.r)); cnt(clamp(b.x + Math.cos(.9) * a.r, 22, G.w - 22), b.y + Math.sin(.9) * a.r); break;
-    case 'hole':
-      g.strokeStyle = hexA(c, .3); g.lineWidth = 1.5; dashed(4, 8); ring(a.x, a.y, 150 * gr); solid();
-      shape(circ(a.x, a.y, 34)); g.fillStyle = '#000'; disc(a.x, a.y, 10 * gr); cnt(a.x, a.y - 48, 11); break;
+    case 'hole': case 'sing': {
+      const big = a.k === 'sing' ? 1.6 : 1;
+      g.strokeStyle = hexA(c, .3); g.lineWidth = 1.5; dashed(4, 8); ring(a.x, a.y, (a.pull || 150 * fs()) * gr); solid();
+      shape(circ(a.x, a.y, 34 * big)); g.fillStyle = '#000'; disc(a.x, a.y, 10 * big * gr); cnt(a.x, a.y - 48 * big, 11); break;
+    }
     case 'collapse': {
       const p = a.p; shape(circ(p.x, p.y, a.r));
       g.strokeStyle = hexA(c, .9 * (.5 + .5 * pul)); g.lineWidth = 3; ring(p.x, p.y, p.R + 6);
@@ -114,15 +117,26 @@ export function drawTele(a, b) {
       g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
       txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
     }
+    default: if (a.zones) { // 고유 패턴: 존 정의를 그대로 예고로 그린다
+      const ps = a.zones.map(z => place(z, b));
+      ps.forEach(p => { shape(() => zonePath(p, gr)); if (p.shape === 'c' && p.r < 200) warn(p.x, p.y - 2, 22); });
+      const p0 = ps[0], fk = fs();
+      if (p0.shape === 'c' && p0.r < 200) cnt(p0.x, p0.y - p0.r - 12);
+      else if (p0.shape === 'b' && p0.w > p0.hh) cnt(G.w - 24 * fk, p0.y);
+      else if (p0.shape === 'b') cnt(clamp(p0.x, 22, G.w - 22), b.y + b.hr + 60 * fk);
+      else cnt(b.x, b.y + b.hr + 48 * fk);
+    }
   }
   g.globalAlpha = 1;
 }
 
 /* ---------- 존(범위 공격) ---------- */
-/** 존의 모양: 원(c) 또는 보스에서 뻗는 부채꼴(w). k 는 크기 배율 */
+/** 존의 모양: 원(c) · 보스에서 뻗는 부채꼴(w) · 띠(b) · 도넛(o). k 는 크기 배율 */
 function zonePath(h, k) {
   g.beginPath();
   if (h.shape === 'c') g.arc(h.x, h.y, Math.max(1, h.r * k), 0, TAU);
+  else if (h.shape === 'b') { const hz = h.w > h.hh, w = hz ? h.w : h.w * k, hh = hz ? h.hh * k : h.hh; g.rect(h.x - w, h.y - hh, w * 2, hh * 2); }   // 띠: 가는 쪽만 줄어든다
+  else if (h.shape === 'o') { g.arc(h.x, h.y, Math.max(1, h.r2 * k), 0, TAU); g.moveTo(h.x + h.r1 * k, h.y); g.arc(h.x, h.y, Math.max(.5, h.r1 * k), 0, TAU, true); }
   else { g.moveTo(h.x, h.y); g.arc(h.x, h.y, h.len * k, h.a - h.half, h.a + h.half); g.closePath(); }
 }
 
@@ -176,7 +190,7 @@ function drawZone(h) {
       if (h.kind === 'meteor') drawFallingMeteor(h, f);
       else if (h.kind === 'comet') drawFallingComet(h, f);
       else if (h.kind === 'collapse' && h.p) drawCracking(h, f);
-    } else { // 부채꼴: 가장자리 레이저가 번쩍
+    } else if (h.shape === 'w') { // 부채꼴: 가장자리 레이저가 번쩍
       g.strokeStyle = hexA('#ffffff', .5 + .5 * bl); g.lineWidth = 2;
       for (const sg of [-1, 1]) line(h.x, h.y, h.x + Math.cos(h.a + sg * h.half) * h.len * f, h.y + Math.sin(h.a + sg * h.half) * h.len * f);
     }
@@ -184,11 +198,18 @@ function drawZone(h) {
   }
   if (t < t2) { // 폭발
     const k = (t - t1) / h.blast;
-    if (h.shape === 'c') {
+    if (h.kind === 'pool') drawPool(h, t - t1, t2 - t1);
+    else if (h.shape === 'c') {
       const rg = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r * (.85 + .3 * k));
       rg.addColorStop(0, 'rgba(255,255,255,' + (1 - k * .5) + ')'); rg.addColorStop(.45, hexA(col, .85 * (1 - k * .5))); rg.addColorStop(1, hexA(col, 0));
       g.fillStyle = rg; disc(h.x, h.y, h.r * (.85 + .3 * k));
       g.strokeStyle = hexA('#ffffff', 1 - k); g.lineWidth = 5 * (1 - k) + 1; ring(h.x, h.y, h.r * (.7 + .4 * k));
+    } else if (h.shape !== 'w') { // 띠·도넛: 켜질 때·꺼질 때 서서히, 한가운데는 하얗게
+      const ap = clamp(Math.min(t < t1 + .08 ? (t - t1) / .08 : 1, (t2 - t) / .2), 0, 1);
+      g.save(); zonePath(h, 1); g.clip(); g.globalAlpha = ap;
+      g.fillStyle = hexA(col, .8); g.fillRect(h.x - (h.w || h.r2), h.y - (h.hh || h.r2), (h.w || h.r2) * 2, (h.hh || h.r2) * 2);
+      g.fillStyle = 'rgba(255,255,255,' + (.75 * (1 - k * .5)) + ')'; zonePath(h, .5); g.fill();
+      g.restore(); g.globalAlpha = ap; g.strokeStyle = '#fff'; g.lineWidth = 3; zonePath(h, 1); g.stroke(); g.globalAlpha = 1;
     } else {
       g.save(); zonePath(h, 1); g.clip();
       const gg = g.createLinearGradient(h.x, h.y, h.x + Math.cos(h.a) * h.len, h.y + Math.sin(h.a) * h.len);
@@ -207,6 +228,20 @@ function drawZone(h) {
   }
   const fk = 1 - (t - t2) / h.fade; if (fk <= 0) return; // 잔광
   if (h.shape === 'c') { g.fillStyle = hexA(col, .16 * fk); disc(h.x, h.y, h.r * .95); g.strokeStyle = hexA(col, .5 * fk); g.lineWidth = 2; ring(h.x, h.y, h.r * .95); }
+  else if (h.shape !== 'w') { g.fillStyle = hexA(col, .14 * fk); zonePath(h, 1); g.fill(); g.strokeStyle = hexA(col, .45 * fk); g.lineWidth = 2; g.stroke(); }
+}
+
+/** 독 웅덩이: 오래 남는 부글거리는 독 (e: 지나간 시간, dur: 전체) */
+function drawPool(h, e, dur) {
+  const a = clamp(Math.min(e / .25, (dur - e) / .6), 0, 1), pul = .5 + .5 * Math.sin(G.T * 5 + h.x);
+  const rg = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r);
+  rg.addColorStop(0, hexA('#d8ffb0', .7 * a)); rg.addColorStop(.7, hexA('#3fd04a', .55 * a)); rg.addColorStop(1, hexA('#1f8a2a', .15 * a));
+  g.fillStyle = rg; disc(h.x, h.y, h.r * (1 + .03 * pul));
+  g.strokeStyle = hexA('#b8ff9a', (.55 + .35 * pul) * a); g.lineWidth = 2.5; ring(h.x, h.y, h.r);
+  for (let i = 0; i < 4; i++) { // 올라오는 거품
+    const f = (G.T * .7 + i * .27 + h.x * .013) % 1, an = i * 2.1 + h.y * .05, d = h.r * .6 * ((i % 2) ? .5 : 1);
+    g.strokeStyle = hexA('#e8ffd0', .8 * (1 - f) * a); g.lineWidth = 1.5; ring(h.x + Math.cos(an) * d, h.y + Math.sin(an) * d - f * 10, 2 + f * 5);
+  }
 }
 
 /* ---------- 위험 요소 (존 · 블랙홀 · 항성풍) ---------- */
@@ -215,7 +250,7 @@ export function drawHaz(h) {
     case 'zone': drawZone(h); break;
     case 'hole': {
       const rr0 = h.r * easeOut(h.born);
-      g.strokeStyle = 'rgba(200,140,255,.28)'; g.lineWidth = 1.5; dashed(4, 8); ring(h.x, h.y, 150); solid();
+      g.strokeStyle = 'rgba(200,140,255,.28)'; g.lineWidth = 1.5; dashed(4, 8); ring(h.x, h.y, h.pull || 150 * fs()); solid();
       const hg = g.createRadialGradient(h.x, h.y, rr0 * .6, h.x, h.y, rr0 * 6);
       hg.addColorStop(0, 'rgba(170,90,255,.6)'); hg.addColorStop(1, 'rgba(170,90,255,0)');
       g.fillStyle = hg; disc(h.x, h.y, rr0 * 6);

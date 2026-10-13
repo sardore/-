@@ -32,7 +32,7 @@ export function startBoss() {
   const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
   const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks * fk });
   G.arenaBot = P.y + 110 * K; G.arenaTop = G.arenaBot - arenaH();
-  const by = G.arenaTop + (V.VH < 760 ? 150 : 178) * K + d.R * .6;
+  const by = G.arenaTop + (V.VH < 760 ? 118 : 132) * K + d.R * .6;
   G.stars = []; G.holes = []; G.mons = [];
   P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
   const sway = stage >= SWAY_FROM ? SWAY_Y : 0, list = buildArena(P, by, d.R, sway, ACT.ghost * K);
