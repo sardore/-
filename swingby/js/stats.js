@@ -13,6 +13,8 @@ export const curDef = () => SHIPS[G.shipId];
 export const fs = () => Math.sqrt(G.w / W0);
 /** 행성에 붙을 때의 최소 궤도 반지름. 한가운데로 파고들어도 이만큼은 바깥에서 돌게 한다 */
 export const minOrbit = p => p.R + 20 * fs();
+/** 아레나 배율(선형): 필드 폭 ÷ 기본 폭. 거리·길이처럼 필드 전체에 걸치는 값에 쓴다. 크기 배율은 fs() */
+export const arenaK = () => G.w / W0;
 export const shipR = () => (7 + (G.tier - 1) * 1.6) * fs();                 // 기체 충돌 반경
 
 const baseSpd = () => (235 + Math.min(G.hops * 3, 165)) * fs();

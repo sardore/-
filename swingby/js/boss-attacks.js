@@ -1,8 +1,8 @@
 /* 보스의 공격: 예고(텔레그래프) 만들기·턴 진행, 발동, 존·블랙홀·항성풍 판정, 기체 피격 */
-import { G, V } from './state.js';
-import { W0, PI, TAU, rnd, clamp, pickOf } from './util.js';
+import { G } from './state.js';
+import { PI, TAU, rnd, clamp, pickOf } from './util.js';
 import { ATK } from './data.js';
-import { spd, shipR } from './stats.js';
+import { spd, shipR, fs, arenaK } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, popText } from './fx.js';
 import { die } from './player.js';
@@ -11,26 +11,26 @@ import { regrow, aliveP } from './boss-arena.js';
 
 /* ---------- 공격 예고 ---------- */
 function mkTele(k) {
-  const b = G.boss, o = { k, t: 2, age: 0 }, ymin = b.y + b.hr + 40, ymax = G.arenaCam + V.VH - 125, al = aliveP();
+  const b = G.boss, o = { k, t: 2, age: 0 }, fk = fs(), K = arenaK(), ymin = b.y + b.hr + 40 * fk, ymax = G.arenaBot - 125 * K, al = aliveP();
   if (k === 'meteor') {
-    const n = 2 + (b.phase > 0 ? 1 : 0) + (Math.random() < .4 ? 1 : 0), r = 58 + (b.phase > 0 ? 6 : 0); o.zs = [];
+    const n = 2 + (b.phase > 0 ? 1 : 0) + (Math.random() < .4 ? 1 : 0), r = (58 + (b.phase > 0 ? 6 : 0)) * fk; o.zs = [];
     for (let tr = 0; o.zs.length < n && tr < 80; tr++) {
       let x, y;
-      if (Math.random() < .65 && al.length) { const p = pickOf(al); x = p.x + rnd(-24, 24); y = p.y + rnd(-24, 24); } else { x = rnd(50, W0 - 50); y = rnd(ymin, ymax); }
-      x = clamp(x, r * .6, W0 - r * .6); y = clamp(y, ymin, ymax);
+      if (Math.random() < .65 && al.length) { const p = pickOf(al); x = p.x + rnd(-24, 24) * fk; y = p.y + rnd(-24, 24) * fk; } else { x = rnd(50 * fk, G.w - 50 * fk); y = rnd(ymin, ymax); }
+      x = clamp(x, r * .6, G.w - r * .6); y = clamp(y, ymin, ymax);
       if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 1.5)) o.zs.push({ x, y, r });
     }
   } else if (k === 'comet') {
-    const n = 5 + (b.phase > 0 ? 2 : 0), r = 34; o.zs = [];
-    for (let tr = 0; o.zs.length < n && tr < 120; tr++) { const x = rnd(36, W0 - 36), y = rnd(ymin, ymax); if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 2.1)) o.zs.push({ x, y, r }); }
+    const n = 5 + (b.phase > 0 ? 2 : 0), r = 34 * fk; o.zs = [];
+    for (let tr = 0; o.zs.length < n && tr < 120; tr++) { const x = rnd(36 * fk, G.w - 36 * fk), y = rnd(ymin, ymax); if (o.zs.every(z => Math.hypot(z.x - x, z.y - y) > r * 2.1)) o.zs.push({ x, y, r }); }
     o.zs.sort((u, v) => u.x - v.x);
   } else if (k === 'beam') {
     const tg = G.ship.mode === 'orb' && Math.random() < .5 ? G.ship.p : pickOf(al.length ? al : G.planets);
-    o.tx = tg.x; o.ty = tg.y; o.jit = rnd(-.08, .08); o.half = .3; o.len = 950; o.a = beamAngle(o, b);
-  } else if (k === 'jet') { o.as = [PI / 2 - .82, PI / 2 + .82]; o.half = .24; o.len = 950; }
-  else if (k === 'flare') o.r = b.hr + 150 + (b.phase > 0 ? 28 : 0);
-  else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60, W0 - 60); o.y = rnd(ymin + 20, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60)) break; } }
-  else if (k === 'collapse') { o.p = pickOf(al); o.t = 3; o.r = o.p.R + 78; }
+    o.tx = tg.x; o.ty = tg.y; o.jit = rnd(-.08, .08); o.half = .3; o.len = 950 * K; o.a = beamAngle(o, b);
+  } else if (k === 'jet') { o.as = [PI / 2 - .82, PI / 2 + .82]; o.half = .24; o.len = 950 * K; }
+  else if (k === 'flare') o.r = b.hr + (150 + (b.phase > 0 ? 28 : 0)) * fk;
+  else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60 * fk, G.w - 60 * fk); o.y = rnd(ymin + 20 * fk, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60 * fk)) break; } }
+  else if (k === 'collapse') { o.p = pickOf(al); o.t = 3; o.r = o.p.R + 78 * fk; }
   else if (k === 'wind') { o.dir = Math.random() < .5 ? -1 : 1; o.t = 1; }
   return o;
 }
@@ -40,10 +40,11 @@ export const beamAngle = (o, b) => clamp(Math.atan2(o.ty - b.y, o.tx - b.x) + o.
 /** 직전 턴에 한 번 더 강하게 알리는 링 */
 function telePing(a) {
   const c = ATK[a.k].c, b = G.boss;
+  const fk = fs();
   if (a.zs) for (const z of a.zs) ringFx(z.x, z.y, c, z.r * .3, z.r * 1.1, .5, 3);
-  else if (a.k === 'beam' || a.k === 'jet') ringFx(b.x, b.y, c, b.hr, b.hr + 75, .5, 3);
+  else if (a.k === 'beam' || a.k === 'jet') ringFx(b.x, b.y, c, b.hr, b.hr + 75 * fk, .5, 3);
   else if (a.k === 'flare') ringFx(b.x, b.y, c, b.hr, a.r, .6, 3);
-  else if (a.k === 'hole') ringFx(a.x, a.y, c, 10, 80, .5, 3);
+  else if (a.k === 'hole') ringFx(a.x, a.y, c, 10 * fk, 80 * fk, .5, 3);
   else if (a.k === 'collapse') ringFx(a.p.x, a.p.y, c, a.p.R, a.r, .5, 3);
 }
 export function queueAttack(kind) {
@@ -85,7 +86,7 @@ function execAttack(a) {
     case 'beam': zone({ kind: 'beam', shape: 'w', anchor: true, x: b.x, y: b.y, a: a.a, half: a.half, len: a.len, fuse: 1.05, blast: .9, col: c, pow }); break;
     case 'jet': for (const an of a.as) zone({ kind: 'jet', shape: 'w', anchor: true, x: b.x, y: b.y, a: an, half: a.half, len: a.len, fuse: 1.15, blast: 1, col: c, pow }); break;
     case 'flare': zone({ kind: 'flare', shape: 'c', anchor: true, x: b.x, y: b.y, r: a.r, fuse: 1.05, blast: .4, fade: 1, col: c, pow }); break;
-    case 'hole': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: 3, r: 16, t: 0, born: 0, pow }); beep(150, .4, 'sawtooth', .12); break;
+    case 'hole': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: 3, r: 16 * fs(), t: 0, born: 0, pow }); beep(150, .4, 'sawtooth', .12); break;
     case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: 2 }); noise(1.2, .12, 1800, 300); break;
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
   }
@@ -135,7 +136,7 @@ export function hurt(x, y, pow = 1) {
   popText(s.x, s.y - 24, '-' + dm.toFixed(1) + '초', '#ff8f8f', 17);
   const an = Math.atan2(s.y - y, s.x - x);
   if (s.mode === 'orb') { s.mode = 'free'; s.last = s.p; s.vx = Math.cos(an) * spd() * .85; s.vy = Math.sin(an) * spd() * .85; s.air = 0; s.hitF = false; s.boost = 1; }
-  else { s.vx += Math.cos(an) * 150; s.vy += Math.sin(an) * 150; }
+  else { s.vx += Math.cos(an) * 150 * fs(); s.vy += Math.sin(an) * 150 * fs(); }
   if (G.bo2 <= 0) { G.bo2 = 0; die('산소 고갈 — 보스의 공격'); }
 }
 
@@ -159,8 +160,8 @@ function updateZone(h, dt, b, s) {
 function updateHole(h, dt, s) {
   h.born = Math.min(1, h.born + dt * 2);
   if (s.mode === 'free') {
-    const dx = h.x - s.x, dy = h.y - s.y, d = Math.hypot(dx, dy);
-    if (d < 150) { const a = 16000 / (d + 40); s.vx += dx / d * a * dt; s.vy += dy / d * a * dt; }
+    const fk = fs(), dx = h.x - s.x, dy = h.y - s.y, d = Math.hypot(dx, dy);
+    if (d < 150 * fk) { const a = 16000 * fk / (d / fk + 40); s.vx += dx / d * a * dt; s.vy += dy / d * a * dt; }
     if (d < h.r + shipR() - 1) hurt(h.x, h.y, h.pow);
   }
   if (Math.random() < dt * 50) { const an = rnd(0, TAU); G.parts.push({ x: h.x + Math.cos(an) * 80, y: h.y + Math.sin(an) * 80, vx: -Math.cos(an) * 100, vy: -Math.sin(an) * 100, t: 0, l: .7, c: '#c88aff', s: 2 }); }
@@ -174,8 +175,8 @@ export function updateHaz(dt, b) {
     if (h.k === 'zone') updateZone(h, dt, b, s);
     else if (h.k === 'hole') updateHole(h, dt, s);
     else if (h.k === 'wind') {
-      if (s.mode === 'free') s.vx += h.dir * 230 * dt;
-      if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : W0 + 5, y: G.camY + rnd(0, V.VH), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });
+      if (s.mode === 'free') s.vx += h.dir * 230 * fs() * dt;
+      if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : G.w + 5, y: rnd(G.arenaTop, G.arenaBot), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });
     }
   }
   G.haz = G.haz.filter(h => !h.dead);

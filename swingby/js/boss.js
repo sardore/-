@@ -1,8 +1,8 @@
 /* 항성 보스전의 진행: 프레임 갱신·이동, 기체의 충돌(피해), 격파와 다음 구간으로의 전환. 아레나는 boss-arena.js, 공격은 boss-attacks.js */
 import { G } from './state.js';
-import { W0, TAU, rnd, clamp, pickOf, save } from './util.js';
+import { TAU, rnd, clamp, pickOf, save } from './util.js';
 import { BOSSES, STAGES, BIOMES, MONSTER_ZONE } from './data.js';
-import { capOf } from './stats.js';
+import { capOf, fs } from './stats.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, addScore } from './fx.js';
 import { scheduleFork } from './fork.js';
@@ -41,7 +41,7 @@ function moveBoss(dt, b) {
   b.mv += ((planted ? 0 : 1) - b.mv) * Math.min(1, dt * 5);
   b.mt += dt * b.mv;
   const k = b.stage - SWAY_FROM, ease = clamp(b.mt / 2, 0, 1);
-  const ax = Math.min(W0 / 2 - b.hr - 26, 55 + 22 * k) * ease, ay = Math.min(SWAY_Y, 14 + 4 * k) * ease;
+  const fk = fs(), ax = Math.min(G.w / 2 - b.hr - 26 * fk, (55 + 22 * k) * fk) * ease, ay = Math.min(SWAY_Y, 14 + 4 * k) * fk * ease;
   b.x = b.hx + ax * Math.sin(b.mt * (.45 + .05 * k) + b.ph);
   b.y = b.hy + ay * (.5 + .5 * Math.sin(b.mt * (.8 + .07 * k)));    // 위로는 HUD, 아래로는 행성이 있어 아래쪽으로만 흔들린다
   for (const a of b.q) if (a.k === 'beam') a.a = beamAngle(a, b);

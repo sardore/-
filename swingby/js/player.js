@@ -1,9 +1,9 @@
 /* 플레이어 기체: 입력 동작(발사·차지), 포획, 사망, 매 프레임의 이동·충돌 */
-import { G, V } from './state.js';
+import { G } from './state.js';
 import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
 import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit } from './stats.js';
-import { viewBot } from './camera.js';
+import { viewTop, viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
 import { shatter } from './planets.js';
@@ -99,7 +99,7 @@ export function die(why) {
   const s = G.ship, st = G.stats;
   if (st.shield > 0) { // 비상 추진기: 가장 가까운 행성 궤도로 되돌린다
     st.shield--; let bp = null;
-    for (const p of G.planets) { if (p.dead) continue; if (p.y < G.camY + V.VH - 70 && p.y > G.camY + 50 && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
+    for (const p of G.planets) { if (p.dead) continue; if (p.y < viewBot() - 70 / G.vz && p.y > viewTop() + 50 / G.vz && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
     bp = bp || s.p;
     let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
     s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
@@ -142,7 +142,7 @@ export function stepShip(dt) {
     if (bf) emitFlames(dt);
     if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; wallHit(6, s.y, 0, bf); }
     if (s.x > G.w - 6 && s.vx > 0) { s.x = G.w - 6; s.vx *= -1; wallHit(G.w - 6, s.y, PI, bf); }
-    if (boss && s.y < G.arenaCam + 10 && s.vy < 0) { s.y = G.arenaCam + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
+    if (boss && s.y < G.arenaTop + 10 && s.vy < 0) { s.y = G.arenaTop + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     if (!boss) hitMonsters();
@@ -158,8 +158,8 @@ export function stepShip(dt) {
       if (boss) { if (boss.state === 'fight') { G.bo2 -= dt; if (G.bo2 <= 0) { G.bo2 = 0; die('산소 고갈'); } } }
       else if (s.air > o2max()) die('산소 고갈');
       if (G.st !== 'play') return false;
-      if (boss && s.y > G.camY + V.VH - 12 && s.vy > 0) { // 보스전 바닥: 튕기고 산소를 조금 잃는다
-        s.y = G.camY + V.VH - 12; s.vy *= -1; G.bo2 = Math.max(0, G.bo2 - .8); beep(120, .08, 'triangle', .08);
+      if (boss && s.y > G.arenaBot - 12 && s.vy > 0) { // 보스전 바닥: 튕기고 산소를 조금 잃는다
+        s.y = G.arenaBot - 12; s.vy *= -1; G.bo2 = Math.max(0, G.bo2 - .8); beep(120, .08, 'triangle', .08);
         sparks(s.x, s.y, '#ff8a7a', 9, 240, -PI / 2, .9); shakeAdd(4); popText(s.x, s.y - 16, '-0.8s', '#ff8a7a', 14);
       } else if (!boss && s.y > viewBot() + 40) die('심우주로 표류');
       if (G.st !== 'play') return false;

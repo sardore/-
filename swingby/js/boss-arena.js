@@ -2,7 +2,8 @@
 import { G, V } from './state.js';
 import { W0, TAU, rnd, clamp } from './util.js';
 import { BOSSES, STAGES, BIOMES } from './data.js';
-import { capOf, bossO2 } from './stats.js';
+import { capOf, bossO2, fs, arenaK } from './stats.js';
+import { arenaH } from './camera.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, ringFx, flashScreen } from './fx.js';
 import { mkPlanet } from './planets.js';
@@ -15,12 +16,13 @@ export const aliveP = () => G.planets.filter(p => !p.dead);
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
   const s = G.ship, P = s.p, bi = G.nextBi, d0 = BOSSES[bi];
-  // 아레나는 항상 기본 폭: 필드를 기본 폭으로 되돌리고, 지금 서 있는 행성도 그 안으로 옮긴다
-  P.x = clamp(P.x * W0 / G.w, 70, W0 - 70); G.w = W0; G.vz = 1;
+  // 아레나는 보스가 시작될 때의 필드 폭 그대로(진행할수록 넓다). 필드 폭은 보스전 동안 고정이고, 크기는 fk(√), 거리는 K(선형) 배율을 따른다
+  const fk = fs(), K = arenaK();
+  P.x = clamp(P.x, 70 * fk, G.w - 70 * fk); G.vz = W0 / G.w;
   const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
-  const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks });
-  G.arenaCam = P.y - V.VH + 110;
-  const by = G.arenaCam + (V.VH < 760 ? 150 : 178) + d.R * .6;
+  const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks * fk });
+  G.arenaBot = P.y + 110 * K; G.arenaTop = G.arenaBot - arenaH();
+  const by = G.arenaTop + (V.VH < 760 ? 150 : 178) * K + d.R * .6;
   G.stars = []; G.holes = []; G.mons = [];
   P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
   const list = buildArena(P, by, d.R, stage >= SWAY_FROM ? SWAY_Y : 0);
@@ -28,7 +30,7 @@ export function startBoss() {
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
   const hp = Math.round(d.hp * (1 + .6 * loop));
   G.boss = {
-    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: W0 / 2, y: by, hx: W0 / 2, hy: by, mt: 0, mv: 1,
+    bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: G.w / 2, y: by, hx: G.w / 2, hy: by, mt: 0, mv: 1,
     idle: 0, cast: 0, st: 0, state: 'intro', flash: 0, sq: 0, q: [], turn: 0, phase: 0, hitT: 0, last: '', ph: rnd(0, TAU)
   };
   G.bo2max = G.bo2 = bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
@@ -38,24 +40,25 @@ export function startBoss() {
 
 /** 보스로 향하는 직선을 가로막지 않는 행성 배치를 찾는다 */
 function buildArena(P, by, bossR, sway) {
-  const yMin = by + bossR + 50 + sway, yMax = P.y + (V.VH < 760 ? 18 : -60);
+  const fk = fs(), K = arenaK();
+  const yMin = by + bossR + (50 + sway) * fk, yMax = P.y + (V.VH < 760 ? 18 : -60) * K, want = Math.round(5 * K);
   const clear = (p, L) => { // p→보스 선분 근처에 다른 행성이 없어야 한다
-    const ax = p.x, ay = p.y, vx = W0 / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
+    const ax = p.x, ay = p.y, vx = G.w / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
     for (const q of L) {
       if (q === p) continue;
       const t = ((q.x - ax) * vx + (q.y - ay) * vy) / len2; if (t <= 0 || t >= 1) continue;
-      if (Math.hypot(q.x - (ax + vx * t), q.y - (ay + vy * t)) < capOf(q) * .55 + 10) return false;
+      if (Math.hypot(q.x - (ax + vx * t), q.y - (ay + vy * t)) < capOf(q) * .55 + 10 * fk) return false;
     }
     return true;
   };
   let list = [P];
   for (let att = 0; att < 80; att++) {
     const L = [P];
-    for (let tries = 0; tries < 300 && L.length < 5 + (att % 2); tries++) {
-      const x = rnd(58, W0 - 58), y = rnd(yMin, Math.max(yMin + 10, yMax));
-      if (!L.every(q => Math.hypot(q.x - x, q.y - y) > 118)) continue;
+    for (let tries = 0; tries < 300 && L.length < want + (att % 2); tries++) {
+      const x = rnd(58 * fk, G.w - 58 * fk), y = rnd(yMin, Math.max(yMin + 10, yMax));
+      if (!L.every(q => Math.hypot(q.x - x, q.y - y) > 118 * fk)) continue;
       const gas = L.length === 3, q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : 'n');
-      q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 58 : rnd(40, 48)); q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
+      q.R = (gas ? rnd(32, 38) : rnd(20, 27)) * fk; q.cap = q.R + (gas ? 58 : rnd(40, 48)) * fk; q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
     }
     if (L.length >= 4 && L.every(q => clear(q, L))) { list = L; break; }
     if (att === 79) list = L;

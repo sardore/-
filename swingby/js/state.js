@@ -32,7 +32,7 @@ function freshRun() {
     cards: [], evoOpts: [], pickMode: 'card', pickTitle: '', pickT: 0,
     deadT: 0, deadWhy: '', clearT: 0,
     // 보스전
-    boss: null, haz: [], bo2: 0, bo2max: 0, arenaCam: 0, bcombo: 0,
+    boss: null, haz: [], bo2: 0, bo2max: 0, arenaTop: 0, arenaBot: 0, bcombo: 0,
     // 연출
     parts: [], texts: [], fxr: [], shake: 0, freeze: 0, ts: 1, tsT: 0, zoom: 0,
     flashA: 0, flashC: '#fff', banner: null, toastO: null, castO: null, lowO2: 0

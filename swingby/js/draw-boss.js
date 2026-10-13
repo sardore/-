@@ -1,6 +1,7 @@
 /* 보스·공격 예고·존·블랙홀·항성풍 그리기 (논리 상태는 읽기만 한다) */
-import { G, V, g } from './state.js';
-import { W0, PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
+import { G, g } from './state.js';
+import { PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
+import { fs } from './stats.js';
 import { ATK } from './data.js';
 import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
@@ -93,9 +94,9 @@ export function drawTele(a, b) {
   switch (a.k) {
     case 'meteor': a.zs.forEach(z => { shape(circ(z.x, z.y, z.r)); warn(z.x, z.y - 2, 26); cnt(z.x, z.y + z.r * .62, 11); }); break;
     case 'comet': { a.zs.forEach(z => shape(circ(z.x, z.y, z.r))); const z = a.zs[0]; if (z) cnt(z.x, z.y, 11); break; }
-    case 'beam': { shape(wedge(a.a, a.half, a.len)); const d = 150; cnt(clamp(b.x + Math.cos(a.a) * d, 20, W0 - 20), b.y + Math.sin(a.a) * d); break; }
+    case 'beam': { shape(wedge(a.a, a.half, a.len)); const d = 150 * fs(); cnt(clamp(b.x + Math.cos(a.a) * d, 20, G.w - 20), b.y + Math.sin(a.a) * d); break; }
     case 'jet': for (const an of a.as) shape(wedge(an, a.half, a.len)); cnt(b.x, b.y + b.hr + 48); break;
-    case 'flare': shape(circ(b.x, b.y, a.r)); cnt(clamp(b.x + Math.cos(.9) * a.r, 22, W0 - 22), b.y + Math.sin(.9) * a.r); break;
+    case 'flare': shape(circ(b.x, b.y, a.r)); cnt(clamp(b.x + Math.cos(.9) * a.r, 22, G.w - 22), b.y + Math.sin(.9) * a.r); break;
     case 'hole':
       g.strokeStyle = hexA(c, .3); g.lineWidth = 1.5; dashed(4, 8); ring(a.x, a.y, 150 * gr); solid();
       shape(circ(a.x, a.y, 34)); g.fillStyle = '#000'; disc(a.x, a.y, 10 * gr); cnt(a.x, a.y - 48, 11); break;
@@ -107,10 +108,11 @@ export function drawTele(a, b) {
       cnt(p.x, p.y - p.R - 18, 11); break;
     }
     case 'wind': { // 한쪽 벽에서 밀려오는 바람
-      const x = a.dir > 0 ? 0 : W0, gg = g.createLinearGradient(x, 0, x + a.dir * 120, 0);
+      const x = a.dir > 0 ? 0 : G.w, bw = 120 * fs(), mid = (G.arenaTop + G.arenaBot) / 2, tx = a.dir > 0 ? 40 * fs() : G.w - 40 * fs();
+      const gg = g.createLinearGradient(x, 0, x + a.dir * bw, 0);
       gg.addColorStop(0, hexA(c, .22)); gg.addColorStop(1, hexA(c, 0));
-      g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : W0 - 120, G.camY, 120, V.VH);
-      txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', a.dir > 0 ? 40 : W0 - 40, G.camY + V.VH * .5, 24, c, 'center', 800); cnt(a.dir > 0 ? 40 : W0 - 40, G.camY + V.VH * .5 - 30); break;
+      g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
+      txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
     }
   }
   g.globalAlpha = 1;
@@ -126,8 +128,8 @@ function zonePath(h, k) {
 
 /** 운석: 위에서 비스듬히 떨어지는 꼬리 달린 바위 */
 function drawFallingMeteor(h, f) {
-  const ff = f * f, x = h.x + (1 - ff) * 70, y = h.y - (1 - ff) * (h.y - G.arenaCam + 90);
-  const tailY = y - Math.max(80, (h.y - G.arenaCam) * (1 - ff) * .45);
+  const ff = f * f, x = h.x + (1 - ff) * 70, y = h.y - (1 - ff) * (h.y - G.arenaTop + 90);
+  const tailY = y - Math.max(80, (h.y - G.arenaTop) * (1 - ff) * .45);
   const tl = g.createLinearGradient(x, y, x + 70 * (1 - ff) + 10, tailY);
   tl.addColorStop(0, 'rgba(255,200,120,.95)'); tl.addColorStop(1, 'rgba(255,100,40,0)');
   g.strokeStyle = tl; g.lineWidth = 12; g.lineCap = 'round'; line(x, y, x + 70 * (1 - ff) * .45 + 8, tailY); g.lineCap = 'butt';
@@ -223,9 +225,9 @@ export function drawHaz(h) {
       txt(String(h.turns), h.x, h.y - rr0 - 12, 14, '#d8b0ff', 'center', 800); break;
     }
     case 'wind': {
-      const x = h.dir > 0 ? 0 : W0, gg = g.createLinearGradient(x, 0, x + h.dir * 100, 0);
+      const x = h.dir > 0 ? 0 : G.w, bw = 100 * fs(), gg = g.createLinearGradient(x, 0, x + h.dir * bw, 0);
       gg.addColorStop(0, 'rgba(138,255,200,.2)'); gg.addColorStop(1, 'rgba(138,255,200,0)');
-      g.fillStyle = gg; g.fillRect(h.dir > 0 ? 0 : W0 - 100, G.camY, 100, V.VH); break;
+      g.fillStyle = gg; g.fillRect(h.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop); break;
     }
   }
 }
