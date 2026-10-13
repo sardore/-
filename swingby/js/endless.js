@@ -2,8 +2,9 @@
  * 보스는 별 카탈로그 번호(HD 209458 …)를 이름으로 갖는 무작위 보스다: 전용 패턴 5개 중 둘 + 공용 패턴 몇 개를 들고 나오고, 스킬 이름은 알려주지 않는다.
  * 공격력·체력은 보스를 잡을 때마다 지수로 오른다 — 궤도 붕괴(선형)보다 가팔라서 언젠가는 반드시 게임오버가 된다. */
 import { G } from './state.js';
-import { rnd, rint, pickOf, shuffle } from './util.js';
+import { rint, shuffle } from './util.js';
 import { STAGES } from './data.js';
+import { genLook } from './boss-gen.js';
 
 export const ENDLESS = {
   dec: .03,                  // 클리어 뒤 행성 하나를 지날 때마다 궤도 붕괴 속도가 +3%p (선형)
@@ -13,7 +14,6 @@ export const ENDLESS = {
 };
 export const EXCLUSIVE = ['rain', 'ripple', 'grid', 'sweep', 'snare'];
 const COMMON = ['meteor', 'comet', 'beam', 'jet', 'flare', 'hole', 'collapse', 'wind'];
-const KINDS = ['dwarf', 'spike', 'ring', 'bull', 'pulse', 'super', 'swirl', 'twin', 'hex', 'eta', 'devour'];
 /** 카탈로그 약어와 실제 목록의 번호 범위(가중치) */
 const CATALOGS = [['HD', 359083, 3], ['HIP', 118322, 3], ['HR', 9110, 1], ['GJ', 1291, 1], ['SAO', 258997, 1]];
 
@@ -30,12 +30,11 @@ function catalogName() {
 
 /** n(0부터)번째 무한 보스를 만든다. BOSSES 항목과 같은 모양 + endless 표시 */
 export function makeEndlessBoss(n) {
-  const name = catalogName(), hue = rint(0, 359);
+  const name = catalogName(), look = genLook();   // 외형은 기존 보스 그림을 쓰지 않고 boss-gen.js 가 부품을 조합해 그린다
   const own = shuffle(EXCLUSIVE.slice()).slice(0, 2), com = shuffle(COMMON.slice()).slice(0, 3);
   return {
-    n: name, e: name, endless: n + 1, R: rint(46, 66), hue, kind: pickOf(KINDS),
+    n: name, e: name, endless: n + 1, R: rint(46, 66), hue: look.pal.h, kind: 'gen', look,
     hp: Math.round(ENDLESS.hp0 * Math.pow(ENDLESS.hpG, n)), atk: +(ENDLESS.atk0 * Math.pow(ENDLESS.atkG, n)).toFixed(1),
-    col: ['hsl(' + hue + ',100%,92%)', 'hsl(' + hue + ',92%,60%)', 'hsl(' + hue + ',85%,22%)'],
     pat: shuffle(own.concat(com)), q: n >= 4 ? 4 : 3, line: '이름만 남은 카탈로그의 별'
   };
 }

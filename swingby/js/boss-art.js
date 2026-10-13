@@ -2,6 +2,7 @@
  * 좌표 원점은 보스 중심, R 은 충돌 반지름(몸통은 이 안에 그리고, 뿔·집게·광선 같은 장식은 밖으로 나가도 된다). */
 import { G, g } from './state.js';
 import { PI, TAU } from './util.js';
+import { drawGen } from './boss-gen.js';
 
 const hsl = (h, s, l, a = 1) => 'hsla(' + h + ',' + s + '%,' + l + '%,' + a + ')';
 
@@ -279,6 +280,7 @@ const ART = {
 
 /** 보스 몸을 그린다. 호출 전에 보스 중심으로 translate/scale 되어 있어야 한다 */
 export function drawBossBody(b) {
+  if (b.d.look) { drawGen(b); return; }   // 무한 모드 보스: 조합형 외형
   g.lineCap = 'round';
   (ART[b.d.kind] || ART.dwarf)(b, b.R, b.d.hue);
   g.lineCap = 'butt';

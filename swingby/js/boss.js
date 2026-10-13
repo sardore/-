@@ -22,7 +22,7 @@ export function updateBoss(dt) {
   if (b.state === 'dying') {
     if (Math.random() < dt * 14) {
       const an = rnd(0, TAU), r = rnd(0, b.R);
-      burst(b.x + Math.cos(an) * r, b.y + Math.sin(an) * r, pickOf(['#fff', '#ffd070', b.d.col[1]]), 10, 260);
+      burst(b.x + Math.cos(an) * r, b.y + Math.sin(an) * r, pickOf(['#fff', '#ffd070', b.d.col ? b.d.col[1] : 'hsl(' + b.d.hue + ',100%,65%)']), 10, 260);
       ringFx(b.x + Math.cos(an) * r, b.y + Math.sin(an) * r, '#fff', 2, 40, .3, 2); shakeAdd(8); if (Math.random() < .25) noise(.2, .2, 3000, 200);
     }
     if (b.st > 2.6) finishBoss();
