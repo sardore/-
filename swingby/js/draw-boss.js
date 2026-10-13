@@ -1,7 +1,7 @@
 /* 보스·공격 예고·존·블랙홀·항성풍 그리기 (논리 상태는 읽기만 한다) */
-import { G, g } from './state.js';
+import { G, V, g } from './state.js';
 import { PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
-import { fs } from './stats.js';
+import { fs, arenaK } from './stats.js';
 import { ATK } from './data.js';
 import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
@@ -230,4 +230,15 @@ export function drawHaz(h) {
       g.fillStyle = gg; g.fillRect(h.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop); break;
     }
   }
+}
+
+/** 보스전의 바닥(화면 아래)은 낙사선이다. 기체가 가까워질수록 아래쪽이 붉게 깜빡인다 (화면 좌표) */
+export function drawFloorWarn() {
+  const b = G.boss; if (!b || b.state !== 'fight') return;
+  const { VW, VH } = V, gap = (G.arenaBot - G.ship.y) / arenaK();   // 화면 기준으로 남은 높이
+  const d = clamp(1 - gap / 150, 0, 1), pul = .5 + .5 * Math.sin(G.T * (6 + 12 * d)), h = 64 + 50 * d;
+  const gr = g.createLinearGradient(0, VH - h, 0, VH);
+  gr.addColorStop(0, 'rgba(255,60,60,0)'); gr.addColorStop(1, 'rgba(255,60,60,' + (.1 + d * (.18 + .4 * pul)) + ')');
+  g.fillStyle = gr; g.fillRect(0, VH - h, VW, h);
+  if (d > .2) { g.globalAlpha = clamp(d * 1.4, 0, 1) * (.6 + .4 * pul); txt('▼ 추락 위험 ▼', VW / 2, VH - 78, 15, '#ff8a8a', 'center', 800); g.globalAlpha = 1; }
 }

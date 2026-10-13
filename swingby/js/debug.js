@@ -10,11 +10,25 @@ import { pressStart, pressEnd } from './player.js';
 import { choose, evolveTo } from './progress.js';
 import { forceTele } from './boss-attacks.js';
 
-/** 지금 발사하면 목표(보스 또는 가장 가까운 미방문 행성)에 닿을 정렬인가 */
+/** 맵이 밀려나는 보스전에서 서 있는 행성이 낮으면 갈아탈 위쪽 행성을 돌려준다(없으면 null) */
+function climbTarget() {
+  const s = G.ship, p = s.p, K = G.w / 420, b = G.boss;
+  if (!b || b.state !== 'fight' || p.y <= G.arenaBot - 190 * K) return null;
+  let bp = null;
+  for (const q of G.planets) {
+    if (q === p || q.dead || q.y > p.y - 40 * K || p.y - q.y > 300 * K || q.y < G.arenaTop + b.R * 1.2 + 90 * K) continue;
+    if (!bp || q.y < bp.y) bp = q;
+  }
+  return bp;
+}
+
+/** 지금 발사하면 목표(보스·갈아탈 행성·가장 가까운 미방문 행성)에 닿을 정렬인가 */
 function aimed() {
   const s = G.ship, p = s.p, hx = -Math.sin(s.a) * s.dir, hy = Math.cos(s.a) * s.dir;
   let tx, ty, tr;
-  if (G.boss) { tx = G.boss.x; ty = G.boss.y; tr = G.boss.R + 2; }
+  const cl = climbTarget();
+  if (cl) { tx = cl.x; ty = cl.y; tr = capOf(cl) * .5; }
+  else if (G.boss) { tx = G.boss.x; ty = G.boss.y; tr = G.boss.R + 2; }
   else {
     let bp = null;
     for (const q of G.planets) { if (q.seen || q.dead || q.y > s.y) continue; if (!bp || q.y > bp.y) bp = q; }
@@ -35,7 +49,7 @@ function botAct() {
   if (G.st !== 'play' || s.mode !== 'orb') return;
   if (G.boss && G.boss.state !== 'fight') return;
   if (s.charging) { if (aimed() && (s.charge > .7 || !G.boss)) pressEnd(); return; }
-  if (curDef().dash && G.boss) { pressStart(); return; }   // 보스전: 먼저 차지를 시작해 두고 정렬을 기다린다
+  if (curDef().dash && G.boss && !climbTarget()) { pressStart(); return; }   // 보스전: 먼저 차지를 시작해 두고 정렬을 기다린다 (갈아탈 때는 차지 없이 바로)
   if (aimed()) { pressStart(); if (s.charging) pressEnd(); }
 }
 

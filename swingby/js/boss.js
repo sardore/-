@@ -4,12 +4,12 @@ import { TAU, rnd, clamp, pickOf, save } from './util.js';
 import { BOSSES, STAGES, BIOMES, MONSTER_ZONE } from './data.js';
 import { capOf, fs } from './stats.js';
 import { beep, thump, noise, vibe } from './audio.js';
-import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, addScore } from './fx.js';
+import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, addScore, toast } from './fx.js';
 import { scheduleFork } from './fork.js';
 import { afterBoss } from './progress.js';
 import { heatRam, heatMul, flameColor } from './heat.js';
 import { isDashing, impactDamage, bounceShip, bounceSpeed, standoff } from './impact.js';
-import { SWAY_FROM, SWAY_Y, regrowAll } from './boss-arena.js';
+import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena } from './boss-arena.js';
 import { queueAttack, beamAngle, updateHaz } from './boss-attacks.js';
 
 /* ---------- 프레임 갱신 ---------- */
@@ -17,7 +17,7 @@ export function updateBoss(dt) {
   const b = G.boss;
   b.st += dt; for (const a of b.q) a.age += dt;
   if (b.flash > 0) b.flash -= dt; if (b.sq > 0) b.sq = Math.max(0, b.sq - dt * 5); if (b.hitT > 0) b.hitT -= dt;
-  if (b.state === 'intro') { if (b.st > 2.6) { b.state = 'fight'; b.st = 0; queueAttack().t = 3; } return; }
+  if (b.state === 'intro') { if (b.st > 2.6) { b.state = 'fight'; b.st = 0; queueAttack().t = 3; toast('맵이 뒤로 밀려난다 — 아래로 떨어지면 끝! 계속 위로', '#ff9d7a'); } return; }
   if (b.state === 'dying') {
     if (Math.random() < dt * 14) {
       const an = rnd(0, TAU), r = rnd(0, b.R);
@@ -27,6 +27,7 @@ export function updateBoss(dt) {
     if (b.st > 2.6) finishBoss();
     return;
   }
+  scrollArena(b, dt);
   moveBoss(dt, b);
   if (b.cast > 0) {
     b.cast = Math.max(0, b.cast - dt);
@@ -36,7 +37,7 @@ export function updateBoss(dt) {
 }
 /** 2스테이지부터 보스가 아레나 안을 천천히 떠다닌다. 보스 위치에서 뻗는 공격(빔·제트·플레어)이 나가는 동안은 멈춰 선다 */
 function moveBoss(dt, b) {
-  if (b.stage < SWAY_FROM) return;
+  if (b.stage < SWAY_FROM) { b.y = b.hy; return; }       // 스크롤 때문에 제자리여도 y 는 계속 올라간다
   const planted = G.haz.some(h => h.anchor && !h.dead && h.t < h.delay + h.fuse + h.blast);
   b.mv += ((planted ? 0 : 1) - b.mv) * Math.min(1, dt * 5);
   b.mt += dt * b.mv;
@@ -74,7 +75,7 @@ export function ram() {
 
 /* ---------- 격파 ---------- */
 function bossDefeat() {
-  const b = G.boss; b.state = 'dying'; b.st = 0; G.haz = []; b.q = []; G.kills++;
+  const b = G.boss; b.state = 'dying'; b.st = 0; b.sv = 0; G.haz = []; b.q = []; G.kills++;
   hitstop(.3); slowmo(.28, 1.5); G.shake = 24; flashScreen(.9, '#fff'); punch(.12); vibe([80, 40, 160]); thump(80, 20, 1.4, .5); noise(1.6, .35, 5000, 60);
 }
 function finishBoss() {

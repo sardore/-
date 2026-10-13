@@ -99,7 +99,7 @@ export function die(why) {
   const s = G.ship, st = G.stats;
   if (st.shield > 0) { // 비상 추진기: 가장 가까운 행성 궤도로 되돌린다
     st.shield--; let bp = null;
-    for (const p of G.planets) { if (p.dead) continue; if (p.y < viewBot() - 70 / G.vz && p.y > viewTop() + 50 / G.vz && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
+    for (const p of G.planets) { if (p.dead) continue; if (p.y < viewBot() - (G.boss ? 130 : 70) / G.vz && p.y > viewTop() + 50 / G.vz && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
     bp = bp || s.p;
     let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
     s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
@@ -134,6 +134,7 @@ export function stepShip(dt) {
     s.x = p.x + Math.cos(s.a) * s.r; s.y = p.y + Math.sin(s.a) * s.r;
     if (s.charging) chargeFx(dt);
     if (s.r <= p.R + 3) { die('궤도가 붕괴해 행성에 추락'); if (G.st !== 'play') return false; }
+    if (bf && s.y > G.arenaBot + 40) { die('행성과 함께 뒤로 밀려나 표류'); if (G.st !== 'play') return false; }   // 행성이 화면 아래로 사라졌다
   } else {
     regulateSpeed(dt, v);
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
@@ -158,10 +159,8 @@ export function stepShip(dt) {
       if (boss) { if (boss.state === 'fight') { G.bo2 -= dt; if (G.bo2 <= 0) { G.bo2 = 0; die('산소 고갈'); } } }
       else if (s.air > o2max()) die('산소 고갈');
       if (G.st !== 'play') return false;
-      if (boss && s.y > G.arenaBot - 12 && s.vy > 0) { // 보스전 바닥: 튕기고 산소를 조금 잃는다
-        s.y = G.arenaBot - 12; s.vy *= -1; G.bo2 = Math.max(0, G.bo2 - .8); beep(120, .08, 'triangle', .08);
-        sparks(s.x, s.y, '#ff8a7a', 9, 240, -PI / 2, .9); shakeAdd(4); popText(s.x, s.y - 16, '-0.8s', '#ff8a7a', 14);
-      } else if (!boss && s.y > viewBot() + 40) die('심우주로 표류');
+      if (boss && !bf) { if (s.y > G.arenaBot - 12 && s.vy > 0) { s.y = G.arenaBot - 12; s.vy *= -1; } }   // 등장·격파 연출 중에만 바닥이 막아 준다
+      else if (s.y > (boss ? G.arenaBot : viewBot()) + 40) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
       if (G.st !== 'play') return false;
     }
   }

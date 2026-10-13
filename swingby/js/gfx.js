@@ -2,6 +2,9 @@
 import { g } from './state.js';
 import { FONT } from './util.js';
 
+/** 그래픽 버전. 기본 2(새 렌더러: draw-*2.js). 주소에 ?gfx=1 을 붙이면 예전 렌더러로 돌아간다 — 예전 코드는 롤백용으로 남겨 두었다 */
+export const GFX = { v: typeof location !== 'undefined' && /[?&]gfx=1\b/.test(location.search) ? 1 : 2 };
+
 /** 둥근 사각형 경로 */
 export function rr(x, y, w, h, r) {
   g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();

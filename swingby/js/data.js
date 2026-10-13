@@ -51,16 +51,16 @@ export const MONSTER_ZONE = { stage: 3, len: 12 };
 export const EVOLVE_AT = { 2: 2, 3: 5 };
 export const LAST_STAGE = STAGES.length - 1;
 
-/* 공격 패턴: n 짧은 이름, c 색, cast 시전 문구, pow 피해 배율(보스 atk 에 곱한다) */
+/* 공격 패턴: n 짧은 이름, c 색, cast 시전 문구, pow 피해 배율(보스 atk 에 곱한다), keep 발동 뒤 유지되는 턴 수(예고 지연 없이 바로 작동하는 지속형만) */
 export const ATK = {
   meteor:   { n: '운석',     c: '#ffb06a', cast: '운석 낙하',      pow: 1 },
   comet:    { n: '혜성군',   c: '#9fe8ff', cast: '혜성군 폭격',    pow: .8 },
   beam:     { n: '부채꼴',   c: '#ff6a8a', cast: '부채꼴 광선',    pow: 1.2 },
   jet:      { n: '쌍제트',   c: '#c89aff', cast: '상대론적 제트',  pow: 1.25 },
   flare:    { n: '플레어',   c: '#ffe27a', cast: '플레어 폭발',    pow: 1.3 },
-  hole:     { n: '블랙홀',   c: '#c88aff', cast: '흡수 블랙홀',    pow: .9 },
+  hole:     { n: '블랙홀',   c: '#c88aff', cast: '흡수 블랙홀',    pow: .9, keep: 4 },
   collapse: { n: '행성 붕괴', c: '#ff7a6a', cast: '행성 붕괴',      pow: 1.1 },
-  wind:     { n: '항성풍',   c: '#8affc8', cast: '항성풍',         pow: 0 }
+  wind:     { n: '항성풍',   c: '#8affc8', cast: '항성풍',         pow: 0, keep: 4 }
 };
 
 /* ---------- 행성 종류 ----------

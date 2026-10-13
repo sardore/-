@@ -86,8 +86,8 @@ function execAttack(a) {
     case 'beam': zone({ kind: 'beam', shape: 'w', anchor: true, x: b.x, y: b.y, a: a.a, half: a.half, len: a.len, fuse: 1.05, blast: .9, col: c, pow }); break;
     case 'jet': for (const an of a.as) zone({ kind: 'jet', shape: 'w', anchor: true, x: b.x, y: b.y, a: an, half: a.half, len: a.len, fuse: 1.15, blast: 1, col: c, pow }); break;
     case 'flare': zone({ kind: 'flare', shape: 'c', anchor: true, x: b.x, y: b.y, r: a.r, fuse: 1.05, blast: .4, fade: 1, col: c, pow }); break;
-    case 'hole': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: 3, r: 16 * fs(), t: 0, born: 0, pow }); beep(150, .4, 'sawtooth', .12); break;
-    case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: 2 }); noise(1.2, .12, 1800, 300); break;
+    case 'hole': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: at.keep, r: 16 * fs(), t: 0, born: 0, pow }); beep(150, .4, 'sawtooth', .12); break;
+    case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: at.keep }); noise(1.2, .12, 1800, 300); break;
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
   }
 }

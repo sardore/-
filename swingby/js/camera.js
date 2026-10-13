@@ -20,5 +20,6 @@ export function updateCamera(dt) {
   if (G.boss) ty = G.arenaTop + (arenaH() - V.VH) / 2;      // 아레나 윗변이 화면 맨 위에 오도록
   else if (zoomed) ty = F.hub.y - V.VH / 2 - HUB_FRAME * V.VH / tv;
   else ty = Math.min(G.camY, (s.mode === 'orb' ? s.p.y : s.y) - V.VH / 2 - .14 * V.VH / G.vz);
+  if (G.boss) G.camY -= G.boss.sv * dt;                      // 보스전 스크롤을 미리 따라가서 카메라가 뒤처지지 않게
   G.camY += (ty - G.camY) * Math.min(1, dt * (G.boss ? 3 : zoomed ? 3.5 : 4.5));
 }
