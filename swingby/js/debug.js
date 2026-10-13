@@ -8,7 +8,7 @@ import { draw } from './draw.js';
 import { pointerDown, pointerUp } from './input.js';
 import { pressStart, pressEnd } from './player.js';
 import { choose, evolveTo } from './progress.js';
-import { forceTele } from './boss.js';
+import { forceTele } from './boss-attacks.js';
 
 /** 지금 발사하면 목표(보스 또는 가장 가까운 미방문 행성)에 닿을 정렬인가 */
 function aimed() {

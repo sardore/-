@@ -4,7 +4,7 @@ import { CARDS, STAT_INFO, LAST_STAGE, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, ringFx, flashScreen, punch, slowmo, shakeAdd, popText } from './fx.js';
-import { startBoss } from './boss.js';
+import { startBoss } from './boss-arena.js';
 import { save } from './util.js';
 import { applyDebugRun } from './debug-run.js';
 

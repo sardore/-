@@ -222,10 +222,13 @@ Canvas 2D + WebAudio, 외부 의존성 없음. `index.html` 은 껍데기이고 
 | `stats.js` | 퍼센트 능력치 → 실제 수치 변환 (속도·인력·붕괴·산소·점수·충돌) |
 | `camera.js` | 카메라 이동, 갈림길 줌, 보이는 범위(`viewTop/viewBot`) |
 | `monsters.js` · `draw-monster.js` | 괴물 행성(적): 배치·이동·충돌·처치, 그리기 |
-| `world.js` | 행성/별/블랙홀 생성, 바이옴, 소행성 파쇄, 갈림길(허브·항로·확정) |
+| `world.js` | 필드 폭 성장, 지형 패턴에 따른 행성·별·블랙홀·괴물 배치(`gen`) |
+| `planets.js` · `scatter.js` · `fork.js` | 행성 생성·소행성 파쇄·애니메이션 · 별/블랙홀 배치 · 갈림길(허브·항로·확정) |
 | `heat.js` | 보스전 열기: 벽 튕김마다 불꽃·속도·충돌 보너스 누적, 착지/피격 시 초기화 |
 | `player.js` | 발사·차지·포획·사망, 프레임별 기체 이동·충돌·산소·별 수집 |
-| `boss.js` | 아레나, 턴 진행, 공격 예고/발동/존 판정, 피격·충돌, 격파 |
+| `boss.js` | 보스전 진행: 프레임 갱신·이동, 기체 충돌(피해), 격파와 다음 구간 전환 |
+| `boss-arena.js` · `boss-attacks.js` | 아레나 구성·행성 재생 · 공격 예고/발동/존 판정·기체 피격·턴 진행 |
+| `impact.js` | 보스·괴물 공통 충돌 계산: 충돌 피해, 돌격 보너스, 튕겨 나가기 |
 | `progress.js` | 기체 진화, 강화 카드, 보스 격파 후 진행 규칙 |
 | `game.js` | `update`(한 틱)·`step`(상태별 진행·히트스톱) |
 | `fx.js` · `audio.js` | 타격감 연출 · 효과음과 배경음악 |
@@ -233,7 +236,7 @@ Canvas 2D + WebAudio, 외부 의존성 없음. `index.html` 은 껍데기이고 
 | `input.js` | 터치/마우스/키보드 → 누름/뗌 |
 | `debug.js` | `window.__dbg` + 테스트용 봇 |
 
-의존 방향은 대체로 `data/ships/util → state → stats/camera/fx → world/player/boss/progress → game → draw → main` 이고, 보스·플레이어·진행 모듈은 함수 호출 수준에서만 서로 참조한다(최상위 실행 코드는 없다).
+의존 방향은 대체로 `data/ships/util → state → stats/camera/fx/impact → planets/scatter/fork/world/monsters/player/boss*/progress → game → draw → main` 이고, 보스·플레이어·진행 모듈은 함수 호출 수준에서만 서로 참조한다(최상위 실행 코드는 없다).
 
 ## 디버그판
 - 주소 뒤에 `?debug` 를 붙이면 전용 기체 **디버그함**(`ships.js` 의 `dbg`, 트리 밖)으로 시작한다. 능력치는 상한 근처(충돌 400·산소 300·인력 300·추진기 9)이고 시작하자마자 **TON 618** 과 싸운다. `&boss=N` 으로 `BOSSES` 인덱스의 다른 보스도, `&zone=monster` 로 보스 없이 그 지역(바이옴)만 구경할 수도 있다.
