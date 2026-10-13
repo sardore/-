@@ -46,7 +46,7 @@ function drawBossHud() {
     txt(at.n + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
   }
   if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
-  if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
+  if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선  맵 ×2', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
   // 산소 게이지: 보스전에서는 회복되지 않는다
   const ow = 280, ox = VW / 2 - ow / 2, oy = VH - 44, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
   g.fillStyle = 'rgba(255,255,255,.14)'; rr(ox, oy, ow, 12, 6); g.fill();
@@ -112,6 +112,7 @@ export function drawScreens() {
     txt(String(G.score), VW / 2, VH * .28 + 112, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .28 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
     if (G.shardGain > 0) txt('별 조각 +' + G.shardGain, VW / 2, VH * .28 + 198, 14, '#ffe27a', 'center', 800);
+    if (!G.debug) txt('이후 회차에서는 별 조각을 모을 수 없어', VW / 2, VH * .28 + 218, 12, 'rgba(255,255,255,.55)', 'center', 500);
     if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 계속', VW / 2, VH - 80, 16, '#fff'); }
     g.globalAlpha = 1;
   }
@@ -121,7 +122,7 @@ export function drawScreens() {
     const b = G.boss; if (b && b.state === 'fight') txt(b.d.n + ' 남은 체력 ' + Math.max(1, Math.round(b.hp / b.max * 100)) + '%', VW / 2, VH * .3 + 52, 13, 'rgba(255,200,170,.85)', 'center', 600);
     txt(String(G.score), VW / 2, VH * .3 + 110, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .3 + 140, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  최대 콤보 x' + G.maxCombo + '  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .3 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
-    txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : '별 조각 +' + G.shardGain, VW / 2, VH * .3 + 198, 14, '#ffe27a', 'center', 800);
+    txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : G.shardLock ? 'TON 618 격파 후에는 별 조각을 모을 수 없어' : '별 조각 +' + G.shardGain, VW / 2, VH * .3 + 198, 14, G.shardLock ? 'rgba(255,255,255,.55)' : '#ffe27a', 'center', 800);
     if (G.deadT > .7) { drawDeadShopBtn(); g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 다시 출발', VW / 2, VH - 80, 19, '#fff'); }
     g.globalAlpha = 1;
   }

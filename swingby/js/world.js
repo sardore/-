@@ -15,7 +15,16 @@ const FIELD_MAX = 220;     // 기본 폭에서 최대로 더 넓어지는 양
 export const fieldTarget = () => W0 + Math.min(FIELD_MAX, G.hops * 2.2);
 export function growField(dt) {
   if (G.boss || (G.fork && G.fork.state === 'hub')) return;   // 보스전·갈림길 선택 중에는 고정
+  const w0 = G.w;
   G.w += (fieldTarget() - G.w) * Math.min(1, dt * .9);
+  if (G.w < w0) squeeze(G.w / w0);
+}
+/** 확대된 보스 아레나(boss-arena.js 의 arenaGrow)가 끝나고 필드가 원래 폭으로 돌아올 때, 남은 오브젝트가 벽 밖에 남지 않도록 가로로 같이 줄인다 */
+function squeeze(r) {
+  for (const p of G.planets) { p.x *= r; if (p.drift) p.drift.x0 *= r; }
+  for (const L of [G.stars, G.holes]) for (const o of L) o.x *= r;
+  for (const m of G.mons) { m.x *= r; if (m.x0 != null) m.x0 *= r; }
+  if (G.ship && G.ship.mode === 'free') G.ship.x *= r;
 }
 
 /* ---------- 지형 패턴 ----------

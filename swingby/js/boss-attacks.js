@@ -133,19 +133,17 @@ export function bossTurn() {
 }
 
 /* ---------- 사건의 지평선 (TON 618) ---------- */
-/** 항성풍보다 세게 아래로 끌어당기는 중력장. 보스전이 끝날 때까지 풀리지 않는다 */
+/** 맵이 밀려나는 속도를 2배로 올리는 중력장. 보스전이 끝날 때까지 풀리지 않는다 */
 function startHorizon(b) {
   const at = ATK.horizon;
   b.horizon = true; G.haz.push({ k: 'horizon', t: 0, f: 0 });
   G.castO = { t: 0, dur: 1.3, name: at.cast, c: at.c }; b.cast = 1;
   sweep(60, 300, 1.4, .13); thump(60, 25, 1.2, .4); noise(1.4, .2, 900, 60); shakeAdd(12); flashScreen(.3, at.c);
-  toast('아래로 끌려간다 — 멈추면 떨어져!', at.c);
+  toast('맵이 2배로 빨라진다 — 멈추면 떨어져!', at.c);
 }
-/** 비행 중 아래로 당기는 가속(항성풍 230 → 330). 도달하는 데 1초쯤 걸려 서서히 세진다 */
-const HORIZON_PULL = 330;
-function updateHorizon(h, dt, b, s) {
+/** 사건의 지평선의 실제 효과는 맵이 밀려나는 속도 2배다(boss-arena.js 의 scrollSpeed). 여기서는 연출(아래로 쏟아지는 빛줄기)만 키운다 */
+function updateHorizon(h, dt) {
   h.f = Math.min(1, h.f + dt * .9);
-  if (b.state === 'fight' && s.mode === 'free') s.vy += HORIZON_PULL * fs() * h.f * dt;
   if (Math.random() < dt * 50 * h.f) { // 아래로 쏟아지는 빛줄기
     const K = arenaK();
     G.parts.push({ x: rnd(0, G.w), y: G.arenaBot - rnd(120, 460) * K, vx: 0, vy: rnd(260, 480), t: 0, l: .55, c: Math.random() < .5 ? 'rgba(190,140,255,.75)' : 'rgba(255,190,130,.6)', s: 2.6, line: true });
@@ -263,7 +261,7 @@ export function updateHaz(dt, b) {
     h.t = (h.t || 0) + dt;
     if (h.k === 'zone') updateZone(h, dt, b, s);
     else if (h.k === 'hole') updateHole(h, dt, s);
-    else if (h.k === 'horizon') updateHorizon(h, dt, b, s);
+    else if (h.k === 'horizon') updateHorizon(h, dt);
     else if (h.k === 'wind') {
       if (s.mode === 'free') s.vx += h.dir * 230 * fs() * dt;
       if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : G.w + 5, y: rnd(G.arenaTop, G.arenaBot), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });

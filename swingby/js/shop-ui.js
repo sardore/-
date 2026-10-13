@@ -89,7 +89,7 @@ function act() {
   const st = barState(it), say = s => { P.msg = s; P.msgT = 1.6; };
   if (!st || !st.ok && (it.spec || !owned(it))) { say(st && st.label === '최대' ? '이미 최대야' : '별 조각이 부족해'); beep(160, .1, 'sawtooth', .06); return; }
   if (it.spec || !owned(it)) { if (buy(it) === 'ok') { say('구매 완료'); beep(880, .1); beep(1180, .12); } return; }
-  if (equipped(it)) { unequip(it); say('해제했어'); } else { equip(it); say('장착했어'); }
+  if (equipped(it)) { unequip(it); say('해제했어'); } else { equip(it); say('장착됨'); }
   beep(700, .06);
 }
 

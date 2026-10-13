@@ -20,22 +20,29 @@ export const SCROLL = { base: 12, max: 1.4, ton: 1.8, accel: .8, gap: [58, 86] }
 const ACT = { ghost: 40, ramp: 24, alpha: .1 };
 /** 이동 템포 배율: 첫 보스 1.0 → 후반 보스 1.4(스테이지에 따라 일정하게), TON 618 은 예외로 1.8 */
 export const scrollTempo = b => b.d.kind === 'quasar' ? SCROLL.ton : 1 + (SCROLL.max - 1) * Math.min(b.stage, STAGES.length - 2) / (STAGES.length - 2);
-const scrollSpeed = b => SCROLL.base * scrollTempo(b) * arenaK();   // 행성 간격은 거리 기준이라 빨라지면 행성이 나오는 빈도(시간당)도 같은 비율로 늘어난다
+export const HORIZON_SCROLL = 2;   // TON 618 의 사건의 지평선: 맵이 밀려나는 속도 배율
+const scrollSpeed = b => SCROLL.base * scrollTempo(b) * arenaK() * (b.horizon ? HORIZON_SCROLL : 1);   // 행성 간격은 거리 기준이라 빨라지면 행성이 나오는 빈도(시간당)도 같은 비율로 늘어난다
 
 /* ---------- 시작: 아레나 ---------- */
+/** 후반 보스일수록 맵이 크다: 첫 보스 ×1.0 → 마지막 보스 ×(1+ARENA_GROW). 기체·행성·보스는 √ 로만 커지므로 화면에서는 상대적으로 작아지고 거리는 멀어진다 */
+export const ARENA_GROW = .3;
+export const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length - 1) / (STAGES.length - 1);
+
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
   const s = G.ship, P = s.p, bi = G.nextBi, d0 = BOSSES[bi];
-  // 아레나는 보스가 시작될 때의 필드 폭 그대로(진행할수록 넓다). 필드 폭은 보스전 동안 고정이고, 크기는 fk(√), 거리는 K(선형) 배율을 따른다
+  const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
+  // 아레나는 보스가 시작될 때의 필드 폭에 스테이지 가산(ARENA_GROW)을 곱한 폭이다. 필드 폭은 보스전 동안 고정이고, 크기는 fk(√), 거리는 K(선형) 배율을 따른다
+  const grow = arenaGrow(stage), px = P.x / G.w;
+  G.w *= grow; P.x = px * G.w;
   const fk = fs(), K = arenaK();
   P.x = clamp(P.x, 70 * fk, G.w - 70 * fk); G.vz = W0 / G.w;
-  const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
   const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks * fk });
   G.arenaBot = P.y + 110 * K; G.arenaTop = G.arenaBot - arenaH();
   const by = G.arenaTop + (V.VH < 760 ? 118 : 132) * K + d.R * .6;
   G.stars = []; G.holes = []; G.mons = [];
   P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
-  const sway = stage >= SWAY_FROM ? SWAY_Y : 0, list = buildArena(P, by, d.R, sway, ACT.ghost * K);
+  const sway = stage >= SWAY_FROM ? SWAY_Y : 0, list = buildArena(P, by, d.R, sway, ACT.ghost * K, grow);
   P.seen = true; list.sort((a, b) => b.y - a.y); G.planets = list;
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
   const hp = Math.round(d.hp * (1 + .6 * loop));
@@ -59,9 +66,10 @@ function arenaPlanet(x, y, gas) {
 }
 
 /** 보스로 향하는 직선을 가로막지 않는 행성 배치를 찾는다 */
-function buildArena(P, by, bossR, sway, skip) {
+function buildArena(P, by, bossR, sway, skip, grow) {
   const fk = fs(), K = arenaK();
-  const yMin = by + bossR + (50 + sway) * fk + skip, yMax = P.y + (V.VH < 760 ? 18 : -60) * K, want = Math.round(5 * K);
+  // 행성 개수는 아레나 확대(grow) 전의 필드 폭 기준 그대로: 맵만 커지고 시작 행성 수는 늘리지 않는다
+  const yMin = by + bossR + (50 + sway) * fk + skip, yMax = P.y + (V.VH < 760 ? 18 : -60) * K, want = Math.round(5 * K / grow);
   const clear = (p, L) => { // p→보스 선분 근처에 다른 행성이 없어야 한다
     const ax = p.x, ay = p.y, vx = G.w / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
     for (const q of L) {
