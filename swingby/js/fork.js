@@ -14,7 +14,7 @@ export function scheduleFork() {
 /** 이번 갈림길의 좌/우 선택지. 처음에는 단순한 바이옴만, 소행성대·공허대는 두 번째 갈림길부터 */
 function routeOptions() {
   const stage = G.kills % STAGES.length, bis = STAGES[stage], f = G.kills - 1;
-  const afterZone = (G.kills - 1) % STAGES.length === MONSTER_ZONE.stage;   // 괴물 지대 보스 직후엔 같은 지대를 또 권하지 않는다
+  const afterZone = (G.kills - 1) % STAGES.length === MONSTER_ZONE.stage;   // 독 행성 지대 보스 직후엔 같은 지대를 또 권하지 않는다
   const pool = f <= 0 ? ['nebula', 'redzone'] : f === 1 ? ['belt', 'void'] : Object.keys(BIOMES).filter(k => k !== 'normal' && !(k === 'monster' && afterZone));
   const biomes = shuffle(pool.slice()), bosses = bis.length > 1 ? shuffle(bis.slice()) : [bis[0], bis[0]];
   return [0, 1].map(i => ({ biome: biomes[i], bi: bosses[i] }));

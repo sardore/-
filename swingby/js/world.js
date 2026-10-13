@@ -1,4 +1,4 @@
-/* 월드 생성: 필드 폭의 성장, 지형 패턴에 따른 행성·별·블랙홀·괴물 배치 (행성 자체는 planets.js, 갈림길은 fork.js) */
+/* 월드 생성: 필드 폭의 성장, 지형 패턴에 따른 행성·별·블랙홀·독 행성 배치 (행성 자체는 planets.js, 갈림길은 fork.js) */
 import { G } from './state.js';
 import { W0, rnd, clamp, TAU } from './util.js';
 import { viewTop } from './camera.js';

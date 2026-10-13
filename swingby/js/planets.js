@@ -12,7 +12,7 @@ function pickType(i, biome) {
     case 'belt': return r < .8 ? 'a' : 'n';
     case 'nebula': return r < .75 ? 'g' : 'n';
     case 'redzone': return r < .45 ? 'r' : r < .8 ? 'n' : 'g';
-    case 'monster': return r < .7 ? 'n' : r < .85 ? 'g' : 'r';   // 일반 행성이 대부분: 괴물은 지형이 아니라 그 사이를 떠다닌다
+    case 'monster': return r < .7 ? 'n' : r < .85 ? 'g' : 'r';   // 일반 행성이 대부분: 독 행성은 지형이 아니라 그 사이를 떠다닌다
     default: return r < .2 ? 'r' : r < .36 ? 'g' : 'n';
   }
 }

@@ -40,12 +40,12 @@ export const BOSSES = [
   { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['comet', 'beam', 'hole', 'flare'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
   { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'hex', col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['beam', 'comet', 'flare', 'hole', 'jet'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
   { n: '에타 카리나',      e: 'ETA CARINAE',      R: 60, hp: 640,  atk: 10,   hue: 14,  kind: 'eta',   col: ['#ffd8b0', '#ff7a30', '#701808'], pat: ['meteor', 'flare', 'collapse', 'hole', 'wind', 'beam'], q: 3, line: '언제 터질지 모르는 극대거성' },
-  { n: '포식성 그롬',      e: 'GROM THE DEVOURER', R: 56, hp: 420,  atk: 8,    hue: 125, kind: 'devour', col: ['#d8ffb0', '#4fd84a', '#124a14'], pat: ['meteor', 'hole', 'beam', 'collapse', 'comet'], q: 2, line: '괴물 행성들의 왕, 닥치는 대로 삼킨다' }
+  { n: '포식성 그롬',      e: 'GROM THE DEVOURER', R: 56, hp: 420,  atk: 8,    hue: 125, kind: 'devour', col: ['#d8ffb0', '#4fd84a', '#124a14'], pat: ['meteor', 'hole', 'beam', 'collapse', 'comet'], q: 2, line: '독 행성들의 왕, 닥치는 대로 삼킨다' }
 ];
 /** 스테이지마다 만날 수 있는 보스(BOSSES 인덱스). 2개면 갈림길에서 고른다. 한 판에 8스테이지 = 8종을 만난다.
- * 4번째(11)는 괴물 행성 지대의 도전 보스 — 갈림길 없이 지대를 지나 바로 만난다 */
+ * 4번째(11)는 독 행성 지대의 도전 보스 — 갈림길 없이 지대를 지나 바로 만난다 */
 export const STAGES = [[0], [1, 2], [7, 8], [11], [3, 4], [9], [5, 10], [6]];
-/** 괴물 행성 지대: 이 스테이지(STAGES 인덱스)의 보스 앞에 반드시 나온다. len 은 지대를 지나는 행성 수 */
+/** 독 행성 지대: 이 스테이지(STAGES 인덱스)의 보스 앞에 반드시 나온다. len 은 지대를 지나는 행성 수 */
 export const MONSTER_ZONE = { stage: 3, len: 12 };
 /** 기체 진화에 필요한 누적 보스 격파 수 (현재 단계 → 격파 수). 후반 진화는 보스가 늘어난 만큼 늦다 */
 export const EVOLVE_AT = { 2: 2, 3: 5 };
@@ -75,6 +75,6 @@ export const BIOMES = {
   belt:    { n: '소행성대',  c: '#e0a878', hue: 28,  sc: 1.25, ph: [18, 48],   look: { sky: ['#1c1006', '#3a230e'], haze: [30, 75, 46],  cl: .13, dust: ['#f0c690', 1.9, -1], vig: ['#4a2400', .4] } },
   nebula:  { n: '가스 성운', c: '#b68aff', hue: 268, sc: .8,   ph: [265, 325], look: { sky: ['#16063c', '#34105a'], haze: [305, 85, 52], cl: .3,  dust: ['#ecd0ff', 1.1, 1],  vig: ['#7a28b8', .35] } },
   redzone: { n: '적색 지대', c: '#ff7a6a', hue: 4,   sc: 1.4,  ph: [200, 330],  look: { sky: ['#2c0507', '#4c0b10'], haze: [4, 92, 48],   cl: .24, dust: ['#ffb070', 1.5, 3],  vig: ['#ff2a14', .38] } },
-  monster: { n: '괴물 행성',  c: '#8dff7a', hue: 128, sc: 1.3,  ph: [180, 255], look: { sky: ['#031208', '#0a2614'], haze: [135, 70, 36], cl: .22, dust: ['#b8ff9a', 1.4, 1], vig: ['#22ff5a', .34] } },
+  monster: { n: '독 행성',  c: '#8dff7a', hue: 128, sc: 1.3,  ph: [180, 255], look: { sky: ['#031208', '#0a2614'], haze: [135, 70, 36], cl: .22, dust: ['#b8ff9a', 1.4, 1], vig: ['#22ff5a', .34] } },
   void:    { n: '공허대',    c: '#8a8aff', hue: 248, sc: 1.5,  ph: [222, 268], look: { sky: ['#010105', '#05031a'], haze: [255, 70, 32], cl: .14, dust: ['#8a8aff', .8, 0],   vig: ['#000000', .65] } }
 };
