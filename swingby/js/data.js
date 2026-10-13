@@ -4,7 +4,7 @@
  * 모든 능력치는 퍼센트이며 100% = Lv1 기본 기체. 추진기(shield)만 개수. */
 export const STATS = [ // 레이더 차트 축 순서
   { k: 'spd',   n: '속도',   c: '#8affc8' },
-  { k: 'ram',   n: '박치기', c: '#ff6a6a' },
+  { k: 'ram',   n: '충돌', c: '#ff6a6a' },
   { k: 'grav',  n: '인력',   c: '#7dd3ff' },
   { k: 'decay', n: '궤도',   c: '#9dffb0' },
   { k: 'o2',    n: '산소',   c: '#b8a8ff' },
@@ -17,7 +17,7 @@ export const baseStats = () => ({ spd: 100, ram: 100, grav: 100, decay: 100, o2:
 /** 업그레이드 카드(4단 진화 이후). step 은 퍼센트포인트, cap 은 상한 */
 export const CARDS = [
   { k: 'spd',   n: '추력 증강',   d: '비행 속도',     step: 5,  cap: 160 },
-  { k: 'ram',   n: '박치기 강화', d: '보스 충돌 피해',     step: 12, cap: 400 },
+  { k: 'ram',   n: '충돌 강화', d: '보스 충돌 피해',     step: 12, cap: 400 },
   { k: 'grav',  n: '중력 증폭',   d: '행성 포획·별 수집 범위', step: 10, cap: 300 },
   { k: 'decay', n: '안정 궤도',   d: '궤도가 천천히 줄어듦', step: 12, cap: 320 },
   { k: 'o2',    n: '산소 탱크',   d: '비행 시간·보스전 산소', step: 12, cap: 300 },

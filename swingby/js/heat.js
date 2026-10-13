@@ -8,7 +8,7 @@ import { sparks, ringFx, shakeAdd } from './fx.js';
 
 export const HEAT_MAX = 5;          // 쌓이는 최대 단계
 const HEAT_SPEED = .14;             // 한 단계마다 늘어나는 속도 비율
-const HEAT_RAM = .12;               // 한 단계마다 늘어나는 박치기 피해 비율
+const HEAT_RAM = .12;               // 한 단계마다 늘어나는 충돌 피해 비율
 
 export const heatMul = () => 1 + HEAT_SPEED * G.ship.heat;
 export const heatRam = () => 1 + HEAT_RAM * G.ship.heat;

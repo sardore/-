@@ -1,4 +1,4 @@
-/* 항성 보스전: 아레나 구성, 턴제 예고·공격 패턴, 존(zone) 판정, 피격·박치기, 격파와 진행 */
+/* 항성 보스전: 아레나 구성, 턴제 예고·공격 패턴, 존(zone) 판정, 피격·충돌, 격파와 진행 */
 import { G, V } from './state.js';
 import { W0, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
 import { BOSSES, STAGES, ATK, BIOMES } from './data.js';
@@ -185,7 +185,7 @@ function hurtZone(h, s) {
   hurt(s.x + Math.sin(h.a) * sg * 30, s.y - Math.cos(h.a) * sg * 30, h.pow);
 }
 
-/* ---------- 피격 / 박치기 ---------- */
+/* ---------- 피격 / 충돌 ---------- */
 /** 보스 공격에 맞았다: 보스마다 다른 atk(초) × 패턴 배율만큼 산소를 잃는다 */
 export function hurt(x, y, pow = 1) {
   const s = G.ship, b = G.boss; if (s.inv > 0 || G.st !== 'play' || !b) return;
@@ -218,7 +218,7 @@ export function ram() {
   ringFx(b.x + nx * b.hr, b.y + ny * b.hr, '#fff', 4, 70, .35, 4); ringFx(b.x, b.y, col, b.hr, b.hr + 60, .5, 3);
   thump(190, 38, .3, .42); noise(.22, .3, 6000, 300); beep(820 + Math.min(G.bcombo, 6) * 60, .05, 'square', .07);
   G.texts.push({ x: b.x + nx * (b.hr + 22), y: b.y + ny * (b.hr + 22), t: 0, s: '-' + dmg, c: '#ffe27a', sz: clamp(18 + dmg * .45, 20, 40) });
-  addScore(dmg * 3, s.x, s.y - 14, '#ffe27a', dashing ? '돌격!' : '박치기', 16);
+  addScore(dmg * 3, s.x, s.y - 14, '#ffe27a', dashing ? '돌격!' : '충돌', 16);
   const phases = b.d.kind === 'quasar' ? [.66, .33] : [.5];
   if (b.phase < phases.length && b.hp <= b.max * phases[b.phase] && b.hp > 0) {
     b.phase++;

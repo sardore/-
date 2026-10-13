@@ -41,7 +41,7 @@ function drawBossHud() {
     const at = ATK[a.k]; rr(x - 34, by + 34, 68, 22, 8); g.fillStyle = 'rgba(10,8,24,.75)'; g.fill(); g.strokeStyle = a.t <= 1 ? '#ff6a6a' : at.c; g.lineWidth = 1.5; g.stroke();
     txt(at.n + ' ' + a.t, x, by + 49, 12, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 74;
   }
-  if (G.bcombo > 0) txt('연속 박치기 x' + G.bcombo, VW / 2, by + 74, 13, '#ff9d7a', 'center', 700);
+  if (G.bcombo > 0) txt('연속 충돌 x' + G.bcombo, VW / 2, by + 74, 13, '#ff9d7a', 'center', 700);
   // 산소 게이지: 보스전에서는 회복되지 않는다
   const ow = 280, ox = VW / 2 - ow / 2, oy = VH - 44, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
   g.fillStyle = 'rgba(255,255,255,.14)'; rr(ox, oy, ow, 12, 6); g.fill();

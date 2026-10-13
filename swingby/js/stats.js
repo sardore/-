@@ -1,5 +1,5 @@
 /* 퍼센트 능력치 → 실제 게임 수치 변환. 규칙을 이 파일 하나에 모아 둔다.
- *   spd 비행·궤도 속도 ×  · ram 박치기 피해 ×  · grav 행성 포획 링 폭·별 수집 범위 ×  · decay 궤도 붕괴 ÷
+ *   spd 비행·궤도 속도 ×  · ram 충돌 피해 ×  · grav 행성 포획 링 폭·별 수집 범위 ×  · decay 궤도 붕괴 ÷
  *   o2 비행 시간·보스전 산소 ×  · mult 점수 ×  · shield 개수 */
 import { G } from './state.js';
 import { W0 } from './util.js';
