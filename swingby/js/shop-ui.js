@@ -118,6 +118,7 @@ const shard = (x, y, r) => { // 별 조각 아이콘
 export function drawShop() {
   stepScroll();
   const { VW, VH } = V, L = layout();
+  if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);
   g.fillStyle = 'rgba(5,6,15,.82)'; g.fillRect(0, 0, VW, VH);
   rr(L.back.x, L.back.y, L.back.w, L.back.h, 15); g.fillStyle = 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1; g.stroke();
   txt('◀ 돌아가기', L.back.x + L.back.w / 2, L.back.y + 20, 12, '#fff', 'center', 700);

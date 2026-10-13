@@ -103,6 +103,7 @@ export function drawScreens() {
     else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
     g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     drawTitleMenu();
+    if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);   // 어느 버전을 받았는지 확인용
     if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
