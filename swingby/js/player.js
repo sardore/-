@@ -16,7 +16,8 @@ import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 import { cfg, shipHue, emitDecor, landHsl, starHsl } from './cos.js';
 import { settleRun } from './shop.js';
 
-export const CHARGE_T = .8;      // 차지가 가득 차는 시간(초)
+export const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 비례해 길어진다(약한 돌진은 빨리, 강한 돌진은 오래)
+const chargeTime = () => CHARGE_T * curDef().dash;
 const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오는 시간 상수
 
 /* ---------- 입력 동작 ---------- */
@@ -26,7 +27,7 @@ const canAct = () => G.st === 'play' && G.ship.mode === 'orb' && !(G.boss && G.b
 export function pressStart() {
   if (!canAct()) return;
   const s = G.ship; s.charging = true; s.charge = 0; s.chFull = false;
-  sweep(180, 900, CHARGE_T, .07);
+  sweep(180, 900, chargeTime(), .07);
 }
 /** 뗌: 차지 중이었다면 그 세기로 발사 */
 export function pressEnd() {
@@ -204,7 +205,7 @@ function dashTrail(dt) {
 }
 function chargeFx(dt) {
   const s = G.ship;
-  s.charge = Math.min(1, s.charge + dt / CHARGE_T);
+  s.charge = Math.min(1, s.charge + dt / chargeTime());
   const col = 'hsl(' + shipHue() + ',100%,75%)';
   if (Math.random() < dt * 70 * (.3 + s.charge)) { // 기체로 빨려드는 입자
     const an = rnd(0, TAU), r = 38 - s.charge * 14;

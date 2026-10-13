@@ -56,7 +56,7 @@ const maxScroll = () => Math.max(0, rows().total - layout().list.h);
 
 /* ---------- 입력 ---------- */
 /* 스크롤: 손가락을 따라가고, 떼면 속도가 남아 서서히 멈춘다(관성). 휠은 칸마다 속도를 더해 연속으로 돌릴수록 빨라진다 */
-const FRICTION = 3.4, FLING_MAX = 3200;
+const FRICTION = 2.3, FLING_MAX = 6500, FLING_GAIN = 1.5;   // 마찰이 작을수록 오래 미끄러진다
 export function shopDown(x, y) { P.vel = 0; P.d = { x, y, s0: P.scroll, moved: false, ly: y, lt: performance.now(), v: 0 }; }
 export function shopMove(y) {
   const d = P.d; if (!d) return;
@@ -67,7 +67,7 @@ export function shopMove(y) {
     if (dt > 0) { d.v = d.v * .55 + (-(y - d.ly) / dt) * .45; d.ly = y; d.lt = now; }
   }
 }
-export const shopWheel = dy => { P.vel = clamp(P.vel + dy * 3.5, -FLING_MAX, FLING_MAX); };
+export const shopWheel = dy => { P.vel = clamp(P.vel + dy * 4.5, -FLING_MAX, FLING_MAX); };
 /** 한 프레임의 관성 스크롤 */
 function stepScroll() {
   const now = performance.now(), dt = clamp((now - (P.tick || now)) / 1000, 0, .05); P.tick = now;
@@ -80,7 +80,7 @@ function stepScroll() {
 /** 손가락을 뗐다: 거의 움직이지 않았으면 탭으로 처리 (x 가 없으면 취소) */
 export function shopUp(x, y) {
   const d = P.d; P.d = null;
-  if (d && d.moved && x != null && performance.now() - d.lt < 90) P.vel = clamp(d.v, -FLING_MAX, FLING_MAX);   // 멈칫하지 않고 뗐으면 속도가 남는다
+  if (d && d.moved && x != null && performance.now() - d.lt < 120) P.vel = clamp(d.v * FLING_GAIN, -FLING_MAX, FLING_MAX);   // 멈칫하지 않고 뗐으면 속도가 남는다
   if (!d || x == null || d.moved) return;
   const L = layout();
   if (inRect(L.back, x, y)) { closeShop(); return; }
