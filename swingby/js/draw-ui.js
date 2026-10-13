@@ -9,7 +9,7 @@ import { rr, txt } from './gfx.js';
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
 
 export function drawHud() {
-  const { VW, VH, OX } = V, T = G.T, b = G.boss;
+  const { VW, OX } = V, b = G.boss;
   if (G.st !== 'play' && G.st !== 'pick') return;
   txt(String(G.score), VW / 2, 54, 40, '#fff', 'center', 800);
   if (G.combo > 1 && !b) txt('x' + G.combo + ' 콤보', VW / 2, 78, 15, '#7dd3ff');

@@ -10,7 +10,7 @@ import { drawHud, drawLowO2, drawMuteButton, drawOverlays, drawScreens } from '.
 import { drawPick } from './draw-pick.js';
 
 export function draw() {
-  const { VW, VH, OX, S, DPR } = V;
+  const { VW, VH, S, DPR } = V;
   g.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
   drawBackdrop();
   g.save();

@@ -2,10 +2,12 @@
 import { G, V } from './state.js';
 import { W0, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
 import { BOSSES, STAGES, ATK, BIOMES, MONSTER_ZONE } from './data.js';
-import { spd, capOf, shipR, ramMul, bossO2 } from './stats.js';
+import { spd, capOf, shipR, bossO2 } from './stats.js';
+import { isDashing, impactDamage, bounceShip, bounceSpeed, standoff } from './impact.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, popText, addScore } from './fx.js';
-import { mkPlanet, scheduleFork } from './world.js';
+import { mkPlanet } from './planets.js';
+import { scheduleFork } from './fork.js';
 import { die } from './player.js';
 import { afterBoss } from './progress.js';
 import { heatReset, heatRam, heatMul, flameColor } from './heat.js';
@@ -205,12 +207,9 @@ export function hurt(x, y, pow = 1) {
 export function ram() {
   const b = G.boss, s = G.ship;
   const nx0 = s.x - b.x, ny0 = s.y - b.y, L = Math.hypot(nx0, ny0) || 1, nx = nx0 / L, ny = ny0 / L;
-  const dashing = s.boost > 1.15, dashMul = dashing ? 1 + .6 * (s.boost - 1) : 1;
-  const dmg = Math.round(26 * ramMul() * (1 + .12 * Math.min(G.bcombo, 6)) * dashMul * heatRam() * (.9 + Math.random() * .2));
+  const dashing = isDashing(), dmg = impactDamage((1 + .12 * Math.min(G.bcombo, 6)) * heatRam());
   b.hp -= dmg; b.flash = .18; b.sq = 1; b.hitT = .5; s.ramT = .35; s.hitF = true;
-  const dot = s.vx * nx + s.vy * ny; let vx = s.vx - 2 * dot * nx, vy = s.vy - 2 * dot * ny;
-  const m = Math.hypot(vx, vy) || 1, v = Math.max(spd() * .75 * heatMul(), m * .85);
-  s.vx = vx / m * v; s.vy = vy / m * v; s.x = b.x + nx * (b.hr + shipR() + 5); s.y = b.y + ny * (b.hr + shipR() + 5);
+  bounceShip(b.x, b.y, nx, ny, standoff(b.hr, 5), bounceSpeed(heatMul()));
   const col = 'hsl(' + b.d.hue + ',100%,70%)', ang = Math.atan2(ny, nx);
   hitstop(.09 + Math.min(dmg, 40) / 700 + (dashing ? .04 : 0)); shakeAdd(11 + dmg * .12 + (dashing ? 5 : 0)); punch(.05 + (dashing ? .03 : 0)); flashScreen(.28, '#fff'); vibe(35);
   if (s.heat) sparks(s.x, s.y, flameColor(66), 8 + s.heat * 4, 420, ang, 1.3);

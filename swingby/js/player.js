@@ -6,9 +6,11 @@ import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, 
 import { viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
-import { shatter, enterFork, commitRoute } from './world.js';
+import { shatter } from './planets.js';
+import { enterFork, commitRoute } from './fork.js';
 import { bossTurn, ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
+import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 
 export const CHARGE_T = .8;      // 차지가 가득 차는 시간(초)
@@ -42,7 +44,7 @@ export function release(charge) {
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
   sparks(s.x, s.y, '#bfeaff', 9, 260, back, .5); ringFx(s.x, s.y, 'rgba(190,235,255,.8)', 4, 26, .3, 2); shakeAdd(2.2);
-  if (boost > 1.15) { // 돌격!
+  if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
     thump(260, 50, .25, .3); sweep(300, 1400, .3, .1, 'square'); noise(.3, .22, 7000, 500);
     sparks(s.x, s.y, '#fff', 16, 520, back, .35); sparks(s.x, s.y, 'hsl(' + curDef().L.h + ',100%,70%)', 14, 420, back, .5);

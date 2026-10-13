@@ -2,7 +2,8 @@
  * 부딪힐수록 작아지다가 터진다. 괴물 행성 지대(BIOMES.monster)에서만 나온다. 겉모습은 draw-monster.js */
 import { G } from './state.js';
 import { rnd, clamp, TAU } from './util.js';
-import { fs, shipR, spd, ramMul } from './stats.js';
+import { fs, shipR } from './stats.js';
+import { impactDamage, bounceShip, bounceSpeed, standoff } from './impact.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, popText, addScore } from './fx.js';
 import { beep, thump, noise, vibe } from './audio.js';
 
@@ -67,12 +68,9 @@ export function hitMonsters() {
 }
 
 function bump(m, nx, ny) {
-  const s = G.ship, dashing = s.boost > 1.15, dashMul = dashing ? 1 + .6 * (s.boost - 1) : 1;
-  const dmg = Math.round(26 * ramMul() * dashMul * (.9 + Math.random() * .2));
+  const s = G.ship, dmg = impactDamage();
   m.hp -= dmg; m.flash = .16; m.sq = 1; s.ramT = HIT_COOLDOWN;
-  const dot = s.vx * nx + s.vy * ny; let vx = s.vx - 2 * dot * nx, vy = s.vy - 2 * dot * ny;
-  const len = Math.hypot(vx, vy) || 1, v = Math.max(spd() * .75, len * .85);
-  s.vx = vx / len * v; s.vy = vy / len * v; s.x = m.x + nx * (reachOf(m) + shipR() + 4); s.y = m.y + ny * (reachOf(m) + shipR() + 4);
+  bounceShip(m.x, m.y, nx, ny, standoff(reachOf(m), 4), bounceSpeed());
   const col = 'hsl(' + m.hue + ',90%,62%)', ang = Math.atan2(ny, nx), bx = m.x + nx * m.R, by = m.y + ny * m.R;
   sparks(s.x, s.y, '#fff', 10, 380, ang, .9); sparks(bx, by, col, 12, 300, ang, 1.2);
   ringFx(bx, by, '#fff', 4, 46, .3, 3); hitstop(.06 + Math.min(dmg, 40) / 900); shakeAdd(6 + dmg * .08); punch(.03); vibe(25);
