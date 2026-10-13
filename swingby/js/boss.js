@@ -10,6 +10,7 @@ import { die } from './player.js';
 import { afterBoss } from './progress.js';
 import { heatReset, heatRam, heatMul, flameColor } from './heat.js';
 
+const ARENA_RING = .78;               // 보스전에서 서 있던 행성의 포획 링 폭 비율 (아레나 행성은 처음부터 좁게 만든다)
 const SWAY_FROM = 1, SWAY_Y = 26;   // 보스가 움직이기 시작하는 스테이지(0부터)와 위아래 흔들림 폭
 export const aliveP = () => G.planets.filter(p => !p.dead);
 
@@ -24,6 +25,7 @@ export function startBoss() {
   G.arenaCam = P.y - V.VH + 110;
   const by = G.arenaCam + (V.VH < 760 ? 150 : 178) + d.R * .6;
   G.stars = []; G.holes = [];
+  P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
   const list = buildArena(P, by, d.R, stage >= SWAY_FROM ? SWAY_Y : 0);
   P.seen = true; list.sort((a, b) => b.y - a.y); G.planets = list;
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
@@ -56,7 +58,7 @@ function buildArena(P, by, bossR, sway) {
       const x = rnd(58, W0 - 58), y = rnd(yMin, Math.max(yMin + 10, yMax));
       if (!L.every(q => Math.hypot(q.x - x, q.y - y) > 118)) continue;
       const gas = L.length === 3, q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : 'n');
-      q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 78 : rnd(54, 64)); q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
+      q.R = gas ? rnd(32, 38) : rnd(20, 27); q.cap = q.R + (gas ? 58 : rnd(40, 48)); q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true; L.push(q);
     }
     if (L.length >= 4 && L.every(q => clear(q, L))) { list = L; break; }
     if (att === 79) list = L;
