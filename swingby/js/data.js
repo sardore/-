@@ -25,9 +25,8 @@ export const CARDS = [
   { k: 'shield', n: '비상 추진기', d: '사망 1회 방지',      step: 1,  cap: 9 }
 ];
 
-/** 점수 배율 카드(항해 일지)의 중반 보너스: 보스 3회 격파부터 TON 618 을 잡을 때까지는 오르는 폭이 mul 배, 그 뒤(무한 모드)에는 본래대로 */
-export const MULT_BOOST = { from: 3, mul: 2 };
-export const cardStep = (c, kills, cleared) => c.k === 'mult' && kills >= MULT_BOOST.from && !cleared ? c.step * MULT_BOOST.mul : c.step;
+/** 보스를 쓰러뜨릴 때마다 점수 배율이 20%씩 복리로 오른다 (화면에는 표시하지 않는다) */
+export const BOSS_MUL = 1.2;
 
 /* ---------- 보스 ----------
  * kind: 그리는 방식, pat: 쓰는 패턴, q: 동시에 예고해 두는 공격 수, atk: 한 번 맞을 때 깎이는 산소(초) */

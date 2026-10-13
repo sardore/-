@@ -1,7 +1,7 @@
 /* 선택 화면: 기체 진화(상위 기체 비교 + 능력치 다각형) · 강화 카드 */
 import { G, V, g } from './state.js';
 import { TAU, clamp } from './util.js';
-import { STAT_INFO, cardStep } from './data.js';
+import { STAT_INFO } from './data.js';
 import { SHIPS, statsAfter } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
 import { drawRadar } from './radar.js';
@@ -63,7 +63,7 @@ function drawCards() {
   txt(G.pickTitle, cx, top + 20, 20, '#fff', 'center', 800);
   drawRadar(cx, top + 98, 46, [{ stats: G.stats, color: shipHsl(SHIPS[G.shipId]), fill: .24 }], { labels: true, fs: 10 });
   G.cards.forEach((c, i) => {
-    const r = rects[i], info = STAT_INFO[c.k], now = G.stats[c.k], next = Math.min(c.cap, now + cardStep(c, G.kills, G.cleared));
+    const r = rects[i], info = STAT_INFO[c.k], now = G.stats[c.k], next = Math.min(c.cap, now + c.step);
     const after = Object.assign({}, G.stats, { [c.k]: next });
     g.globalAlpha = fade(i);
     rr(r.x, r.y, r.w, r.h, 14); g.fillStyle = 'rgba(22,24,48,.95)'; g.fill(); g.strokeStyle = info.c; g.lineWidth = 2; g.stroke();
