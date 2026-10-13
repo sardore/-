@@ -35,6 +35,9 @@ defShip('wor', 4, '웜홀선',     '포획·속도·점수',         285, { kind
 defShip('gha', 4, '은하 수확선', '별을 끌어모으는 수집선',   35,  { kind: 'scout', panels: 1, pods: 2, engines: 3, drones: 3 }, { grav: 40, mult: 25, o2: 25 });
 defShip('gol', 4, '황금 상선',  '점수 배율 극대화',       46,  { kind: 'hull', panels: 1, pods: 2, engines: 3, plates: 2, ring: 1 }, { mult: 75, shield: 1 });
 
+/* 디버그판(?debug) 전용: 진화 트리에 속하지 않는다. 능력치를 상한 근처까지 올린 기체 */
+defShip('dbg', 4, '디버그함', '테스트 전용 초고스펙', 48, { kind: 'dart', fins: 3, engines: 4, cannons: 2, plates: 2, spike: 1, halo: 1, ring: 1, drones: 3 }, { spd: 30, ram: 300, grav: 200, decay: 220, o2: 200, mult: 300, shield: 9 }, [], 1);
+
 /** 현재 능력치에 이 기체의 증가량을 더한 결과(새 객체) */
 export function statsAfter(stats, def) {
   const out = Object.assign({}, stats);

@@ -2,7 +2,7 @@
 import { G, V } from './state.js';
 import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
-import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit } from './stats.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit } from './stats.js';
 import { viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
@@ -99,7 +99,7 @@ export function die(why) {
     for (const p of G.planets) { if (p.dead) continue; if (p.y < G.camY + V.VH - 70 && p.y > G.camY + 50 && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
     bp = bp || s.p;
     let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
-    s.mode = 'orb'; s.p = bp; s.r = capOf(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
+    s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
     s.x = bp.x + Math.cos(a) * s.r; s.y = bp.y + Math.sin(a) * s.r;
     if (!G.boss && !bp.seen) { bp.seen = true; G.hops++; }
     if (!G.boss) forkArrive(bp);
@@ -125,6 +125,7 @@ export function stepShip(dt) {
   if (s.mode === 'orb') {
     const p = s.p;
     if (!boss && !(s.grace > 0)) s.r -= decRate(p) * dt;
+    const mo = maxOrbit(p); if (s.r > mo) s.r += (mo - s.r) * Math.min(1, dt * 5);   // 너무 먼 궤도로 붙었으면 부드럽게 끌려 들어온다
     const da = (boss ? orbSpd() * .58 : orbSpd()) / Math.max(s.r, 8) * dt;
     s.a += s.dir * da; s.swept += da;
     s.x = p.x + Math.cos(s.a) * s.r; s.y = p.y + Math.sin(s.a) * s.r;

@@ -18,7 +18,12 @@ export const shipR = () => (7 + (G.tier - 1) * 1.6) * fs();                 // �
 const baseSpd = () => (235 + Math.min(G.hops * 3, 165)) * fs();
 export const spd = () => baseSpd() * pct('spd');     // 비행 속도
 export const orbSpd = () => baseSpd();                // 궤도 회전 속도: 속도 능력치의 영향을 받지 않는다
-export const capOf = p => p.R + (p.cap - p.R) * pct('grav');
+/** 포획 범위 배율. 인력이 높을수록 효과가 줄어든다: 너무 넓으면 원하는 행성을 고를 수 없어 오히려 답답해진다 */
+const RING_KNEE = 1.5, RING_SLOPE = .4, ORBIT_MAX = 1.45;
+export const ringMul = () => { const g = pct('grav'); return g <= RING_KNEE ? g : RING_KNEE + (g - RING_KNEE) * RING_SLOPE; };
+export const capOf = p => p.R + (p.cap - p.R) * ringMul();
+/** 궤도 반지름의 상한. 포획 범위가 아무리 넓어도 이보다 먼 궤도는 금방 안쪽으로 끌려 들어온다(큰 궤도는 회전이 느려 답답하다) */
+export const maxOrbit = p => Math.min(capOf(p), p.R + (p.cap - p.R) * ORBIT_MAX);
 export const decRate = p => (5 + Math.min(G.hops * .22, 9)) * PLANET_DEC[p.t] / pct('decay') * fs();
 export const o2max = () => 2.6 * pct('o2');
 export const magRange = () => 20 * pct('grav') * fs();

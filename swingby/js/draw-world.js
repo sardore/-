@@ -4,7 +4,7 @@ import { PI, TAU, clamp, easeOut } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { capOf, o2max, fs } from './stats.js';
+import { capOf, maxOrbit, o2max, fs } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { txt } from './gfx.js';
 import { flameColor } from './heat.js';
@@ -102,7 +102,7 @@ export function drawPlayer() {
   const s = G.ship, T = G.T, def = SHIPS[G.shipId];
   let hx, hy;
   if (s.mode === 'orb') {
-    const p = s.p, ratio = (s.r - p.R) / (capOf(p) - p.R), danger = !G.boss && ratio < .38;
+    const p = s.p, ratio = (s.r - p.R) / (maxOrbit(p) - p.R), danger = !G.boss && ratio < .38;
     g.strokeStyle = danger ? 'rgba(255,90,90,' + (.5 + .4 * Math.sin(T * 18)) + ')' : 'rgba(255,255,255,.2)'; g.lineWidth = danger ? 2 : 1;
     g.beginPath(); g.arc(p.x, p.y, s.r, 0, TAU); g.stroke();
     hx = -Math.sin(s.a) * s.dir; hy = Math.cos(s.a) * s.dir;
