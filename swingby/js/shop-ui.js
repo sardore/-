@@ -19,10 +19,10 @@ import { beep } from './audio.js';
 const PW = 372, ROW = 52, ROW_SPEC = 58, HEAD = 40, GOLD = '#ffe27a';
 
 /** 화면 상태: 탭 · 스크롤 · 고른 상품 · 안내 문구 · 드래그 중인 손가락 · 미리보기용 입자 */
-const P = { tab: 'fx', scroll: 0, sel: null, msg: '', msgT: 0, d: null, parts: [], fxr: [], last: 0, nextRing: 0, nextStar: 0, starOff: 0 };
+const P = { tab: 'fx', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', msgT: 0, d: null, parts: [], fxr: [], last: 0, nextRing: 0, nextStar: 0, starOff: 0 };
 
 /* ---------- 열기·닫기 ---------- */
-export function openShop() { Object.assign(P, { tab: 'fx', scroll: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
+export function openShop() { Object.assign(P, { tab: 'fx', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
 /** 디버그/테스트: 상점을 열고 그 상품을 골라 미리보기 한다 */
 export function previewItem(id) { const it = ITEMS[id]; if (!it) return; openShop(); P.tab = it.tab; P.sel = id; }
 /** 닫으면 시작화면으로: 새 판을 만들어 구매한 초기 스펙을 반영한다 */
@@ -55,20 +55,36 @@ function rows() {
 const maxScroll = () => Math.max(0, rows().total - layout().list.h);
 
 /* ---------- 입력 ---------- */
-export function shopDown(x, y) { P.d = { x, y, s0: P.scroll, moved: false }; }
+/* 스크롤: 손가락을 따라가고, 떼면 속도가 남아 서서히 멈춘다(관성). 휠은 칸마다 속도를 더해 연속으로 돌릴수록 빨라진다 */
+const FRICTION = 3.4, FLING_MAX = 3200;
+export function shopDown(x, y) { P.vel = 0; P.d = { x, y, s0: P.scroll, moved: false, ly: y, lt: performance.now(), v: 0 }; }
 export function shopMove(y) {
   const d = P.d; if (!d) return;
   if (Math.abs(y - d.y) > 8) d.moved = true;
-  if (d.moved && inRect(layout().list, d.x, d.y)) P.scroll = clamp(d.s0 - (y - d.y), 0, maxScroll());
+  if (d.moved && inRect(layout().list, d.x, d.y)) {
+    P.scroll = clamp(d.s0 - (y - d.y), 0, maxScroll());
+    const now = performance.now(), dt = (now - d.lt) / 1000;
+    if (dt > 0) { d.v = d.v * .55 + (-(y - d.ly) / dt) * .45; d.ly = y; d.lt = now; }
+  }
 }
-export const shopWheel = dy => { P.scroll = clamp(P.scroll + dy * .6, 0, maxScroll()); };
+export const shopWheel = dy => { P.vel = clamp(P.vel + dy * 3.5, -FLING_MAX, FLING_MAX); };
+/** 한 프레임의 관성 스크롤 */
+function stepScroll() {
+  const now = performance.now(), dt = clamp((now - (P.tick || now)) / 1000, 0, .05); P.tick = now;
+  if (P.d && P.d.moved) { P.vel = 0; return; }
+  if (Math.abs(P.vel) < 8) { P.vel = 0; return; }
+  const ms = maxScroll(), nx = P.scroll + P.vel * dt;
+  P.scroll = clamp(nx, 0, ms); if (nx < 0 || nx > ms) P.vel = 0;
+  P.vel *= Math.exp(-dt * FRICTION);
+}
 /** 손가락을 뗐다: 거의 움직이지 않았으면 탭으로 처리 (x 가 없으면 취소) */
 export function shopUp(x, y) {
   const d = P.d; P.d = null;
+  if (d && d.moved && x != null && performance.now() - d.lt < 90) P.vel = clamp(d.v, -FLING_MAX, FLING_MAX);   // 멈칫하지 않고 뗐으면 속도가 남는다
   if (!d || x == null || d.moved) return;
   const L = layout();
   if (inRect(L.back, x, y)) { closeShop(); return; }
-  if (y >= L.tabY && y <= L.tabY + 30 && x >= L.x && x <= L.x + PW) { const t = TABS[Math.min(TABS.length - 1, Math.floor((x - L.x) / L.tabW))]; if (t.k !== P.tab) { P.tab = t.k; P.scroll = 0; P.sel = null; beep(480, .05); } return; }
+  if (y >= L.tabY && y <= L.tabY + 30 && x >= L.x && x <= L.x + PW) { const t = TABS[Math.min(TABS.length - 1, Math.floor((x - L.x) / L.tabW))]; if (t.k !== P.tab) { P.tab = t.k; P.scroll = 0; P.vel = 0; P.sel = null; beep(480, .05); } return; }
   if (inRect(barBtn(L), x, y)) { act(); return; }
   if (inRect(L.list, x, y)) {
     const ly = y - L.list.y + P.scroll, r = rows().out.find(q => q.it && ly >= q.y && ly < q.y + q.h);
@@ -100,6 +116,7 @@ const shard = (x, y, r) => { // 별 조각 아이콘
   g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .72, y - r * .15); g.lineTo(x, y + r * .1); g.closePath(); g.fill();
 };
 export function drawShop() {
+  stepScroll();
   const { VW, VH } = V, L = layout();
   g.fillStyle = 'rgba(5,6,15,.82)'; g.fillRect(0, 0, VW, VH);
   rr(L.back.x, L.back.y, L.back.w, L.back.h, 15); g.fillStyle = 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1; g.stroke();
@@ -252,3 +269,4 @@ export function drawDeadShopBtn() {
   shard(r.x + 24, r.y + r.h / 2, 8); txt('별 조각 상점', r.x + r.w / 2 + 10, r.y + 24, 14, GOLD, 'center', 800);
 }
 export const deadShopHit = (x, y) => inRect(deadBtn(), x, y);
+export const shopScroll = () => ({ y: P.scroll, v: P.vel });   // 테스트용
