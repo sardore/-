@@ -16,8 +16,8 @@ import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 import { cfg, shipHue, emitDecor, landHsl, starHsl } from './cos.js';
 import { settleRun } from './shop.js';
 
-export const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 비례해 길어진다(약한 돌진은 빨리, 강한 돌진은 오래)
-const chargeTime = () => CHARGE_T * curDef().dash;
+export const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 반비례한다(강한 돌진일수록 빨리 찬다)
+const chargeTime = () => CHARGE_T / curDef().dash;
 const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오는 시간 상수
 
 /* ---------- 입력 동작 ---------- */
