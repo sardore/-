@@ -5,24 +5,22 @@
 export const STATS = [ // 레이더 차트 축 순서
   { k: 'spd',   n: '속도',   c: '#8affc8' },
   { k: 'ram',   n: '박치기', c: '#ff6a6a' },
-  { k: 'grav',  n: '포획',   c: '#7dd3ff' },
+  { k: 'grav',  n: '인력',   c: '#7dd3ff' },
   { k: 'decay', n: '궤도',   c: '#9dffb0' },
   { k: 'o2',    n: '산소',   c: '#b8a8ff' },
-  { k: 'mag',   n: '자석',   c: '#ffe27a' },
   { k: 'mult',  n: '점수',   c: '#ff8fd0' }
 ];
 export const SHIELD = { k: 'shield', n: '추진기', c: '#ff9d7a' };
 export const STAT_INFO = Object.fromEntries(STATS.concat([SHIELD]).map(s => [s.k, s]));
-export const baseStats = () => ({ spd: 100, ram: 100, grav: 100, decay: 100, o2: 100, mag: 100, mult: 100, shield: 0 });
+export const baseStats = () => ({ spd: 100, ram: 100, grav: 100, decay: 100, o2: 100, mult: 100, shield: 0 });
 
 /** 업그레이드 카드(4단 진화 이후). step 은 퍼센트포인트, cap 은 상한 */
 export const CARDS = [
-  { k: 'spd',   n: '추력 증강',   d: '비행·궤도 속도',     step: 5,  cap: 160 },
+  { k: 'spd',   n: '추력 증강',   d: '비행 속도',     step: 5,  cap: 160 },
   { k: 'ram',   n: '박치기 강화', d: '보스 충돌 피해',     step: 12, cap: 400 },
-  { k: 'grav',  n: '중력 증폭',   d: '행성 포획 범위',     step: 10, cap: 300 },
+  { k: 'grav',  n: '중력 증폭',   d: '행성 포획·별 수집 범위', step: 10, cap: 300 },
   { k: 'decay', n: '안정 궤도',   d: '궤도가 천천히 줄어듦', step: 12, cap: 320 },
   { k: 'o2',    n: '산소 탱크',   d: '비행 시간·보스전 산소', step: 12, cap: 300 },
-  { k: 'mag',   n: '별 자석',     d: '별 수집 범위',       step: 15, cap: 400 },
   { k: 'mult',  n: '항해 일지',   d: '모든 점수',          step: 10, cap: 400 },
   { k: 'shield', n: '비상 추진기', d: '사망 1회 방지',      step: 1,  cap: 9 }
 ];
@@ -33,14 +31,14 @@ export const BOSSES = [
   { n: '프록시마 센타우리', e: 'PROXIMA CENTAURI', R: 44, hp: 120,  atk: 6,    hue: 10,  kind: 'dwarf', col: ['#ffd9a8', '#ff7a3a', '#8a2208'], pat: ['flare', 'meteor'], q: 1, line: '가장 가까운 이웃 별' },
   { n: '시리우스',         e: 'SIRIUS',           R: 44, hp: 170,  atk: 6.5,  hue: 205, kind: 'spike', col: ['#ffffff', '#9fd8ff', '#2a62b8'], pat: ['beam', 'comet', 'flare'], q: 2, line: '밤하늘에서 가장 밝은 별' },
   { n: '베가',             e: 'VEGA',             R: 47, hp: 220,  atk: 6,    hue: 218, kind: 'ring',  col: ['#ffffff', '#b4c8ff', '#4660c8'], pat: ['comet', 'wind', 'collapse', 'beam'], q: 2, line: '빠르게 자전하는 푸른 별' },
-  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'giant', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['meteor', 'hole', 'collapse', 'flare'], q: 2, line: '황소의 눈, 늙은 거성' },
+  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 320,  atk: 7.5,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['meteor', 'hole', 'collapse', 'flare'], q: 2, line: '황소의 눈, 늙은 거성' },
   { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 520,  atk: 8.5,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'flare', 'hole', 'meteor'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
   { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'comet', 'hole', 'collapse', 'beam', 'wind', 'flare'], q: 3, line: '곧 폭발할 초거성' },
   { n: 'TON 618',          e: 'TON 618',          R: 53, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['hole', 'beam', 'jet', 'collapse', 'meteor', 'comet', 'flare', 'wind'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
 ,
-  { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'giant', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['meteor', 'wind', 'beam', 'collapse'], q: 2, line: '목동자리의 주황빛 거성' },
+  { n: '아크투루스',       e: 'ARCTURUS',         R: 50, hp: 270,  atk: 7,    hue: 40,  kind: 'swirl', col: ['#fff2c4', '#ffc23a', '#a86a10'], pat: ['meteor', 'wind', 'beam', 'collapse'], q: 2, line: '목동자리의 주황빛 거성' },
   { n: '폴라리스',         e: 'POLARIS',          R: 42, hp: 240,  atk: 6.5,  hue: 52,  kind: 'twin',  col: ['#ffffff', '#fff2a0', '#b8a030'], pat: ['comet', 'beam', 'hole', 'flare'], q: 2, line: '북극성, 동반성을 거느린 길잡이' },
-  { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'spike', spk: 6, col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['beam', 'comet', 'flare', 'hole', 'jet'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
+  { n: '리겔',             e: 'RIGEL',            R: 58, hp: 560,  atk: 8.5,  hue: 222, kind: 'hex', col: ['#ffffff', '#a8c8ff', '#3050c8'], pat: ['beam', 'comet', 'flare', 'hole', 'jet'], q: 3, line: '오리온의 발끝, 푸른 초거성' },
   { n: '에타 카리나',      e: 'ETA CARINAE',      R: 60, hp: 640,  atk: 10,   hue: 14,  kind: 'eta',   col: ['#ffd8b0', '#ff7a30', '#701808'], pat: ['meteor', 'flare', 'collapse', 'hole', 'wind', 'beam'], q: 3, line: '언제 터질지 모르는 극대거성' }
 ];
 /** 스테이지마다 만날 수 있는 보스(BOSSES 인덱스). 2개면 갈림길에서 고른다. 한 판에 7스테이지 = 7종을 만난다 */

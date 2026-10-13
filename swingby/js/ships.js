@@ -11,7 +11,7 @@ defShip('base', 1, '스카우트', '평범한 정찰선', 200, { arrow: 1 }, {},
 /* Lv2 — 모든 루트가 비상 추진기를 하나씩 갖는다 */
 defShip('str', 2, '요격기',   '속도·박치기 돌격형', 8,   { kind: 'dart', fins: 1, engines: 2 }, { spd: 8, ram: 25, shield: 1 }, ['brk', 'gal']);
 defShip('cru', 2, '순양함',   '느긋한 장거리 튼튼형', 150, { kind: 'hull', engines: 2, plates: 1 }, { decay: 30, o2: 30, shield: 1 }, ['bul', 'tnk']);
-defShip('sur', 2, '탐사선',   '넓은 포획과 별 수집', 55,  { kind: 'scout', panels: 1, dish: 1, engines: 1 }, { grav: 18, mag: 40, shield: 1 }, ['nav', 'har']);
+defShip('sur', 2, '탐사선',   '넓은 포획 장거리 탐사', 55,  { kind: 'scout', panels: 1, dish: 1, engines: 1 }, { grav: 25, o2: 20, shield: 1 }, ['nav', 'har']);
 
 /* Lv3 */
 defShip('brk', 3, '파쇄함',   '박치기 극대화 중장갑', 8,   { kind: 'dart', fins: 2, engines: 2, cannons: 1, plates: 1 }, { ram: 45, decay: 15 }, ['dre', 'jug'], .5);
@@ -19,7 +19,7 @@ defShip('gal', 3, '질풍함',   '빠르고 넓은 쾌속함',   170, { kind: 'd
 defShip('bul', 3, '방벽함',   '추진기·안정 궤도 수비형', 150, { kind: 'hull', engines: 2, plates: 2, pods: 1 }, { shield: 1, decay: 50 }, ['cit', 'aeg']);
 defShip('tnk', 3, '보급함',   '산소 가득 장거리선',   120, { kind: 'hull', engines: 3, pods: 1, plates: 1 }, { o2: 50, decay: 20 }, ['ark', 'lei']);
 defShip('nav', 3, '항해선',   '포획 범위와 점수',     55,  { kind: 'scout', panels: 1, dish: 1, engines: 2, fins: 1 }, { grav: 30, mult: 25 }, ['ast', 'wor']);
-defShip('har', 3, '수확선',   '별을 쓸어 담는 수집형', 42,  { kind: 'scout', panels: 1, pods: 1, engines: 2 }, { mag: 60, mult: 40 }, ['gha', 'gol']);
+defShip('har', 3, '수확선',   '별을 쓸어 담는 수집형', 42,  { kind: 'scout', panels: 1, pods: 1, engines: 2 }, { grav: 45, mult: 40 }, ['gha', 'gol']);
 
 /* Lv4 */
 defShip('dre', 4, '드레드노트', '모든 것을 들이받는 전함', 2,   { kind: 'dart', fins: 2, engines: 3, cannons: 2, plates: 2, spike: 1, pods: 1 }, { ram: 50, shield: 1 }, [], .9);
@@ -32,7 +32,7 @@ defShip('ark', 4, '방주',       '산소 가득 거대 생존선',  112, { kind
 defShip('lei', 4, '대양선',     '산소·속도·점수 두루',    202, { kind: 'hull', fins: 1, engines: 3, pods: 2, panels: 1 }, { o2: 50, spd: 8, mult: 25 });
 defShip('ast', 4, '성도선',     '압도적 포획 범위',       45,  { kind: 'scout', panels: 1, dish: 1, engines: 2, ring: 1, drones: 2 }, { grav: 50 });
 defShip('wor', 4, '웜홀선',     '포획·속도·점수',         285, { kind: 'scout', panels: 1, dish: 1, engines: 3, fins: 2, halo: 1 }, { grav: 25, spd: 12, mult: 25 }, [], .6);
-defShip('gha', 4, '은하 수확선', '별 자석 극대화',         35,  { kind: 'scout', panels: 1, pods: 2, engines: 3, drones: 3 }, { mag: 60, mult: 25, o2: 25 });
+defShip('gha', 4, '은하 수확선', '별을 끌어모으는 수집선',   35,  { kind: 'scout', panels: 1, pods: 2, engines: 3, drones: 3 }, { grav: 40, mult: 25, o2: 25 });
 defShip('gol', 4, '황금 상선',  '점수 배율 극대화',       46,  { kind: 'hull', panels: 1, pods: 2, engines: 3, plates: 2, ring: 1 }, { mult: 75, shield: 1 });
 
 /** 현재 능력치에 이 기체의 증가량을 더한 결과(새 객체) */

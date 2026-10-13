@@ -2,7 +2,7 @@
 import { G, V } from './state.js';
 import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
-import { spd, capOf, decRate, o2max, magRange, shipR, curDef } from './stats.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef } from './stats.js';
 import { viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
@@ -118,7 +118,7 @@ export function stepShip(dt) {
   if (s.mode === 'orb') {
     const p = s.p;
     if (!boss && !(s.grace > 0)) s.r -= decRate(p) * dt;
-    const da = (boss ? v * .58 : v) / Math.max(s.r, 8) * dt;
+    const da = (boss ? orbSpd() * .58 : orbSpd()) / Math.max(s.r, 8) * dt;
     s.a += s.dir * da; s.swept += da;
     s.x = p.x + Math.cos(s.a) * s.r; s.y = p.y + Math.sin(s.a) * s.r;
     if (s.charging) chargeFx(dt);

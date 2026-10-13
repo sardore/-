@@ -7,7 +7,7 @@ import { gen, animatePlanets, growField } from './world.js';
 import { checkProgress } from './progress.js';
 import { updateFx } from './fx.js';
 import { musicSet } from './audio.js';
-import { spd } from './stats.js';
+import { orbSpd } from './stats.js';
 
 /** 플레이 중 한 틱 */
 export function update(dt) {
@@ -43,7 +43,7 @@ export function step(dt) {
   animatePlanets(sd);
   switch (G.st) {
     case 'title': { // 타이틀: 첫 행성을 천천히 돈다
-      const s = G.ship; s.a += sd * spd() / s.r; s.x = s.p.x + Math.cos(s.a) * s.r; s.y = s.p.y + Math.sin(s.a) * s.r;
+      const s = G.ship; s.a += sd * orbSpd() / s.r; s.x = s.p.x + Math.cos(s.a) * s.r; s.y = s.p.y + Math.sin(s.a) * s.r;
       s.trail.push(s.x, s.y); if (s.trail.length > 48) s.trail.splice(0, 2); break;
     }
     case 'play': update(sd / 2); if (G.st === 'play') update(sd / 2); break;

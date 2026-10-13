@@ -2,53 +2,23 @@
 import { G, V, g } from './state.js';
 import { W0, PI, TAU, rnd, clamp, hexA, easeOut } from './util.js';
 import { ATK } from './data.js';
+import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
 
 export function drawBoss(b){
-  const d=b.d,R=b.R,h=d.hue,k=d.kind,col=d.col;
+  const d=b.d,R=b.R,h=d.hue,k=d.kind;
   let sc=1;if(b.state==='intro')sc=easeOut(b.st/1.8);
   const pulse=k==='pulse'?1+.06*Math.sin(G.T*3.2):(k==='super'||k==='eta')?1+.03*Math.sin(G.T*2):1;
   sc*=pulse;const dy=b.state==='dying';
   g.save();g.translate(b.x+(dy?rnd(-4,4):0),b.y+(dy?rnd(-4,4):0));g.scale(sc*(1+.1*b.sq),sc*(1-.1*b.sq));
   if(dy)g.globalAlpha=clamp(1-(b.st-1.6)/1,0,1);
-  const gr=k==='giant'?3.4:k==='quasar'?3:2.5;
+  const gr=k==='bull'||k==='swirl'?3.4:k==='quasar'?3:2.5;
   const gl=g.createRadialGradient(0,0,R*.5,0,0,R*gr);
   gl.addColorStop(0,'hsla('+h+',95%,'+(k==='quasar'?'55':'60')+'%,'+(k==='quasar'?.35:.5)+')');gl.addColorStop(1,'hsla('+h+',95%,60%,0)');
   g.fillStyle=gl;g.beginPath();g.arc(0,0,R*gr,0,TAU);g.fill();
   if(b.cast>0){const kc=b.cast/.9,cc=G.castO?G.castO.c:'#fff';g.strokeStyle=hexA(cc.length===7?cc:'#ffffff',.8*(1-kc*.6));g.lineWidth=3+4*(1-kc);g.beginPath();g.arc(0,0,R*(1.1+1.9*kc),0,TAU);g.stroke();g.strokeStyle='rgba(255,255,255,'+.6*(1-kc)+')';g.lineWidth=2;g.beginPath();g.arc(0,0,R*(1.05+.9*kc),0,TAU);g.stroke()}
   if(k==='quasar'){drawQuasar(b,R);g.restore();return}
-  // 코로나 / 스파이크
-  g.lineCap='round';
-  if(k==='eta'){ // 호문쿨루스: 위아래로 부풀어 오른 쌍엽 성운
-    for(const sg of[-1,1]){const cy=sg*R*(1.75+.08*Math.sin(G.T*1.4)),lg=g.createRadialGradient(0,cy,R*.1,0,cy,R*1.15);lg.addColorStop(0,'hsla('+(h+14)+',100%,72%,.55)');lg.addColorStop(1,'hsla('+h+',100%,55%,0)');
-      g.fillStyle=lg;g.beginPath();g.ellipse(0,cy,R*.78,R*1.1,0,0,TAU);g.fill()}
-  }
-  if(k==='spike'){const nsp=d.spk||4;for(let i=0;i<nsp;i++){const a=i*TAU/nsp+G.T*.15+PI/4;const L=R*(3+.3*Math.sin(G.T*2+i));const lg=g.createLinearGradient(0,0,Math.cos(a)*L,Math.sin(a)*L);lg.addColorStop(0,'rgba(255,255,255,.9)');lg.addColorStop(1,'rgba(160,220,255,0)');g.strokeStyle=lg;g.lineWidth=3;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(a)*L,Math.sin(a)*L);g.stroke()}
-    const ca=G.T*1.3;g.fillStyle='#fff';g.beginPath();g.arc(Math.cos(ca)*R*1.9,Math.sin(ca)*R*1.9*.5,5,0,TAU);g.fill()}
-  const rays=k==='giant'?10:(k==='super'||k==='eta')?9:16;
-  for(let i=0;i<rays;i++){const a=i/rays*TAU+G.T*.25*(k==='ring'?3:1),L=R*(1.18+.2*Math.sin(G.T*2.2+i*1.9)+(k==='dwarf'&&i%5===0?.28*Math.max(0,Math.sin(G.T*3+i)):0));
-    g.strokeStyle='hsla('+h+',100%,70%,.55)';g.lineWidth=k==='giant'?7:4;g.beginPath();g.moveTo(Math.cos(a)*R*.96,Math.sin(a)*R*.96);g.lineTo(Math.cos(a)*L,Math.sin(a)*L);g.stroke()}
-  if(k==='ring'){g.save();g.rotate(-.3);for(let i=0;i<3;i++){g.strokeStyle='rgba(190,215,255,'+(.55-i*.12)+')';g.lineWidth=3-i*.6;g.beginPath();g.ellipse(0,0,R*(1.55+i*.22),R*(.42+i*.06),0,0,TAU);g.stroke()}g.restore()}
-  if(k==='twin'){ // 북극성: 궤도를 도는 두 동반성
-    for(let i=0;i<2;i++){const rx=R*(1.9+i*.7),ry=rx*.45,a=G.T*(1.7-i*.5)+i*2.4,x=Math.cos(a)*rx,y=Math.sin(a)*ry;
-      g.strokeStyle='rgba(255,245,170,.22)';g.lineWidth=1.5;g.beginPath();g.ellipse(0,0,rx,ry,0,0,TAU);g.stroke();
-      const cg=g.createRadialGradient(x,y,0,x,y,R*.4);cg.addColorStop(0,'rgba(255,255,255,.95)');cg.addColorStop(.35,'hsla('+(h+8)+',100%,75%,.7)');cg.addColorStop(1,'hsla('+h+',100%,60%,0)');
-      g.fillStyle=cg;g.beginPath();g.arc(x,y,R*.4,0,TAU);g.fill()}
-  }
-  // 본체
-  const bd=g.createRadialGradient(-R*.3,-R*.35,R*.1,0,0,R);bd.addColorStop(0,col[0]);bd.addColorStop(.55,col[1]);bd.addColorStop(1,col[2]);
-  g.fillStyle=bd;g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=2;
-  g.beginPath();
-  if(k==='super'||k==='eta'){for(let i=0;i<=40;i++){const a=i/40*TAU,rr2=R*(1+.07*Math.sin(a*3+G.T*1.6)+.05*Math.sin(a*5-G.T*2.3));i?g.lineTo(Math.cos(a)*rr2,Math.sin(a)*rr2):g.moveTo(Math.cos(a)*rr2,Math.sin(a)*rr2)}g.closePath()}else g.arc(0,0,R,0,TAU);
-  g.fill();g.stroke();
-  g.save();g.beginPath();g.arc(0,0,R,0,TAU);g.clip();
-  const cells=k==='giant'?7:6;
-  for(let i=0;i<cells;i++){const a=i*2.1+G.T*(.25+i*.03),rr2=R*(.3+.4*((i*37)%10)/10);g.fillStyle='hsla('+(h+14)+',100%,78%,.28)';g.beginPath();g.arc(Math.cos(a)*rr2,Math.sin(a)*rr2*.9,R*(.18+.06*(i%3)),0,TAU);g.fill()}
-  g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.arc(R*.35,R*.4,R*1.05,0,TAU);g.arc(0,0,R,0,TAU,true);g.fill();
-  g.restore();
-  // 표정 대신 용암 눈(위협감)
-  if(b.state!=='intro'){const ey=-R*.12,ex=R*.34;g.fillStyle='rgba(20,0,0,.55)';for(const sx of[-1,1]){g.beginPath();g.ellipse(sx*ex,ey,R*.17,R*.1,sx*.35,0,TAU);g.fill()}
-    g.fillStyle='hsla('+(h+30)+',100%,80%,.9)';for(const sx of[-1,1]){g.beginPath();g.ellipse(sx*ex,ey,R*.07,R*.05,0,0,TAU);g.fill()}}
+  drawBossBody(b);
   if(b.flash>0){g.fillStyle='rgba(255,255,255,'+clamp(b.flash*5,0,.9)+')';g.beginPath();g.arc(0,0,R,0,TAU);g.fill()}
   g.restore();
 }
