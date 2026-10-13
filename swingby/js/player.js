@@ -22,13 +22,11 @@ const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오�
 /* ---------- 입력 동작 ---------- */
 const canAct = () => G.st === 'play' && G.ship.mode === 'orb' && !(G.boss && G.boss.state !== 'fight');
 
-/** 누름: 일반 기체는 바로 발사, 돌격 기체는 차지를 시작한다 */
+/** 누름: 차지를 시작한다 (뗄 때 발사) */
 export function pressStart() {
   if (!canAct()) return;
-  if (curDef().dash) {
-    const s = G.ship; s.charging = true; s.charge = 0; s.chFull = false;
-    sweep(180, 900, CHARGE_T, .07);
-  } else release(0);
+  const s = G.ship; s.charging = true; s.charge = 0; s.chFull = false;
+  sweep(180, 900, CHARGE_T, .07);
 }
 /** 뗌: 차지 중이었다면 그 세기로 발사 */
 export function pressEnd() {
@@ -47,8 +45,12 @@ export function release(charge) {
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
   sparks(s.x, s.y, '#bfeaff', 9, 260, back, .5); ringFx(s.x, s.y, 'rgba(190,235,255,.8)', 4, 26, .3, 2); shakeAdd(2.2);
+  s.gd = 0; s.gSkip = null;
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
+    // 발사 직후 잠깐은 출발 행성과 포획 범위가 겹친 이웃에 다시 붙지 않게 한다(돌진 세기에 비례, 출발 행성의 포획 범위보다는 멀리)
+    s.gd = Math.max(capOf(from) * 1.1 + 20 * fs(), f * 300 * fs());
+    s.gSkip = G.planets.filter(q => q !== from && Math.hypot(q.x - from.x, q.y - from.y) < capOf(from) + capOf(q));
     thump(260, 50, .25, .3); sweep(300, 1400, .3, .1, 'square'); noise(.3, .22, 7000, 500);
     sparks(s.x, s.y, '#fff', 16, 520, back, .35); sparks(s.x, s.y, 'hsl(' + shipHue() + ',100%,70%)', 14, 420, back, .5);
     ringFx(s.x, s.y, '#fff', 6, 60 + f * 40, .35, 4); shakeAdd(4 + f * 5); punch(.02 + f * .02); flashScreen(.1 + f * .08, '#fff'); vibe(25);
@@ -65,7 +67,7 @@ export function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
-  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; heatReset();
+  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; heatReset();
   p.pulse = 1; p.sq = .55;
   ringFx(p.x, p.y, 'hsla(' + p.hue + ',90%,75%,.9)', p.R, capOf(p) * .9, .5, 3);
   if (cfg().land) { ringFx(p.x, p.y, landHsl(72, .95), p.R * .6, capOf(p) * 1.15, .7, 4); ringFx(p.x, p.y, '#fff', p.R, capOf(p) * .7, .35, 2); burst(s.x, s.y, landHsl(70), 10, 160); }   // 상점 착지 링
@@ -105,7 +107,7 @@ export function die(why) {
     for (const p of G.planets) { if (p.dead || p.ghost) continue; if (p.y < viewBot() - (G.boss ? 130 : 70) / G.vz && p.y > viewTop() + 50 / G.vz && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
     bp = bp || s.p;
     let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
-    s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
+    s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.gd = 0; s.charging = false; s.heat = 0;
     s.x = bp.x + Math.cos(a) * s.r; s.y = bp.y + Math.sin(a) * s.r;
     if (!G.boss && !bp.seen) { bp.seen = true; G.hops++; }
     if (!G.boss) forkArrive(bp);
@@ -142,6 +144,7 @@ export function stepShip(dt) {
   } else {
     regulateSpeed(dt, v);
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
+    if (s.gd > 0) s.gd -= Math.hypot(s.vx, s.vy) * dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
     const cf = cfg();
     if (s.boost > 1.2 || (cf.trail && cf.trail.style === 'ghost')) dashTrail(dt);
@@ -149,7 +152,7 @@ export function stepShip(dt) {
     if (bf) emitFlames(dt);
     if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; wallHit(6, s.y, 0, bf); }
     if (s.x > G.w - 6 && s.vx > 0) { s.x = G.w - 6; s.vx *= -1; wallHit(G.w - 6, s.y, PI, bf); }
-    if (boss && s.y < G.arenaTop + 10 && s.vy < 0) { s.y = G.arenaTop + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
+    if (boss && s.y < G.arenaTop + 10 && s.vy < 0) { s.y = G.arenaTop + 10; s.vy *= -1; s.gd = 0; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     if (!boss) hitMonsters();
@@ -158,6 +161,7 @@ export function stepShip(dt) {
       const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy);
       if (d >= capOf(p)) continue;
       if (d < p.R * .4) { burst(s.x, s.y, '#ffb070', 16, 200); die('행성에 정면충돌'); break; }
+      if (s.gd > 0 && d > p.R + 10 && s.gSkip && s.gSkip.includes(p)) continue;   // 몸체에 닿을 만큼 박으면 그대로 붙잡힌다
       if (dx * s.vx + dy * s.vy >= 0 || d < p.R + 10) { latch(p, dx, dy, d); break; }
     }
     if (G.st !== 'play') return false;
@@ -178,6 +182,7 @@ export function stepShip(dt) {
 
 /** 옆 벽에 튕김. 보스전에서는 열기가 쌓인다 */
 function wallHit(x, y, dir, bf) {
+  G.ship.gd = 0;
   if (bf) { heatUp(x, y, dir); return; }
   beep(170, .05); sparks(x, y, '#bfeaff', 7, 220, dir, .8); shakeAdd(2.5);
 }

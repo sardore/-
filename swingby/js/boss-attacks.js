@@ -238,7 +238,7 @@ function hurtZone(h, s) {
 export function hurt(x, y, pow = 1) {
   const s = G.ship, b = G.boss; if (s.inv > 0 || G.st !== 'play' || !b) return;
   const dm = b.d.atk * pow * (1 + .15 * b.loop);
-  s.inv = 1.3; G.bo2 -= dm; G.bcombo = 0; G.combo = 0; s.charging = false; heatReset();
+  s.inv = 1.3; s.gd = 0; G.bo2 -= dm; G.bcombo = 0; G.combo = 0; s.charging = false; heatReset();
   G.shake = 15; hitstop(.1); flashScreen(.5, '#ff4040'); punch(.06); vibe(70);
   burst(s.x, s.y, '#ff6a6a', 22, 260); sparks(s.x, s.y, '#fff', 12, 320, Math.atan2(s.y - y, s.x - x), .8); ringFx(s.x, s.y, '#ff6a6a', 6, 60, .35, 3);
   thump(140, 35, .3, .4, 'sawtooth'); noise(.3, .3, 5000, 300);

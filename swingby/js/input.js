@@ -1,5 +1,5 @@
 /* 입력: 터치/마우스/키보드를 게임 동작으로 연결한다.
- * 일반 기체는 누르는 순간 발사, 돌격 기체는 누르는 동안 차지하고 떼면 발사. */
+ * 누르는 동안 차지하고 떼면 발사. */
 import { G, V, cv } from './state.js';
 import { audioUnlock, toggleMute, beep } from './audio.js';
 import { pressStart, pressEnd } from './player.js';

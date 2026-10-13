@@ -48,7 +48,7 @@ function drawEvo() {
     // 바뀌는 능력치: 새 퍼센트 값
     const maxX = r.x + r.w - 96; let x = r.x + 86, y = r.y + 68;
     const chips = Object.keys(o.delta).map(k => k === 'shield' ? ['추진기 +' + o.delta[k], STAT_INFO[k].c] : [STAT_INFO[k].n + ' ' + after[k] + '%', STAT_INFO[k].c]);
-    if (o.dash) chips.push(['차지 돌격', '#ffb070']);
+    if (o.strong) chips.push(['강력한 돌진', '#ffb070']);
     for (const [t, c] of chips) {
       const w = chipWidth(t) + 6;
       if (x + w > maxX && x > r.x + 90) { x = r.x + 86; y += 20; }
