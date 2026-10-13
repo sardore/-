@@ -4,7 +4,7 @@ import { PI, TAU, rnd, clamp, pickOf } from './util.js';
 import { ATK } from './data.js';
 import { spd, shipR, fs, arenaK } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
-import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, popText } from './fx.js';
+import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, popText, toast } from './fx.js';
 import { die } from './player.js';
 import { heatReset } from './heat.js';
 import { regrow, aliveP } from './boss-arena.js';
@@ -31,7 +31,7 @@ function mkTele(k) {
   } else if (k === 'jet') { o.as = [PI / 2 - .82, PI / 2 + .82]; o.half = .24; o.len = 950 * K; }
   else if (k === 'flare') o.r = b.hr + (150 + (b.phase > 0 ? 28 : 0)) * fk;
   else if (k === 'hole') { for (let n = 0; n < 40; n++) { o.x = rnd(60 * fk, G.w - 60 * fk); o.y = rnd(ymin + 20 * fk, ymax); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60 * fk)) break; } }
-  else if (k === 'collapse') { o.p = pickOf(al); o.t = 3; o.r = o.p.R + 78 * fk; }
+  else if (k === 'collapse') { o.p = pickHigh(al); o.t = 3; o.r = o.p.R + 78 * fk; }
   else if (k === 'wind') { o.dir = Math.random() < .5 ? -1 : 1; o.t = 1; }
   else if (k === 'sing') { // 특이점: 필드 한가운데 가까이 생기는 거대한 블랙홀
     o.pull = 260 * fk; o.hr = 26 * fk;
@@ -83,6 +83,13 @@ function uniqueZones(k, b, al, fk, K, ymin, ymax) {
   }
   return zs;
 }
+/** 위쪽 행성일수록 훨씬 잘 뽑힌다 (가장 높은 행성 대비 높이 비율의 세제곱으로 가중). 행성 붕괴가 아래쪽 안전한 행성이 아니라 위쪽을 노리게 한다 */
+function pickHigh(list) {
+  const hs = list.map(p => Math.max(0, G.arenaBot - p.y)), top = Math.max(1, ...hs), w = hs.map(h => .05 + Math.pow(h / top, 3));
+  let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++) if ((r -= w[i]) <= 0) return list[i];
+  return list[list.length - 1];
+}
 /** 빔은 보스가 움직여도 목표를 계속 겨눈다 */
 export const beamAngle = (o, b) => clamp(Math.atan2(o.ty - b.y, o.tx - b.x) + o.jit, .55, PI - .55);
 
@@ -105,13 +112,14 @@ export function queueAttack(kind) {
   const a = mkTele(k); b.q.push(a); return a;
 }
 /** 디버그/테스트용: 지정한 공격을 t 턴 뒤 발동으로 예고 */
-export function forceTele(k, t) { const a = mkTele(k); a.t = t; G.boss.q.push(a); telePing(a); }
+export function forceTele(k, t) { if (k === 'horizon') { startHorizon(G.boss); return; } const a = mkTele(k); a.t = t; G.boss.q.push(a); telePing(a); }
 
 /* ---------- 턴 진행 ---------- */
 /** 플레이어가 행성에 착지할 때마다 1턴 */
 export function bossTurn() {
   const b = G.boss; if (!b || b.state !== 'fight') return;
   b.turn++;
+  if (b.d.kind === 'quasar' && !b.horizon && b.hp <= b.max / 3) startHorizon(b);   // 체력이 1/3 이하가 된 다음 턴
   for (const a of b.q) a.t--;
   const due = b.q.filter(a => a.t <= 0); b.q = b.q.filter(a => a.t > 0);
   for (const a of due) execAttack(a);
@@ -122,6 +130,26 @@ export function bossTurn() {
   b.idle = (b.q.length || due.length) ? 0 : b.idle + 1;
   if (b.q.length < b.d.q + b.phase && (Math.random() < .27 + .1 * b.phase || b.idle >= 4)) { queueAttack(); b.idle = 0; }
   for (const a of b.q) if (a.t === 1) { telePing(a); beep(560, .08, 'square', .06); }
+}
+
+/* ---------- 사건의 지평선 (TON 618) ---------- */
+/** 항성풍보다 세게 아래로 끌어당기는 중력장. 보스전이 끝날 때까지 풀리지 않는다 */
+function startHorizon(b) {
+  const at = ATK.horizon;
+  b.horizon = true; G.haz.push({ k: 'horizon', t: 0, f: 0 });
+  G.castO = { t: 0, dur: 1.3, name: at.cast, c: at.c }; b.cast = 1;
+  sweep(60, 300, 1.4, .13); thump(60, 25, 1.2, .4); noise(1.4, .2, 900, 60); shakeAdd(12); flashScreen(.3, at.c);
+  toast('아래로 끌려간다 — 멈추면 떨어져!', at.c);
+}
+/** 비행 중 아래로 당기는 가속(항성풍 230 → 330). 도달하는 데 1초쯤 걸려 서서히 세진다 */
+const HORIZON_PULL = 330;
+function updateHorizon(h, dt, b, s) {
+  h.f = Math.min(1, h.f + dt * .9);
+  if (b.state === 'fight' && s.mode === 'free') s.vy += HORIZON_PULL * fs() * h.f * dt;
+  if (Math.random() < dt * 50 * h.f) { // 아래로 쏟아지는 빛줄기
+    const K = arenaK();
+    G.parts.push({ x: rnd(0, G.w), y: G.arenaBot - rnd(120, 460) * K, vx: 0, vy: rnd(260, 480), t: 0, l: .55, c: Math.random() < .5 ? 'rgba(190,140,255,.75)' : 'rgba(255,190,130,.6)', s: 2.6, line: true });
+  }
 }
 
 /* ---------- 공격 발동 ---------- */
@@ -235,6 +263,7 @@ export function updateHaz(dt, b) {
     h.t = (h.t || 0) + dt;
     if (h.k === 'zone') updateZone(h, dt, b, s);
     else if (h.k === 'hole') updateHole(h, dt, s);
+    else if (h.k === 'horizon') updateHorizon(h, dt, b, s);
     else if (h.k === 'wind') {
       if (s.mode === 'free') s.vx += h.dir * 230 * fs() * dt;
       if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : G.w + 5, y: rnd(G.arenaTop, G.arenaBot), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });

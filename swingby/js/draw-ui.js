@@ -46,6 +46,7 @@ function drawBossHud() {
     txt(at.n + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
   }
   if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
+  if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
   // 산소 게이지: 보스전에서는 회복되지 않는다
   const ow = 280, ox = VW / 2 - ow / 2, oy = VH - 44, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
   g.fillStyle = 'rgba(255,255,255,.14)'; rr(ox, oy, ow, 12, 6); g.fill();

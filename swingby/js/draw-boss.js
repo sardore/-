@@ -259,12 +259,31 @@ export function drawHaz(h) {
       g.fillStyle = '#000'; disc(h.x, h.y, rr0);
       txt(String(h.turns), h.x, h.y - rr0 - 12, 14, '#d8b0ff', 'center', 800); break;
     }
+    case 'horizon': drawHorizon(h); break;
     case 'wind': {
       const x = h.dir > 0 ? 0 : G.w, bw = 100 * fs(), gg = g.createLinearGradient(x, 0, x + h.dir * bw, 0);
       gg.addColorStop(0, 'rgba(138,255,200,.2)'); gg.addColorStop(1, 'rgba(138,255,200,0)');
       g.fillStyle = gg; g.fillRect(h.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop); break;
     }
   }
+}
+
+/** 사건의 지평선: 아래쪽에서 솟아오르는 거대한 검은 지평선과 그 둘레를 도는 강착 고리, 아래가 보랏빛으로 짙어지는 안개 */
+function drawHorizon(h) {
+  const K = arenaK(), f = easeOut(h.f), T = G.T, cx = G.w / 2, R = 380 * K, top = G.arenaBot - 66 * K * f, cy = top + R, pul = .5 + .5 * Math.sin(T * 2.2);
+  g.save(); g.beginPath(); g.rect(0, G.arenaBot - 420 * K, G.w, 700 * K); g.clip();
+  const fog = g.createLinearGradient(0, G.arenaBot - 300 * K, 0, G.arenaBot + 60 * K);
+  fog.addColorStop(0, 'rgba(90,30,170,0)'); fog.addColorStop(1, 'rgba(90,30,170,' + .38 * f + ')'); g.fillStyle = fog; g.fillRect(0, G.arenaBot - 300 * K, G.w, 400 * K);
+  const rg = g.createRadialGradient(cx, cy, R * .98, cx, cy, R + 130 * K);
+  rg.addColorStop(0, 'rgba(255,200,140,' + (.6 + .2 * pul) * f + ')'); rg.addColorStop(.22, 'rgba(190,90,255,' + .42 * f + ')'); rg.addColorStop(1, 'rgba(90,30,180,0)');
+  g.fillStyle = rg; disc(cx, cy, R + 130 * K);
+  g.fillStyle = '#000'; disc(cx, cy, R);
+  for (let i = 0; i < 4; i++) { // 도는 강착 고리
+    g.strokeStyle = 'hsla(' + (30 + i * 45) + ',100%,' + (74 - i * 6) + '%,' + (.62 - i * .12) * f + ')'; g.lineWidth = 3.2 - i * .6;
+    dashed(60 + i * 34, 26 + i * 8, -T * (70 + i * 28) * (i % 2 ? -1 : 1)); ring(cx, cy, R + 7 + i * 15 * K);
+  }
+  solid(); g.strokeStyle = 'rgba(255,236,200,' + (.75 + .25 * pul) * f + ')'; g.lineWidth = 3; ring(cx, cy, R + 1);
+  g.restore();
 }
 
 /** 보스전의 바닥(화면 아래)은 낙사선이다. 기체가 가까워질수록 아래쪽이 붉게 깜빡인다 (화면 좌표) */
