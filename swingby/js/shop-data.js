@@ -7,7 +7,7 @@ export const TABS = [{ k: 'fx', n: '이펙트' }, { k: 'ship', n: '기체 색' }
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */
 export const SLOTS = [
-  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '기본 글로우는 약하다 — 강도를 올려 빛나게' },
+  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '기체가 내는 빛의 세기' },
   { k: 'glowcol', tab: 'fx',   n: '글로우 색',     note: '글로우의 색. 기본은 기체 색' },
   { k: 'flame',   tab: 'fx',   n: '엔진 불꽃',     note: '엔진이 뿜는 불꽃의 색' },
   { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리' },
@@ -40,7 +40,7 @@ function add(it) { ITEMS[it.id] = it; LIST.push(it); }
 
 /* 글로우 강도: lv 1 = 예전 기본 글로우(비행 20 · 평소 12). 기본(0)은 훨씬 약하다 */
 export const GLOW_BLUR = [[4, 6], [12, 20], [19, 32], [29, 48]];   // [평소, 비행]
-[['약', 400, '예전 기본 글로우'], ['중', 900, '한층 더 환한 빛'], ['강', 1500, '맥동하는 후광까지']].forEach(([n, price, d], i) =>
+[['약', 400, '은은한 빛'], ['중', 900, '한층 더 환한 빛'], ['강', 1500, '맥동하는 후광까지']].forEach(([n, price, d], i) =>
   add({ id: 'glow' + (i + 1), tab: 'fx', slot: 'glow', n: '글로우 ' + n, d, price, v: { lv: i + 1 } }));
 
 for (const slot of ['glowcol', 'flame', 'trail', 'land', 'chargecol', 'heat', 'starfx']) {
@@ -79,7 +79,7 @@ for (const [ship, n, d, price] of DECOR_LIST) add({ id: 'dc_' + ship, tab: 'ship
 for (const [ship] of DECOR_LIST) SLOTS.push({ k: 'decor_' + ship, tab: 'ship', n: SHIPS[ship].n + ' 전용 장식', note: 'Lv4 ' + SHIPS[ship].n + '으로 날 때만 보인다' });
 
 /* ---------- 초기 스펙 ----------
- * 영구 유지. 능력치마다 5단계, 단계당 +2%p(최대 +10%p). 점수 배율은 일부러 뺐다(점수 = 별 수입 = 복리) */
+ * 영구 유지. 능력치마다 5단계, 단계당 +2%p(최대 +10%p). 점수 배율 항목은 없다 */
 export const SPEC_STATS = [
   { k: 'spd', n: '속도', c: '#8affc8' }, { k: 'grav', n: '인력', c: '#7dd3ff' }, { k: 'o2', n: '산소', c: '#b8a8ff' }, { k: 'decay', n: '궤도', c: '#9dffb0' }
 ];

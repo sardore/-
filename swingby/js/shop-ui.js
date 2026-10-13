@@ -43,7 +43,7 @@ function rows() {
   const out = []; let y = 0;
   const push = (r, h) => { r.y = y; r.h = h; y += h; out.push(r); };
   if (P.tab === 'spec') {
-    push({ head: '시작 능력치 (영구)', note: '단계당 +' + SPEC_STEP + '%p, 최대 +' + SPEC_STEP * SPEC_PRICE.length + '%p · 점수 배율은 일부러 뺐다' }, HEAD);
+    push({ head: '시작 능력치 (영구)', note: '단계당 +' + SPEC_STEP + '%p, 최대 +' + SPEC_STEP * SPEC_PRICE.length + '%p' }, HEAD);
     LIST.filter(it => it.tab === 'spec').forEach(it => push({ it }, ROW_SPEC));
   } else for (const sl of SLOTS) {
     if (sl.tab !== P.tab) continue;
