@@ -75,7 +75,12 @@ export function latch(p, dx, dy, d) {
     if (close) { hitstop(.045); punch(.025); shakeAdd(3.5); sparks(s.x, s.y, '#fff', 10, 300, TAU * Math.random(), PI); }
     if (combo >= 5 && combo % 5 === 0) { flashScreen(.18, '#7dd3ff'); punch(.03); toast('x' + combo + ' 콤보!', '#7dd3ff'); }
   } else beep(300, .06);
-  // 갈림길: 허브에 닿으면 시야가 넓어지고, 항로 행성에 닿으면 길이 정해진다
+  forkArrive(p);
+}
+
+/** 갈림길 도착 처리: 허브면 시야가 넓어지고, 항로의 첫 행성이면 길이 정해진다.
+ * 포획과 비상 추진기 복귀처럼 "그 행성에 자리 잡는" 모든 경로에서 부른다 */
+function forkArrive(p) {
   const F = G.fork;
   if (F && p === F.hub) enterFork();
   else if (F && F.state === 'hub' && p.branch) {
@@ -96,6 +101,7 @@ export function die(why) {
     s.mode = 'orb'; s.p = bp; s.r = capOf(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.charging = false; s.heat = 0;
     s.x = bp.x + Math.cos(a) * s.r; s.y = bp.y + Math.sin(a) * s.r;
     if (!G.boss && !bp.seen) { bp.seen = true; G.hops++; }
+    if (!G.boss) forkArrive(bp);
     if (G.boss) G.bo2 = Math.max(G.bo2, 6);
     G.combo = 0; popText(s.x, s.y - 20, '비상 추진!', '#ff9d7a', 17); burst(s.x, s.y, '#ff9d7a', 22, 220); ringFx(s.x, s.y, '#ff9d7a', 6, 90, .5, 4);
     beep(220, .25, 'sawtooth'); noise(.4, .2, 3000, 200); G.shake = 10; hitstop(.1); flashScreen(.3, '#ff9d7a');
