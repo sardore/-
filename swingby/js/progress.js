@@ -1,6 +1,6 @@
 /* 성장: 기체 진화(테크트리), 강화 카드, 보스 격파 후 진행 규칙 */
 import { G, newRun } from './state.js';
-import { CARDS, STAT_INFO, LAST_STAGE, EVOLVE_AT } from './data.js';
+import { CARDS, STAT_INFO, LAST_STAGE, EVOLVE_AT, cardStep } from './data.js';
 import { SHIPS } from './ships.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, ringFx, flashScreen, punch, slowmo, shakeAdd, popText } from './fx.js';
@@ -19,7 +19,7 @@ export function offer(title) {
   beep(660, .12); setTimeout(() => beep(880, .14), 90);
 }
 export function pickCard(c) {
-  G.stats[c.k] = Math.min(c.cap, G.stats[c.k] + c.step); G.st = 'play'; beep(780, .1);
+  G.stats[c.k] = Math.min(c.cap, G.stats[c.k] + cardStep(c, G.kills, G.cleared)); G.st = 'play'; beep(780, .1);
   const info = STAT_INFO[c.k]; popText(G.ship.x, G.ship.y - 24, c.n, info.c, 16); ringFx(G.ship.x, G.ship.y, info.c, 6, 70, .5, 3);
 }
 
@@ -60,7 +60,7 @@ export function checkProgress() {
 /** 보스를 쓰러뜨린 직후: 클리어 / 진화(EVOLVE_AT) / 강화 카드 */
 export function afterBoss(stage) {
   if (stage === LAST_STAGE && !G.cleared) {
-    G.cleared = true; G.st = 'clear'; G.clearT = 0;
+    G.cleared = true; G.st = 'clear'; G.clearT = 0; G.endHop = G.hops;   // 여기서부터 무한 모드
     if (G.score > G.best && !G.debug) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
     settleRun();
   } else if (EVOLVE_AT[G.tier] && G.kills >= EVOLVE_AT[G.tier]) startEvo();

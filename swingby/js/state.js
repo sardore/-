@@ -26,7 +26,7 @@ function freshRun() {
     // 진행
     score: 0, combo: 0, maxCombo: 0, hops: 0, kills: 0, cleared: false, newBest: false,
     nextOffer: Infinity, nextBoss: 10, nextBi: STAGES[0][0], starChain: 0,
-    starScore: 0, starPaid: 0, shardGain: 0, shardLock: false,   // 별에서 얻은 점수 · 이미 별 조각으로 정산한 몫 · 이번 판에 얻은 별 조각 · TON 618 격파 후 지급 잠금
+    starScore: 0, starPaid: 0, shardGain: 0, endHop: null,   // 별에서 얻은 점수 · 이미 별 조각으로 정산한 몫 · 이번 판에 얻은 별 조각 · TON 618 격파(무한 모드 시작) 때의 행성 수
     // 기체
     ship: null, stats: baseStats(), tier: 1, shipId: 'base',
     // 선택 화면

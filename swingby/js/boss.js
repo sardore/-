@@ -11,6 +11,7 @@ import { heatRam, heatMul, flameColor } from './heat.js';
 import { isDashing, impactDamage, bounceShip, bounceSpeed, standoff } from './impact.js';
 import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena, solidifyAll } from './boss-arena.js';
 import { queueAttack, beamAngle, updateHaz } from './boss-attacks.js';
+import { endlessNext, ENDLESS } from './endless.js';
 
 /* ---------- 프레임 갱신 ---------- */
 export function updateBoss(dt) {
@@ -84,8 +85,10 @@ function finishBoss() {
   if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
   regrowAll(); solidifyAll();
   G.boss = null; G.haz = []; G.biome = 'normal';
-  const next = G.kills % STAGES.length; G.nextBi = STAGES[next][0];
-  if (next === MONSTER_ZONE.stage) { // 독 행성 지대: 갈림길 없이 지대를 지나 도전 보스를 만난다
+  const next = G.kills % STAGES.length;
+  G.nextBi = endlessNext() ? -1 : STAGES[next][0];   // -1: 다음 보스는 무한 모드의 무작위 카탈로그 보스
+  if (endlessNext()) { G.nextBoss = G.hops + ENDLESS.gap; scheduleFork(); }
+  else if (next === MONSTER_ZONE.stage) { // 독 행성 지대: 갈림길 없이 지대를 지나 도전 보스를 만난다
     G.biome = 'monster'; G.nextBoss = G.hops + MONSTER_ZONE.len;
     G.banner = { t: 0, dur: 2.8, a: 'ZONE', b: BIOMES.monster.n + ' 지대', c: BIOMES.monster.c, sub: '도전 보스  ' + BOSSES[G.nextBi].n };
   } else { G.nextBoss = G.hops + 14; scheduleFork(); }   // 갈림길에서 고르면 nextBi 를 덮어쓴다

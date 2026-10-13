@@ -4,6 +4,7 @@ import { W0, TAU, FONT, clamp, easeOut } from './util.js';
 import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
+import { endlessDec } from './endless.js';
 import { rr, txt, GFX } from './gfx.js';
 import { drawTitle2 } from './draw-title2.js';
 import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
@@ -24,7 +25,8 @@ export function drawHud() {
     const bl = G.nextBoss - G.hops;
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);
     if (G.biome !== 'normal') { const bm = BIOMES[G.biome]; g.fillStyle = bm.c; g.beginPath(); g.arc(OX + 18, 82, 4, 0, TAU); g.fill(); txt(bm.n, OX + 28, 86, 12, bm.c, 'left', 700); }
-  } else txt('보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
+      if (G.endHop != null) txt('궤도 붕괴 ×' + endlessDec().toFixed(2), OX + 14, 104, 12, 'rgba(255,130,110,.85)', 'left', 700);
+  } else txt(b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
   txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
   if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W0 - 14, 50, 12, '#ff9d7a', 'right', 600);
   if (b && b.state !== 'intro') drawBossHud();
@@ -43,7 +45,7 @@ function drawBossHud() {
   let x = VW / 2 - (b.q.length * 70) / 2 + 35;
   for (const a of b.q) {
     const at = ATK[a.k]; rr(x - 32, cy, 64, 20, 8); g.fillStyle = 'rgba(10,8,24,.75)'; g.fill(); g.strokeStyle = a.t <= 1 ? '#ff6a6a' : at.c; g.lineWidth = 1.5; g.stroke();
-    txt(at.n + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
+    txt((b.d.endless ? '???' : at.n) + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
   }
   if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
   if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선  맵 ×2', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
@@ -103,7 +105,7 @@ export function drawScreens() {
     else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
     g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     drawTitleMenu();
-    if (G.debug) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
+    if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
   if (G.st === 'clear') {
@@ -112,7 +114,7 @@ export function drawScreens() {
     txt(String(G.score), VW / 2, VH * .28 + 112, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .28 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
     if (G.shardGain > 0) txt('별 조각 +' + G.shardGain, VW / 2, VH * .28 + 198, 14, '#ffe27a', 'center', 800);
-    if (!G.debug) txt('이후 회차에서는 별 조각을 모을 수 없어', VW / 2, VH * .28 + 218, 12, 'rgba(255,255,255,.55)', 'center', 500);
+    txt('이제부터 무한 모드 — 궤도가 점점 빨리 무너지고 보스는 끝없이 강해져', VW / 2, VH * .28 + 218, 12, 'rgba(255,255,255,.55)', 'center', 500);
     if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 계속', VW / 2, VH - 80, 16, '#fff'); }
     g.globalAlpha = 1;
   }
@@ -122,7 +124,7 @@ export function drawScreens() {
     const b = G.boss; if (b && b.state === 'fight') txt(b.d.n + ' 남은 체력 ' + Math.max(1, Math.round(b.hp / b.max * 100)) + '%', VW / 2, VH * .3 + 52, 13, 'rgba(255,200,170,.85)', 'center', 600);
     txt(String(G.score), VW / 2, VH * .3 + 110, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .3 + 140, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  최대 콤보 x' + G.maxCombo + '  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .3 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
-    txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : G.shardLock ? 'TON 618 격파 후에는 별 조각을 모을 수 없어' : '별 조각 +' + G.shardGain, VW / 2, VH * .3 + 198, 14, G.shardLock ? 'rgba(255,255,255,.55)' : '#ffe27a', 'center', 800);
+    txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : '별 조각 +' + G.shardGain, VW / 2, VH * .3 + 198, 14, '#ffe27a', 'center', 800);
     if (G.deadT > .7) { drawDeadShopBtn(); g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 다시 출발', VW / 2, VH - 80, 19, '#fff'); }
     g.globalAlpha = 1;
   }

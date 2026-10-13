@@ -92,7 +92,7 @@ function forkArrive(p) {
   if (F && p === F.hub) enterFork();
   else if (F && F.state === 'hub' && p.branch) {
     const br = commitRoute(p), bm = BIOMES[br.biome];
-    G.banner = { t: 0, dur: 2.6, a: '항로 결정', b: bm.n, c: bm.c, sub: '다음 보스  ' + BOSSES[br.bi].n };
+    G.banner = { t: 0, dur: 2.6, a: '항로 결정', b: bm.n, c: bm.c, sub: '다음 보스  ' + (br.bi < 0 ? '???' : BOSSES[br.bi].n) };
     flashScreen(.25, bm.c); punch(.03); thump(110, 40, .4, .25);
   }
 }

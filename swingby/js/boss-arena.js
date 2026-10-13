@@ -7,6 +7,7 @@ import { arenaH } from './camera.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, ringFx, flashScreen } from './fx.js';
 import { mkPlanet } from './planets.js';
+import { endlessNext, makeEndlessBoss } from './endless.js';
 
 const ARENA_RING = .78;               // 보스전에서 서 있던 행성의 포획 링 폭 비율 (아레나 행성은 처음부터 좁게 만든다)
 export const SWAY_FROM = 1, SWAY_Y = 26;   // 보스가 움직이기 시작하는 스테이지(0부터)와 위아래 흔들림 폭
@@ -30,10 +31,11 @@ export const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length
 
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
-  const s = G.ship, P = s.p, bi = G.nextBi, d0 = BOSSES[bi];
-  const stage = G.kills % STAGES.length, loop = Math.floor(G.kills / STAGES.length);
+  const s = G.ship, P = s.p, endless = endlessNext(), n = G.kills - STAGES.length;   // endless: TON 618 이후의 무한 모드 보스(카탈로그 이름, 무작위 패턴)
+  const bi = endless ? -1 : G.nextBi, d0 = endless ? makeEndlessBoss(n) : BOSSES[bi];
+  const stage = endless ? STAGES.length - 2 : G.kills % STAGES.length, loop = endless ? 0 : Math.floor(G.kills / STAGES.length);
   // 아레나는 보스가 시작될 때의 필드 폭에 스테이지 가산(ARENA_GROW)을 곱한 폭이다. 필드 폭은 보스전 동안 고정이고, 크기는 fk(√), 거리는 K(선형) 배율을 따른다
-  const grow = arenaGrow(stage), px = P.x / G.w;
+  const grow = arenaGrow(endless ? STAGES.length - 1 : stage), px = P.x / G.w;
   G.w *= grow; P.x = px * G.w;
   const fk = fs(), K = arenaK();
   P.x = clamp(P.x, 70 * fk, G.w - 70 * fk); G.vz = W0 / G.w;
@@ -52,8 +54,8 @@ export function startBoss() {
     off: by - G.arenaTop, spawnOff: by - G.arenaTop + d.R + (50 + sway) * fk,   // 화면 윗변에서 보스·새 행성 등장선까지의 거리 (실체가 되는 선은 ACT.ghost 아래)
     sv: 0, lastY: Math.min(...list.map(q => q.y)), gap: rnd(...SCROLL.gap) * K, made: 0     // 현재 스크롤 속도 · 마지막 행성 높이 · 다음 행성까지의 간격
   };
-  G.bo2max = G.bo2 = bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
-  G.banner = { t: 0, dur: 3, a: 'BOSS ' + (stage + 1) + ' / ' + STAGES.length + (loop ? '  ·  ' + (loop + 1) + '회차' : ''), b: d.n, c: 'hsl(' + d.hue + ',100%,70%)', sub: d.line };
+  G.bo2max = G.bo2 = endless ? bossO2(STAGES.length - 1, n) : bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
+  G.banner = { t: 0, dur: 3, a: endless ? 'ENDLESS ' + d.endless : 'BOSS ' + (stage + 1) + ' / ' + STAGES.length + (loop ? '  ·  ' + (loop + 1) + '회차' : ''), b: d.n, c: 'hsl(' + d.hue + ',100%,70%)', sub: d.line };
   G.shake = 8; flashScreen(.35, 'hsl(' + d.hue + ',100%,70%)'); thump(70, 28, 1.4, .4); noise(1.6, .25, 900, 60); vibe([40, 30, 80]);
 }
 

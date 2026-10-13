@@ -50,7 +50,7 @@ function drawForkGuides() {
     g.beginPath(); g.moveTo(F.hub.x, F.hub.y); g.lineTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
     const y = p1.y - p1.R - 46, x = clamp((p0.x + p1.x) / 2, 76, G.w - 76);
     txt(bm.n, x, y, 21, bm.c, 'center', 900);
-    txt('▶ ' + BOSSES[br.bi].n, x, y + 21, 15, 'rgba(255,255,255,.85)', 'center', 700);
+    txt('▶ ' + (br.bi < 0 ? '미지의 별' : BOSSES[br.bi].n), x, y + 21, 15, 'rgba(255,255,255,.85)', 'center', 700);
   }
 }
 

@@ -6,6 +6,7 @@ import { BIOMES, STAGES, MONSTER_ZONE } from './data.js';
 import { fs } from './stats.js';
 import { mkPlanet } from './planets.js';
 import { addStars } from './scatter.js';
+import { endlessNext } from './endless.js';
 
 export function scheduleFork() {
   G.fork = { state: 'queued', at: G.genI + 3, active: false, hub: null, branches: null };
@@ -16,7 +17,7 @@ function routeOptions() {
   const stage = G.kills % STAGES.length, bis = STAGES[stage], f = G.kills - 1;
   const afterZone = (G.kills - 1) % STAGES.length === MONSTER_ZONE.stage;   // 독 행성 지대 보스 직후엔 같은 지대를 또 권하지 않는다
   const pool = f <= 0 ? ['nebula', 'redzone'] : f === 1 ? ['belt', 'void'] : Object.keys(BIOMES).filter(k => k !== 'normal' && !(k === 'monster' && afterZone));
-  const biomes = shuffle(pool.slice()), bosses = bis.length > 1 ? shuffle(bis.slice()) : [bis[0], bis[0]];
+  const biomes = shuffle(pool.slice()), bosses = endlessNext() ? [-1, -1] : bis.length > 1 ? shuffle(bis.slice()) : [bis[0], bis[0]];   // -1: 무한 모드의 보스는 가기 전까지 모른다
   return [0, 1].map(i => ({ biome: biomes[i], bi: bosses[i] }));
 }
 

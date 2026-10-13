@@ -25,6 +25,10 @@ export const CARDS = [
   { k: 'shield', n: '비상 추진기', d: '사망 1회 방지',      step: 1,  cap: 9 }
 ];
 
+/** 점수 배율 카드(항해 일지)의 중반 보너스: 보스 3회 격파부터 TON 618 을 잡을 때까지는 오르는 폭이 mul 배, 그 뒤(무한 모드)에는 본래대로 */
+export const MULT_BOOST = { from: 3, mul: 2 };
+export const cardStep = (c, kills, cleared) => c.k === 'mult' && kills >= MULT_BOOST.from && !cleared ? c.step * MULT_BOOST.mul : c.step;
+
 /* ---------- 보스 ----------
  * kind: 그리는 방식, pat: 쓰는 패턴, q: 동시에 예고해 두는 공격 수, atk: 한 번 맞을 때 깎이는 산소(초) */
 export const BOSSES = [
@@ -73,6 +77,12 @@ export const ATK = {
   nova:     { n: '초신성',   c: '#ff7a2a', cast: '초신성 폭발',    pow: 1.5 },   // 베텔게우스
   lobes:    { n: '쌍엽 분출', c: '#ff8a50', cast: '쌍엽 분출',      pow: 1.3 },   // 에타 카리나
   sing:     { n: '특이점',   c: '#d070ff', cast: '특이점 붕괴',    pow: 1.2, keep: 5 },   // TON 618
+  // 무한 모드(endless.js)의 카탈로그 보스 전용 패턴: 이 보스들이 둘씩 가지고 나온다
+  rain:     { n: '별똥비',   c: '#8affd8', cast: '별똥비',         pow: 1 },
+  ripple:   { n: '공명파',   c: '#ffd070', cast: '공명 파동',      pow: 1.1 },
+  grid:     { n: '격자망',   c: '#ff8ae0', cast: '격자망',         pow: 1.15 },
+  sweep:    { n: '소탕선',   c: '#ff9a5a', cast: '회전 소탕',      pow: 1.2 },
+  snare:    { n: '올가미',   c: '#a0a8ff', cast: '중력 올가미',    pow: 1.1 },
   // 패턴 풀에는 없는 특수 공격: TON 618 체력이 1/3 이하가 된 다음 턴에 발동해 보스전이 끝날 때까지 지속
   horizon:  { n: '사건의 지평선', c: '#b070ff', cast: '사건의 지평선', pow: 0 }
 };

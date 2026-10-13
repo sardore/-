@@ -5,6 +5,7 @@ import { G } from './state.js';
 import { W0 } from './util.js';
 import { SHIPS } from './ships.js';
 import { PLANET_DEC, BIOMES } from './data.js';
+import { endlessDec } from './endless.js';
 
 const pct = k => G.stats[k] / 100;
 
@@ -26,7 +27,7 @@ export const ringMul = () => { const g = pct('grav'); return g <= RING_KNEE ? g 
 export const capOf = p => p.R + (p.cap - p.R) * ringMul();
 /** 궤도 반지름의 상한. 포획 범위가 아무리 넓어도 이보다 먼 궤도는 금방 안쪽으로 끌려 들어온다(큰 궤도는 회전이 느려 답답하다) */
 export const maxOrbit = p => Math.min(capOf(p), p.R + (p.cap - p.R) * ORBIT_MAX);
-export const decRate = p => (5 + Math.min(G.hops * .22, 9)) * PLANET_DEC[p.t] / pct('decay') * fs();
+export const decRate = p => (5 + Math.min(G.hops * .22, 9)) * PLANET_DEC[p.t] / pct('decay') * fs() * endlessDec();   // endlessDec: TON 618 을 잡은 뒤에는 진행도에 비례해 계속 빨라진다
 export const o2max = () => 2.6 * pct('o2');
 export const magRange = () => 20 * pct('grav') * fs();
 export const ramMul = () => pct('ram');

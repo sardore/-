@@ -78,6 +78,31 @@ function uniqueZones(k, b, al, fk, K, ymin, ymax) {
     }
     case 'nova': // 초신성: 보스 주위 거대한 폭발 — 아래쪽 멀리가 안전하다
       zs.push({ shape: 'c', rel: true, x: 0, y: 0, r: 310 * K, fuse: 2.2, blast: .55, fade: 1 }); break;
+    case 'rain': { // 별똥비 (무한 모드 전용): 세로 기둥이 한쪽 끝에서 반대쪽으로 차례로 내리꽂힌다
+      const n = Math.max(5, Math.round(G.w / 70)), sg = Math.random() < .5 ? -1 : 1;
+      for (let i = 0; i < n; i++) zs.push({ shape: 'b', vert: true, x: ((sg > 0 ? i : n - 1 - i) + .5) / n * G.w + rnd(-10, 10) * fk, w: 16 * fk, delay: i * .2, fuse: .8, blast: .35 });
+      break;
+    }
+    case 'ripple': // 공명파 (전용): 보스에서 퍼지는 세 겹의 고리가 차례로 터진다
+      for (let i = 0; i < 3; i++) zs.push({ shape: 'o', rel: true, x: 0, y: 0, r1: (105 + i * 115) * K, r2: (160 + i * 115) * K, delay: i * .45, fuse: .9, blast: .35 });
+      break;
+    case 'grid': { // 격자망 (전용): 두 행성의 높이를 가로로, 다른 두 행성의 x 를 세로로 가른다
+      const ps = pl.slice().sort(() => Math.random() - .5), hs = [], vs = [];
+      for (const p of ps) { if (hs.length < 2 && hs.every(q => Math.abs(q.y - p.y) > 80 * K)) hs.push(p); else if (vs.length < 2 && vs.every(q => Math.abs(q.x - p.x) > 80 * fk)) vs.push(p); }
+      for (const p of hs) zs.push({ shape: 'b', x: G.w / 2, y: p.y, w: G.w, hh: 19 * fk, fuse: 1.1, blast: .5 });
+      for (const p of vs) zs.push({ shape: 'b', vert: true, x: p.x, w: 19 * fk, fuse: 1.1, blast: .5 });
+      break;
+    }
+    case 'sweep': { // 소탕선 (전용): 보스 아래쪽 부채꼴이 한쪽에서 반대쪽으로 쓸고 지나간다
+      const sg = Math.random() < .5 ? -1 : 1;
+      for (let i = 0; i < 7; i++) zs.push({ shape: 'w', rel: true, x: 0, y: 0, a: PI / 2 + sg * (i / 6 - .5) * 2.2, half: .13, len: 950 * K, delay: i * .17, fuse: .6, blast: .3 });
+      break;
+    }
+    case 'snare': { // 올가미 (전용): 두 행성의 궤도 고리가 터진다 — 행성 표면 바로 위(안쪽)만 안전하다
+      const ps = pl.slice().sort(() => Math.random() - .5);
+      for (const p of ps.slice(0, 2)) zs.push({ shape: 'o', x: p.x, y: p.y, r1: p.R + 24 * fk, r2: p.R + 110 * fk, fuse: 1.0, blast: .5 });
+      break;
+    }
     case 'lobes': // 쌍엽 분출: 보스 양옆으로 세로 기둥 두 줄
       zs.push({ shape: 'b', rel: true, vert: true, x: -92 * fk, w: 30 * fk, fuse: 1.1, blast: .9 }, { shape: 'b', rel: true, vert: true, x: 92 * fk, w: 30 * fk, delay: .3, fuse: 1.1, blast: .9 }); break;
   }
@@ -154,7 +179,7 @@ function updateHorizon(h, dt) {
 function zone(o) { G.haz.push(Object.assign({ k: 'zone', t: 0, delay: 0, fuse: .9, blast: .3, fade: .8, fired: false }, o)); }
 function execAttack(a) {
   const b = G.boss, at = ATK[a.k], c = at.c, pow = at.pow;
-  G.castO = { t: 0, dur: 1.1, name: at.cast, c }; b.cast = .9;
+  G.castO = { t: 0, dur: 1.1, name: b.d.endless ? '???' : at.cast, c }; b.cast = .9;
   sweep(110, 460, .9, .11); beep(240, .08, 'square', .05); shakeAdd(3);
   switch (a.k) {
     case 'meteor': a.zs.forEach((z, i) => zone({ kind: 'meteor', shape: 'c', x: z.x, y: z.y, r: z.r, delay: i * .2, fuse: .95, blast: .3, col: c, pow })); break;

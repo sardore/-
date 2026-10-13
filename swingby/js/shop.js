@@ -48,10 +48,9 @@ export function equip(it) { if (!SHOP.own[it.id]) return; SHOP.eq[it.slot] = it.
 export function unequip(it) { delete SHOP.eq[it.slot]; persist(); }
 
 /** 판이 끝났다(사망·클리어): 이번 판 별 점수(배율·체인 반영 후)의 3/10(SHARD_RATE)을 별 조각으로 저장한다. 같은 판에서 두 번 불러도 중복 지급하지 않는다.
- * 디버그판은 저장하지 않는다. TON 618 을 쓰러뜨린 뒤(2회차 이후)에는 더 지급하지 않는다. 이번에 얻은 개수를 돌려준다 */
+ * 디버그판은 저장하지 않는다. TON 618 을 쓰러뜨린 뒤(무한 모드)에도 계속 쌓인다. 이번에 얻은 개수를 돌려준다 */
 export function settleRun() {
-  if (G.debug || G.shardLock) return 0;
-  if (G.cleared) G.shardLock = true;   // TON 618 격파 때의 정산이 마지막이다. 이후 회차는 별 조각을 모을 수 없다
+  if (G.debug) return 0;
   const gain = Math.max(0, Math.floor(G.starScore * SHARD_RATE) - G.starPaid);
   if (!gain) return 0;
   G.starPaid += gain; G.shardGain += gain; SHOP.shards += gain; persist();
