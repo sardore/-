@@ -4,7 +4,8 @@ import { W0, TAU, FONT, clamp, easeOut } from './util.js';
 import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
-import { rr, txt } from './gfx.js';
+import { rr, txt, GFX } from './gfx.js';
+import { drawTitle2 } from './draw-title2.js';
 
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
 
@@ -94,8 +95,8 @@ export function drawScreens() {
   const { VW, VH } = V, T = G.T;
   if (G.st === 'title') {
     g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
-    txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900);
-    txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600);
+    if (GFX.v >= 2) drawTitle2();
+    else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
     g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     if (G.debug) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);

@@ -237,7 +237,7 @@ Canvas 2D + WebAudio, 외부 의존성 없음. `index.html` 은 껍데기이고 
 | `game.js` | `update`(한 틱)·`step`(상태별 진행·히트스톱) |
 | `fx.js` · `audio.js` | 타격감 연출 · 효과음과 배경음악 |
 | `draw.js` · `draw-backdrop.js` · `draw-world.js` · `draw-planet.js` · `draw-boss.js` · `boss-art.js` · `draw-ui.js` · `draw-pick.js` · `radar.js` · `gfx.js` | 그리기 (배경 → 월드 → 효과 → UI → 선택 화면), 레이더 차트, 캔버스 도우미. `draw-planet.js` 는 예전(v1) 행성 렌더러 |
-| `draw-backdrop2.js` · `draw-planet2.js` · `draw-fx2.js` | 그래픽 v2 (아래 참고) |
+| `draw-backdrop2.js` · `draw-planet2.js` · `draw-fx2.js` · `draw-title2.js` | 그래픽 v2 (아래 참고) |
 | `input.js` | 터치/마우스/키보드 → 누름/뗌 |
 | `debug.js` | `window.__dbg` + 테스트용 봇 |
 
@@ -247,6 +247,7 @@ Canvas 2D + WebAudio, 외부 의존성 없음. `index.html` 은 껍데기이고 
 기본은 새 렌더러(v2)이고, 주소 뒤에 **`?gfx=1`** 을 붙이면 예전 렌더러로 돌아간다(예전 코드는 지우지 않고 그대로 두었다. `?gfx=1` 화면은 이전 버전과 픽셀 단위로 같다). 전환 값은 `gfx.js` 의 `GFX.v`.
 - **행성**(`draw-planet2.js`): 왼쪽 위에서 오는 빛의 음영과 어두운 면, 밝은 가장자리, 대기 테두리, 천천히 자전하는 대륙·구름, 가스행성의 줄무늬와 **고리의 앞뒤**, 적색왜성의 맥동하는 코로나, 소행성의 면과 분화구.
 - **배경**(`draw-backdrop2.js`): 예전 배경 위에 깜빡이는 별 3겹(시차)과 십자 별, 필드 양옆 벽의 빛 번짐, 보스전 스크롤의 속도선.
+- **타이틀**(`draw-title2.js`): 그라데이션 SWINGBY 로고, 훑고 지나가는 빛줄기, 글자를 감싸고 도는 궤도와 혜성.
 - **효과**(`draw-fx2.js`): 가산 합성으로 빛이 번지는 꼬리·링·파티클, 별(수집품)의 번짐과 반짝임.
 
 ## 디버그판
