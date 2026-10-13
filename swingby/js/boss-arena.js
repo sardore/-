@@ -10,12 +10,14 @@ import { mkPlanet } from './planets.js';
 
 const ARENA_RING = .78;               // 보스전에서 서 있던 행성의 포획 링 폭 비율 (아레나 행성은 처음부터 좁게 만든다)
 export const SWAY_FROM = 1, SWAY_Y = 26;   // 보스가 움직이기 시작하는 스테이지(0부터)와 위아래 흔들림 폭
-export const aliveP = () => G.planets.filter(p => !p.dead);
+export const aliveP = () => G.planets.filter(p => !p.dead && !p.ghost);
 
 /* ---------- 스크롤 ----------
  * 보스전의 맵은 계속 뒤로(화면 아래로) 밀려난다. 보스는 화면 위에 붙어 있고 새 행성은 보스 아래쪽에서 나타난다.
  * 화면 아래로 밀려나면 일반 지형과 똑같이 심우주로 표류해 죽는다. 속도는 화면 기준 px/초이고 필드 폭(arenaK)에 비례해 늘린다. */
 export const SCROLL = { base: 12, perStage: 1.5, perPhase: 2, accel: .8, gap: [78, 112] };
+/** 새 행성은 보스 바로 아래에서 유령(투명·포획 불가)으로 나타나, 등장선에서 ACT.ghost 만큼 더 내려와야 실체가 된다(ACT.ramp 동안 서서히 짙어진다) */
+const ACT = { ghost: 60, ramp: 24, alpha: .1 };
 const scrollSpeed = b => (SCROLL.base + SCROLL.perStage * b.stage + SCROLL.perPhase * b.phase) * arenaK();
 
 /* ---------- 시작: 아레나 ---------- */
@@ -31,14 +33,14 @@ export function startBoss() {
   const by = G.arenaTop + (V.VH < 760 ? 150 : 178) * K + d.R * .6;
   G.stars = []; G.holes = []; G.mons = [];
   P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
-  const sway = stage >= SWAY_FROM ? SWAY_Y : 0, list = buildArena(P, by, d.R, sway);
+  const sway = stage >= SWAY_FROM ? SWAY_Y : 0, list = buildArena(P, by, d.R, sway, ACT.ghost * K);
   P.seen = true; list.sort((a, b) => b.y - a.y); G.planets = list;
   if (G.biome === 'belt') list.forEach(q => { q.brittle = true; }); // 소행성대의 보스: 아레나 행성도 떠나면 부서진다
   const hp = Math.round(d.hp * (1 + .6 * loop));
   G.boss = {
     bi, stage, loop, d, hp, max: hp, R: d.R, hr: d.kind === 'quasar' ? d.R * 1.35 : d.R, x: G.w / 2, y: by, hx: G.w / 2, hy: by, mt: 0, mv: 1,
     idle: 0, cast: 0, st: 0, state: 'intro', flash: 0, sq: 0, q: [], turn: 0, phase: 0, hitT: 0, last: '', ph: rnd(0, TAU),
-    off: by - G.arenaTop, spawnOff: by - G.arenaTop + d.R + (50 + sway) * fk,   // 화면 윗변에서 보스·새 행성 등장선까지의 거리
+    off: by - G.arenaTop, spawnOff: by - G.arenaTop + d.R + (50 + sway) * fk,   // 화면 윗변에서 보스·새 행성 등장선까지의 거리 (실체가 되는 선은 ACT.ghost 아래)
     sv: 0, lastY: Math.min(...list.map(q => q.y)), gap: rnd(...SCROLL.gap) * K, made: 0     // 현재 스크롤 속도 · 마지막 행성 높이 · 다음 행성까지의 간격
   };
   G.bo2max = G.bo2 = bossO2(stage, loop); G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
@@ -55,9 +57,9 @@ function arenaPlanet(x, y, gas) {
 }
 
 /** 보스로 향하는 직선을 가로막지 않는 행성 배치를 찾는다 */
-function buildArena(P, by, bossR, sway) {
+function buildArena(P, by, bossR, sway, skip) {
   const fk = fs(), K = arenaK();
-  const yMin = by + bossR + (50 + sway) * fk, yMax = P.y + (V.VH < 760 ? 18 : -60) * K, want = Math.round(5 * K);
+  const yMin = by + bossR + (50 + sway) * fk + skip, yMax = P.y + (V.VH < 760 ? 18 : -60) * K, want = Math.round(5 * K);
   const clear = (p, L) => { // p→보스 선분 근처에 다른 행성이 없어야 한다
     const ax = p.x, ay = p.y, vx = G.w / 2 - ax, vy = by - ay, len2 = vx * vx + vy * vy;
     for (const q of L) {
@@ -88,6 +90,8 @@ export function scrollArena(b, dt) {
   G.arenaTop -= dy; G.arenaBot -= dy; b.hy = G.arenaTop + b.off;
   for (const h of G.haz) if (h.anchor) h.y -= dy;            // 보스에 붙은 광선·제트·플레어는 보스와 함께 올라간다
   feedPlanets(b);
+  const act = G.arenaTop + b.spawnOff + ACT.ghost * arenaK(), ramp = ACT.ramp * arenaK();
+  for (const p of G.planets) { p.ghost = p.y < act; p.fa = p.ghost ? ACT.alpha : ACT.alpha + (1 - ACT.alpha) * clamp((p.y - act) / ramp, 0, 1); }
   const s = G.ship;
   G.planets = G.planets.filter(p => p.y < G.arenaBot + capOf(p) + 20 || (s.mode === 'orb' && s.p === p));
 }
@@ -104,6 +108,9 @@ function feedPlanets(b) {
     return;
   }
 }
+
+/** 유령 상태를 모두 걷어낸다(보스전이 끝났을 때) */
+export function solidifyAll() { for (const p of G.planets) { p.ghost = false; p.fa = 1; } }
 
 export function regrow(p) {
   p.dead = false; p.born = 0; p.pulse = 1;

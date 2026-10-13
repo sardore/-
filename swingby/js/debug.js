@@ -16,7 +16,7 @@ function climbTarget() {
   if (!b || b.state !== 'fight' || p.y <= G.arenaBot - 190 * K) return null;
   let bp = null;
   for (const q of G.planets) {
-    if (q === p || q.dead || q.y > p.y - 40 * K || p.y - q.y > 300 * K || q.y < G.arenaTop + b.R * 1.2 + 90 * K) continue;
+    if (q === p || q.dead || q.ghost || q.y > p.y - 40 * K || p.y - q.y > 300 * K || q.y < G.arenaTop + b.R * 1.2 + 90 * K) continue;
     if (!bp || q.y < bp.y) bp = q;
   }
   return bp;

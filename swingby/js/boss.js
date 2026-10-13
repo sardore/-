@@ -9,7 +9,7 @@ import { scheduleFork } from './fork.js';
 import { afterBoss } from './progress.js';
 import { heatRam, heatMul, flameColor } from './heat.js';
 import { isDashing, impactDamage, bounceShip, bounceSpeed, standoff } from './impact.js';
-import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena } from './boss-arena.js';
+import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena, solidifyAll } from './boss-arena.js';
 import { queueAttack, beamAngle, updateHaz } from './boss-attacks.js';
 
 /* ---------- 프레임 갱신 ---------- */
@@ -82,7 +82,7 @@ function finishBoss() {
   const b = G.boss, s = G.ship, stage = b.stage;
   addScore(400 * (stage + 1) + b.loop * 500, s.x, s.y - 30, '#ffe27a', b.d.n + ' 격파!', 24);
   if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
-  regrowAll();
+  regrowAll(); solidifyAll();
   G.boss = null; G.haz = []; G.biome = 'normal';
   const next = G.kills % STAGES.length; G.nextBi = STAGES[next][0];
   if (next === MONSTER_ZONE.stage) { // 괴물 행성 지대: 갈림길 없이 지대를 지나 도전 보스를 만난다

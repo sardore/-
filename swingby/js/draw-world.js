@@ -33,7 +33,7 @@ export function drawStar(t) {
 /** 화면에 보이는 월드 요소 전부 */
 export function drawWorld() {
   const top = viewTop(), bot = viewBot(), v2 = GFX.v >= 2, dp = v2 ? drawPlanet2 : drawPlanet, ds = v2 ? drawStar2 : drawStar;
-  for (const p of G.planets) { if (p.y < top - 140 || p.y > bot + 140) continue; dp(p); }
+  for (const p of G.planets) { if (p.y < top - 140 || p.y > bot + 140) continue; if (p.fa < 1) g.globalAlpha = p.fa; dp(p); g.globalAlpha = 1; }
   drawForkGuides();
   for (const m of G.mons) { if (m.y < top - 100 || m.y > bot + 100) continue; drawMonster(m); }
   for (const h of G.holes) { if (h.y < top - 60 || h.y > bot + 60) continue; drawHole(h); }
