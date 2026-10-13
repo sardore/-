@@ -7,6 +7,7 @@ import { burst, ringFx, flashScreen, punch, slowmo, shakeAdd, popText } from './
 import { startBoss } from './boss-arena.js';
 import { save } from './util.js';
 import { applyDebugRun } from './debug-run.js';
+import { applyStartSpecs, settleRun } from './shop.js';
 
 /* ---------- 강화 카드 (4단 진화 이후) ---------- */
 const canTake = c => G.stats[c.k] < c.cap;
@@ -40,8 +41,8 @@ export function evolveTo(d) {
   if (G.tier >= 4) G.nextOffer = G.hops + 4;
 }
 
-/** 새 판 시작 (디버그판이면 초고스펙 설정을 얹는다) */
-export function startRun() { newRun(); applyDebugRun(); }
+/** 새 판 시작: 상점의 영구 초기 스펙을 얹고, 디버그판이면 초고스펙 설정으로 덮어쓴다 */
+export function startRun() { newRun(); applyStartSpecs(G.stats); applyDebugRun(); }
 
 export function choose(i) {
   if (G.pickMode === 'evo') { if (G.evoOpts[i]) evolveTo(G.evoOpts[i]); return; }
@@ -61,6 +62,7 @@ export function afterBoss(stage) {
   if (stage === LAST_STAGE && !G.cleared) {
     G.cleared = true; G.st = 'clear'; G.clearT = 0;
     if (G.score > G.best && !G.debug) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
+    settleRun();
   } else if (EVOLVE_AT[G.tier] && G.kills >= EVOLVE_AT[G.tier]) startEvo();
   else if (G.tier >= 4) offer('보스 격파 — 강화 선택');
 }

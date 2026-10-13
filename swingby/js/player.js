@@ -2,7 +2,7 @@
 import { G } from './state.js';
 import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
-import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit } from './stats.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit, fs } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
@@ -13,6 +13,8 @@ import { ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
 import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
+import { cfg, shipHue, emitDecor, landHsl, starHsl } from './cos.js';
+import { settleRun } from './shop.js';
 
 export const CHARGE_T = .8;      // 차지가 가득 차는 시간(초)
 const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오는 시간 상수
@@ -48,7 +50,7 @@ export function release(charge) {
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
     thump(260, 50, .25, .3); sweep(300, 1400, .3, .1, 'square'); noise(.3, .22, 7000, 500);
-    sparks(s.x, s.y, '#fff', 16, 520, back, .35); sparks(s.x, s.y, 'hsl(' + curDef().L.h + ',100%,70%)', 14, 420, back, .5);
+    sparks(s.x, s.y, '#fff', 16, 520, back, .35); sparks(s.x, s.y, 'hsl(' + shipHue() + ',100%,70%)', 14, 420, back, .5);
     ringFx(s.x, s.y, '#fff', 6, 60 + f * 40, .35, 4); shakeAdd(4 + f * 5); punch(.02 + f * .02); flashScreen(.1 + f * .08, '#fff'); vibe(25);
   }
   if (from.brittle) { // 소행성은 떠나는 순간 부서진다
@@ -66,6 +68,7 @@ export function latch(p, dx, dy, d) {
   s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; heatReset();
   p.pulse = 1; p.sq = .55;
   ringFx(p.x, p.y, 'hsla(' + p.hue + ',90%,75%,.9)', p.R, capOf(p) * .9, .5, 3);
+  if (cfg().land) { ringFx(p.x, p.y, landHsl(72, .95), p.R * .6, capOf(p) * 1.15, .7, 4); ringFx(p.x, p.y, '#fff', p.R, capOf(p) * .7, .35, 2); burst(s.x, s.y, landHsl(70), 10, 160); }   // 상점 착지 링
   thump(170, 60, .16, .2);
   if (G.boss) {
     if (G.boss.state === 'fight') { G.bcombo = s.hitF ? G.bcombo + 1 : 0; s.hitF = false; beep(330, .07); bossTurn(); }
@@ -115,6 +118,7 @@ export function die(why) {
   burst(s.x, s.y, '#fff', 34, 280); burst(s.x, s.y, '#ff6a6a', 24, 200); ringFx(s.x, s.y, '#fff', 6, 140, .6, 4); ringFx(s.x, s.y, '#ff6a6a', 6, 100, .5, 3);
   beep(110, .5, 'sawtooth', .14); thump(120, 30, .6, .4); noise(.7, .3, 4000, 100); vibe([60, 40, 120]);
   if (G.score > G.best && !G.debug) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
+  settleRun();
 }
 
 /* ---------- 프레임 이동 ---------- */
@@ -139,7 +143,9 @@ export function stepShip(dt) {
     regulateSpeed(dt, v);
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
-    if (s.boost > 1.2) dashTrail(dt);
+    const cf = cfg();
+    if (s.boost > 1.2 || (cf.trail && cf.trail.style === 'ghost')) dashTrail(dt);
+    emitDecor(cf, s.x, s.y, s.vx, s.vy, dt, fs(), G.parts);
     if (bf) emitFlames(dt);
     if (s.x < 6 && s.vx < 0) { s.x = 6; s.vx *= -1; wallHit(6, s.y, 0, bf); }
     if (s.x > G.w - 6 && s.vx > 0) { s.x = G.w - 6; s.vx *= -1; wallHit(G.w - 6, s.y, PI, bf); }
@@ -188,12 +194,12 @@ function regulateSpeed(dt, base) {
 }
 function dashTrail(dt) {
   const s = G.ship; s.gt = (s.gt || 0) - dt;
-  if (s.gt <= 0) { s.gt = .025; s.ghosts.push({ x: s.x, y: s.y, a: Math.atan2(s.vy, s.vx), t: 0 }); }
+  if (s.gt <= 0) { s.gt = s.boost > 1.2 ? .025 : .05; s.ghosts.push({ x: s.x, y: s.y, a: Math.atan2(s.vy, s.vx), t: 0 }); }
 }
 function chargeFx(dt) {
   const s = G.ship;
   s.charge = Math.min(1, s.charge + dt / CHARGE_T);
-  const col = 'hsl(' + curDef().L.h + ',100%,75%)';
+  const col = 'hsl(' + shipHue() + ',100%,75%)';
   if (Math.random() < dt * 70 * (.3 + s.charge)) { // 기체로 빨려드는 입자
     const an = rnd(0, TAU), r = 38 - s.charge * 14;
     G.parts.push({ x: s.x + Math.cos(an) * r, y: s.y + Math.sin(an) * r, vx: -Math.cos(an) * r * 3, vy: -Math.sin(an) * r * 3, t: 0, l: .25, c: col, s: 2 });
@@ -208,8 +214,9 @@ function collectStars() {
     if (t.got) continue;
     if (Math.hypot(s.x - t.x, s.y - t.y) < mr) {
       t.got = true; G.starChain++;
-      addScore(5 + G.starChain - 1, t.x, t.y, '#ffe27a');
-      beep(990 * Math.pow(1.07, Math.min(G.starChain - 1, 8)), .06, 'sine'); burst(t.x, t.y, '#ffe27a', 8, 110); ringFx(t.x, t.y, '#ffe27a', 3, 22, .3, 2);
+      G.starScore += addScore(5 + G.starChain - 1, t.x, t.y, '#ffe27a');
+      const sc = starHsl(70) || '#ffe27a';   // 상점 별 파티클 색
+      beep(990 * Math.pow(1.07, Math.min(G.starChain - 1, 8)), .06, 'sine'); burst(t.x, t.y, sc, 8, 110); ringFx(t.x, t.y, sc, 3, 22, .3, 2);
     }
   }
 }

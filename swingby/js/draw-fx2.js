@@ -1,33 +1,51 @@
 /* 효과 그리기 v2: 빛이 번지는 꼬리·링·파티클(가산 합성)과 반짝이는 별. 예전 렌더러는 draw-world.js 에 그대로 있다 */
 import { G, g } from './state.js';
 import { TAU, easeOut } from './util.js';
+import { hueOf, satOf } from './cos.js';
 
 /** 기체 꼬리: 넓고 옅은 빛 + 밝은 심지를 겹쳐 그린다 */
-export function drawTrail2(s, def) {
+export function drawTrail2(s, def, sp) {
   const tr = s.trail, n = tr.length; if (n < 4) return;
-  const h = def.L.h, wm = (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
+  const h = hueOf(sp, def.L.h, G.T), sat = satOf(sp), wm = (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
   g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
   for (let i = 2; i < n; i += 2) {
     const k = i / n;
-    g.strokeStyle = 'hsla(' + h + ',90%,58%,' + k * .2 + ')'; g.lineWidth = 2 + k * wm * 2.6;
+    g.strokeStyle = 'hsla(' + h + ',' + sat * .9 + '%,58%,' + k * .2 + ')'; g.lineWidth = 2 + k * wm * 2.6;
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
-    g.strokeStyle = 'hsla(' + h + ',90%,78%,' + k * .75 + ')'; g.lineWidth = 1 + k * wm;
+    g.strokeStyle = 'hsla(' + h + ',' + sat * .9 + '%,78%,' + k * .75 + ')'; g.lineWidth = 1 + k * wm;
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
+  }
+  if (sp && sp.style === 'dust') { // 별가루: 꼬리를 따라 반짝이는 십자
+    g.lineWidth = 1;
+    for (let i = 2; i < n; i += 2) {
+      const k = i / n, tw = .5 + .5 * Math.sin(G.T * 9 + i * 1.9), L = (1.5 + 3.5 * tw) * (.4 + k);
+      g.strokeStyle = 'hsla(' + (h + i * 3) % 360 + ',100%,85%,' + k * tw + ')';
+      g.beginPath(); g.moveTo(tr[i] - L + Math.sin(i * 7) * 4, tr[i + 1] + Math.cos(i * 5) * 4); g.lineTo(tr[i] + L + Math.sin(i * 7) * 4, tr[i + 1] + Math.cos(i * 5) * 4);
+      g.moveTo(tr[i] + Math.sin(i * 7) * 4, tr[i + 1] - L + Math.cos(i * 5) * 4); g.lineTo(tr[i] + Math.sin(i * 7) * 4, tr[i + 1] + L + Math.cos(i * 5) * 4); g.stroke();
+    }
   }
   g.restore();
 }
 
-/** 링·파티클(글자는 제외) */
-export function drawFxLayers2() {
+/** 금화 입자(황금 상선 장식): 빙글 도는 동전 */
+export function drawCoin(p, a) {
+  const w = .25 + .75 * Math.abs(Math.cos(p.t * 12 + p.ph)), r = p.s;
+  g.globalAlpha = a; g.fillStyle = '#ffd24a'; g.strokeStyle = '#fff3b0'; g.lineWidth = 1;
+  g.beginPath(); g.ellipse(p.x, p.y, r * w, r, 0, 0, TAU); g.fill(); g.stroke();
+}
+
+/** 링·파티클(글자는 제외). 상점 미리보기는 자기 목록을 넘긴다 */
+export function drawFxLayers2(fxr = G.fxr, parts = G.parts) {
   g.save(); g.globalCompositeOperation = 'lighter';
-  for (const f of G.fxr) {
+  for (const f of fxr) {
     const k = f.t / f.dur, r = f.r0 + (f.r1 - f.r0) * easeOut(k), lw = f.w * (1 - k * .6);
     g.strokeStyle = f.c; g.beginPath(); g.arc(f.x, f.y, r, 0, TAU);
     g.globalAlpha = (1 - k) * .3; g.lineWidth = lw * 2.8; g.stroke();
     g.globalAlpha = 1 - k; g.lineWidth = lw; g.stroke();
   }
-  for (const p of G.parts) {
+  for (const p of parts) {
     const a = 1 - p.t / p.l; g.fillStyle = p.c; g.strokeStyle = p.c;
+    if (p.coin) { drawCoin(p, a); continue; }
     if (p.line) { g.globalAlpha = a; g.lineWidth = p.s * .6; g.lineCap = 'round'; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * .05, p.y - p.vy * .05); g.stroke(); continue; }
     const sz = p.s || 3;
     g.globalAlpha = a * .22; g.beginPath(); g.arc(p.x, p.y, sz * 1.7, 0, TAU); g.fill();

@@ -9,6 +9,9 @@ import { pointerDown, pointerUp } from './input.js';
 import { pressStart, pressEnd } from './player.js';
 import { choose, evolveTo } from './progress.js';
 import { forceTele } from './boss-attacks.js';
+import { SHOP, buy, equip, settleRun } from './shop.js';
+import { ITEMS } from './shop-data.js';
+import { openShop, previewItem } from './shop-ui.js';
 
 /** 맵이 밀려나는 보스전에서 서 있는 행성이 낮으면 갈아탈 위쪽 행성을 돌려준다(없으면 null) */
 function climbTarget() {
@@ -73,6 +76,8 @@ export function installDebug() {
     ship: () => ({ tier: G.tier, shipId: G.shipId, stats: Object.assign({}, G.stats), nextOffer: G.nextOffer, dash: curDef().dash }),
     atk: (k, t) => forceTele(k, t),
     down: () => pressStart(), up: () => pressEnd(), tapDown: () => pointerDown(0, 0, true), tapUp: () => pointerUp(),
+    /** 상점 테스트: give(n) 별 조각 지급 · own(id) 공짜로 보유+장착 · open() 상점 열기 · settle() 정산 */
+    shop: { SHOP, give: n => { SHOP.shards += n; }, own: id => { SHOP.own[id] = 1; equip(ITEMS[id]); }, buy: id => buy(ITEMS[id]), open: openShop, preview: previewItem, settle: settleRun },
     bot: botAct, BOSSES
   };
 }

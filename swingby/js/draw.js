@@ -10,11 +10,13 @@ import { drawWorld, drawPlayer, drawFx } from './draw-world.js';
 import { drawBoss, drawTele, drawHaz, drawFloorWarn } from './draw-boss.js';
 import { drawHud, drawLowO2, drawMuteButton, drawOverlays, drawScreens } from './draw-ui.js';
 import { drawPick } from './draw-pick.js';
+import { drawShop } from './shop-ui.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
   g.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
   (GFX.v >= 2 ? drawBackdrop2 : drawBackdrop)();
+  if (G.st === 'shop') { drawShop(); drawMuteButton(); return; }   // 상점은 배경 위에 화면 전체를 덮는다
   g.save();
   const sx = G.shake > 0 ? rnd(-G.shake, G.shake) : 0, sy = G.shake > 0 ? rnd(-G.shake, G.shake) : 0;
   const z = (1 + G.zoom) * G.vz;

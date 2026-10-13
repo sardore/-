@@ -19,13 +19,14 @@ export function resize() {
 function freshRun() {
   return {
     debug: false,                      // 디버그판(?debug)이면 기록을 저장하지 않는다
-    st: 'title',                       // title · play · pick · clear · dead
+    st: 'title',                       // title · shop · play · pick · clear · dead
     // 월드
     planets: [], stars: [], holes: [], mons: [], genY: 0, genI: 0, biome: 'normal', fork: null, pat: { k: '', left: 0, side: 1, gap: false },
     w: W0, camY: 0, vz: 1,             // w: 지금 필드 폭(진행할수록 넓어짐) · vz: 카메라 줌(필드가 넓어지면 줌아웃, 갈림길에서 더)
     // 진행
     score: 0, combo: 0, maxCombo: 0, hops: 0, kills: 0, cleared: false, newBest: false,
     nextOffer: Infinity, nextBoss: 10, nextBi: STAGES[0][0], starChain: 0,
+    starScore: 0, starPaid: 0, shardGain: 0,   // 별에서 얻은 점수 · 이미 별 조각으로 정산한 몫 · 이번 판에 얻은 별 조각
     // 기체
     ship: null, stats: baseStats(), tier: 1, shipId: 'base',
     // 선택 화면

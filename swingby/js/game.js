@@ -51,6 +51,7 @@ export function step(dt) {
     }
     case 'play': update(sd / 2); if (G.st === 'play') update(sd / 2); break;
     case 'pick': G.pickT += dt; break;
+    case 'shop': break;   // 상점 화면은 입력과 그리기(shop-ui.js)만 쓴다
     case 'dead': G.deadT += dt; if (G.boss) G.boss.st += sd; break;
     case 'clear': G.clearT += dt; break;
   }

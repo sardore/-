@@ -22,6 +22,15 @@ export const popText = (x, y, s, c, sz) => G.texts.push({ x, y, t: 0, s, c, sz: 
 export function addScore(n, x, y, c, label, big) {
   n = Math.round(n * scoreMul()); G.score += n;
   popText(x, y, (label ? label + '  ' : '') + '+' + n, c || '#fff', big);
+  return n;
+}
+
+/** 파티클 목록을 dt 만큼 진행시킨다 (게임 월드와 상점 미리보기가 같이 쓴다) */
+export function stepParts(parts, dt) {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.t += dt; if (p.t > p.l) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .97; p.vy *= .97;
+  }
 }
 
 /** 시간이 흐르는 연출 요소 갱신. rawDt: 실제 dt(타이머), dt: 히트스톱·슬로모션이 반영된 dt */
@@ -35,9 +44,6 @@ export function updateFx(rawDt, dt) {
   if (G.castO) { G.castO.t += dt; if (G.castO.t >= G.castO.dur) G.castO = null; }
   const { fxr, parts, texts } = G;
   for (let i = fxr.length - 1; i >= 0; i--) { fxr[i].t += dt; if (fxr[i].t > fxr[i].dur) fxr.splice(i, 1); }
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const p = parts[i]; p.t += dt; if (p.t > p.l) { parts.splice(i, 1); continue; }
-    p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .97; p.vy *= .97;
-  }
+  stepParts(parts, dt);
   for (let i = texts.length - 1; i >= 0; i--) { texts[i].t += dt; if (texts[i].t > 1) texts.splice(i, 1); }
 }

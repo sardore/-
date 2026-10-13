@@ -2,7 +2,7 @@
  * 행성에 착지하거나 보스의 공격을 맞으면 식는다. */
 import { G } from './state.js';
 import { PI, rnd } from './util.js';
-import { curDef } from './stats.js';
+import { heatHsl } from './cos.js';
 import { beep, noise } from './audio.js';
 import { sparks, ringFx, shakeAdd } from './fx.js';
 
@@ -12,8 +12,8 @@ const HEAT_RAM = .12;               // 한 단계마다 늘어나는 충돌 피�
 
 export const heatMul = () => 1 + HEAT_SPEED * G.ship.heat;
 export const heatRam = () => 1 + HEAT_RAM * G.ship.heat;
-/** 기체 색의 불꽃색. light 는 밝기(%) */
-export const flameColor = (light = 62) => 'hsl(' + curDef().L.h + ',100%,' + light + '%)';
+/** 열기 불꽃색: 기체 색(도색 반영), 상점에서 열기 불꽃을 장착했으면 그 색. light 는 밝기(%) */
+export const flameColor = (light = 62) => heatHsl(light);
 
 /** 벽에 튕겼다: 한 단계 뜨거워지고, 그만큼 즉시 빨라진다. (x, y)는 부딪힌 지점, dir 은 튕겨 나가는 각도 */
 export function heatUp(x, y, dir) {
