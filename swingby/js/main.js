@@ -1,5 +1,6 @@
 /* 진입점: 초기화와 메인 루프 */
-import { resize, newRun } from './state.js';
+import { resize } from './state.js';
+import { startRun } from './progress.js';
 import { step } from './game.js';
 import { draw } from './draw.js';
 import { bindInput } from './input.js';
@@ -7,7 +8,7 @@ import { installDebug } from './debug.js';
 
 window.addEventListener('resize', resize);
 resize();
-newRun();
+startRun();
 bindInput();
 installDebug();
 

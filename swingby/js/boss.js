@@ -237,7 +237,7 @@ function bossDefeat() {
 function finishBoss() {
   const b = G.boss, s = G.ship, stage = b.stage;
   addScore(400 * (stage + 1) + b.loop * 500, s.x, s.y - 30, '#ffe27a', b.d.n + ' 격파!', 24);
-  if (G.kills > G.bestBoss) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
+  if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
   regrowAll();
   G.boss = null; G.haz = []; G.biome = 'normal';
   G.nextBoss = G.hops + 14; G.nextBi = STAGES[G.kills % STAGES.length][0]; // 갈림길에서 고르면 덮어쓴다

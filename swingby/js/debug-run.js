@@ -1,0 +1,21 @@
+/* 디버그판: 주소에 ?debug 를 붙이면 초고스펙 기체로 바로 보스전을 시작한다. (예: index.html?debug)
+ *   ?debug            TON 618 (마지막 보스)
+ *   ?debug&boss=3     BOSSES 인덱스로 다른 보스
+ * 이 판의 기록은 저장하지 않는다. 죽으면 같은 조건으로 다시 시작한다. */
+import { G } from './state.js';
+import { BOSSES, STAGES } from './data.js';
+
+const q = new URLSearchParams(location.search);
+export const DEBUG = q.has('debug');
+const TON = BOSSES.findIndex(b => b.kind === 'quasar');
+const target = q.has('boss') ? Math.min(BOSSES.length - 1, Math.max(0, +q.get('boss') || 0)) : TON;
+
+/** 새 판 직후 호출: 드레드노트급 기체에 능력치를 상한 근처까지 채우고 보스 등장 조건을 즉시 만족시킨다 */
+export function applyDebugRun() {
+  if (!DEBUG) return;
+  G.debug = true;
+  G.tier = 4; G.shipId = 'dre';
+  G.stats = { spd: 130, ram: 400, grav: 300, decay: 320, o2: 300, mult: 400, shield: 9 };
+  G.nextBi = target; G.kills = Math.max(0, STAGES.findIndex(s => s.includes(target)));
+  G.hops = 1; G.nextBoss = 0; G.nextOffer = Infinity;
+}

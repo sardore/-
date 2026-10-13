@@ -18,6 +18,7 @@ export function resize() {
 /** 한 판(run) 동안만 유지되는 값. newRun() 이 새 객체로 통째로 교체한다 */
 function freshRun() {
   return {
+    debug: false,                      // 디버그판(?debug)이면 기록을 저장하지 않는다
     st: 'title',                       // title · play · pick · clear · dead
     // 월드
     planets: [], stars: [], holes: [], genY: 0, genI: 0, biome: 'normal', fork: null, pat: { k: '', left: 0, side: 1, gap: false },

@@ -224,3 +224,7 @@ Canvas 2D + WebAudio, 외부 의존성 없음. `index.html` 은 껍데기이고 
 | `debug.js` | `window.__dbg` + 테스트용 봇 |
 
 의존 방향은 대체로 `data/ships/util → state → stats/camera/fx → world/player/boss/progress → game → draw → main` 이고, 보스·플레이어·진행 모듈은 함수 호출 수준에서만 서로 참조한다(최상위 실행 코드는 없다).
+
+## 디버그판
+- 주소 뒤에 `?debug` 를 붙이면 4단 기체(드레드노트)에 능력치를 상한 근처로 채우고(박치기 400·산소 300·인력 300·추진기 9) 시작하자마자 **TON 618** 과 싸운다. `&boss=N` 으로 `BOSSES` 인덱스의 다른 보스도 고를 수 있다.
+- 기록(최고 점수·보스 격파)은 저장하지 않는다. 죽으면 같은 조건으로 다시 시작한다. 구현은 `debug-run.js`, 새 판 시작은 `progress.js` 의 `startRun()` 한 곳.
