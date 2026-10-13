@@ -15,9 +15,9 @@ export const aliveP = () => G.planets.filter(p => !p.dead && !p.ghost);
 /* ---------- 스크롤 ----------
  * 보스전의 맵은 계속 뒤로(화면 아래로) 밀려난다. 보스는 화면 위에 붙어 있고 새 행성은 보스 아래쪽에서 나타난다.
  * 화면 아래로 밀려나면 일반 지형과 똑같이 심우주로 표류해 죽는다. 속도는 화면 기준 px/초이고 필드 폭(arenaK)에 비례해 늘린다. */
-export const SCROLL = { base: 12, perStage: 1.5, perPhase: 2, accel: .8, gap: [78, 112] };
+export const SCROLL = { base: 12, perStage: 1.5, perPhase: 2, accel: .8, gap: [58, 86] };
 /** 새 행성은 보스 바로 아래에서 유령(투명·포획 불가)으로 나타나, 등장선에서 ACT.ghost 만큼 더 내려와야 실체가 된다(ACT.ramp 동안 서서히 짙어진다) */
-const ACT = { ghost: 60, ramp: 24, alpha: .1 };
+const ACT = { ghost: 40, ramp: 24, alpha: .1 };
 const scrollSpeed = b => (SCROLL.base + SCROLL.perStage * b.stage + SCROLL.perPhase * b.phase) * arenaK();
 
 /* ---------- 시작: 아레나 ---------- */
