@@ -4,6 +4,7 @@ import { viewBot, updateCamera } from './camera.js';
 import { stepShip } from './player.js';
 import { updateBoss } from './boss.js';
 import { gen, animatePlanets, growField } from './world.js';
+import { updateMonsters } from './monsters.js';
 import { checkProgress } from './progress.js';
 import { updateFx } from './fx.js';
 import { musicSet } from './audio.js';
@@ -14,7 +15,7 @@ export function update(dt) {
   if (G.boss) updateBoss(dt);
   if (!stepShip(dt)) return;
   updateCamera(dt);
-  if (!G.boss) { growField(dt); gen(); cull(); }
+  if (!G.boss) { growField(dt); gen(); updateMonsters(dt); cull(); }
   if (!G.boss && G.ship.mode === 'orb') checkProgress();
 }
 
@@ -23,6 +24,7 @@ function cull() {
   const lim = viewBot() + 260, s = G.ship;
   if (G.planets.length > 14) G.planets = G.planets.filter(p => p.y < lim || p === s.p);
   if (G.stars.length > 40) G.stars = G.stars.filter(t => t.y < lim && !t.got);
+  if (G.mons.length > 4) G.mons = G.mons.filter(m => m.y < lim);
   if (G.holes.length > 12) G.holes = G.holes.filter(h => h.y < lim);
 }
 

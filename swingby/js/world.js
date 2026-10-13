@@ -1,9 +1,10 @@
 /* 월드 생성: 행성(종류·바이옴)·별·블랙홀, 그리고 갈림길(거대 암석 행성 + 좌우 항로) */
 import { G } from './state.js';
 import { W0, rnd, clamp, shuffle, TAU } from './util.js';
-import { BIOMES, STAGES } from './data.js';
+import { BIOMES, STAGES, MONSTER_ZONE } from './data.js';
 import { viewTop } from './camera.js';
 import { fs } from './stats.js';
+import { maybeMonster } from './monsters.js';
 
 /* ---------- 필드 폭 ----------
  * 진행할수록 필드가 점점 넓어지고(카메라는 줌아웃) 행성·간격도 같이 커진다. 보스 아레나는 항상 기본 폭. */
@@ -24,6 +25,7 @@ function pickType(i, biome) {
     case 'belt': return r < .8 ? 'a' : 'n';
     case 'nebula': return r < .75 ? 'g' : 'n';
     case 'redzone': return r < .45 ? 'r' : r < .8 ? 'n' : 'g';
+    case 'monster': return r < .7 ? 'n' : r < .85 ? 'g' : 'r';   // 일반 행성이 대부분: 괴물은 지형이 아니라 그 사이를 떠다닌다
     default: return r < .2 ? 'r' : r < .36 ? 'g' : 'n';
   }
 }
@@ -134,6 +136,7 @@ export function gen() {
     G.planets.push(p);
     addStars(prev, p);
     maybeHole(prev, p, dy);
+    if (G.biome === 'monster') maybeMonster(prev, p, dy);
   }
 }
 
@@ -147,7 +150,8 @@ export function scheduleFork() {
 /** 이번 갈림길의 좌/우 선택지. 처음에는 단순한 바이옴만, 소행성대·공허대는 두 번째 갈림길부터 */
 function routeOptions() {
   const stage = G.kills % STAGES.length, bis = STAGES[stage], f = G.kills - 1;
-  const pool = f <= 0 ? ['nebula', 'redzone'] : f === 1 ? ['belt', 'void'] : Object.keys(BIOMES).filter(k => k !== 'normal');
+  const afterZone = (G.kills - 1) % STAGES.length === MONSTER_ZONE.stage;   // 괴물 지대 보스 직후엔 같은 지대를 또 권하지 않는다
+  const pool = f <= 0 ? ['nebula', 'redzone'] : f === 1 ? ['belt', 'void'] : Object.keys(BIOMES).filter(k => k !== 'normal' && !(k === 'monster' && afterZone));
   const biomes = shuffle(pool.slice()), bosses = bis.length > 1 ? shuffle(bis.slice()) : [bis[0], bis[0]];
   return [0, 1].map(i => ({ biome: biomes[i], bi: bosses[i] }));
 }

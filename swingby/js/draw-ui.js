@@ -1,7 +1,7 @@
 /* 화면 위 UI: HUD, 보스 체력·산소, 배너·시전 문구·토스트, 타이틀/사망/클리어 화면, 음소거 버튼 */
 import { G, V, g } from './state.js';
 import { W0, TAU, FONT, clamp, easeOut } from './util.js';
-import { STAGES, ATK, BIOMES, BOSSES } from './data.js';
+import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
 import { rr, txt } from './gfx.js';
@@ -16,7 +16,7 @@ export function drawHud() {
   const sd = SHIPS[G.shipId];
   txt('Lv ' + G.tier + '  ' + sd.n, OX + 14, 30, 14, 'hsl(' + sd.L.h + ',90%,75%)', 'left', 700);
   if (!b) {
-    const nx = G.tier === 1 ? '진화까지 ' + Math.max(0, 8 - G.hops) + '행성' : G.tier === 2 ? '다음 진화: 보스 2 격파' : G.tier === 3 ? '다음 진화: 보스 4 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
+    const nx = G.tier === 1 ? '진화까지 ' + Math.max(0, 8 - G.hops) + '행성' : EVOLVE_AT[G.tier] ? '다음 진화: 보스 ' + EVOLVE_AT[G.tier] + ' 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
     txt(nx, OX + 14, 48, 12, 'rgba(255,255,255,.55)', 'left', 500);
     const bl = G.nextBoss - G.hops;
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);

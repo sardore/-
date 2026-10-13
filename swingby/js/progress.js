@@ -1,6 +1,6 @@
 /* 성장: 기체 진화(테크트리), 강화 카드, 보스 격파 후 진행 규칙 */
 import { G, newRun } from './state.js';
-import { CARDS, STAT_INFO, LAST_STAGE } from './data.js';
+import { CARDS, STAT_INFO, LAST_STAGE, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { beep, thump, noise, vibe } from './audio.js';
 import { burst, ringFx, flashScreen, punch, slowmo, shakeAdd, popText } from './fx.js';
@@ -56,12 +56,11 @@ export function checkProgress() {
   else if (G.hops >= G.nextBoss && G.st === 'play') startBoss();
 }
 
-/** 보스를 쓰러뜨린 직후: 클리어 / 진화(2번째·4번째 격파) / 강화 카드 */
+/** 보스를 쓰러뜨린 직후: 클리어 / 진화(EVOLVE_AT) / 강화 카드 */
 export function afterBoss(stage) {
   if (stage === LAST_STAGE && !G.cleared) {
     G.cleared = true; G.st = 'clear'; G.clearT = 0;
     if (G.score > G.best && !G.debug) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
-  } else if (G.tier === 2 && G.kills >= 2) startEvo();
-  else if (G.tier === 3 && G.kills >= 4) startEvo();
+  } else if (EVOLVE_AT[G.tier] && G.kills >= EVOLVE_AT[G.tier]) startEvo();
   else if (G.tier >= 4) offer('보스 격파 — 강화 선택');
 }

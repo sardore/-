@@ -247,6 +247,33 @@ const ART = {
     fillBody(R, b.d.col, rock); surface(R, h, 6, rock);
     g.strokeStyle = hsl(h + 20, 100, 78, .6); g.lineWidth = 3; g.beginPath(); g.ellipse(0, 0, R * 1.5, R * .22, 0, 0, TAU); g.stroke(); // 적도 먼지 띠
     face('cyclops', R, h, b.state);
+  },
+
+  /** 포식성 그롬(괴물 행성 지대): 촉수를 늘어뜨린 녹색 괴수 행성. 눈 셋과 이빨 가득한 큰 입 */
+  devour(b, R, h) {
+    const t = G.T, sh = G.ship;
+    for (let i = 0; i < 9; i++) { // 둘레에서 꿈틀대는 촉수
+      const a = i / 9 * TAU + .35, w = Math.sin(t * 2.4 + i * 1.7) * R * .24, L = R * (.55 + .14 * (i % 3)), ca = Math.cos(a), sa = Math.sin(a);
+      const ex = ca * (R + L) - sa * w * .7, ey = sa * (R + L) + ca * w * .7;
+      g.strokeStyle = hsl(h, 70, 30); g.lineWidth = R * .15; g.beginPath(); g.moveTo(ca * R * .85, sa * R * .85); g.quadraticCurveTo(ca * (R + L * .55) - sa * w, sa * (R + L * .55) + ca * w, ex, ey); g.stroke();
+      g.fillStyle = hsl(h + 25, 80, 62, .9); g.beginPath(); g.arc(ex, ey, R * .07, 0, TAU); g.fill();
+    }
+    fillBody(R, b.d.col, circle(R)); surface(R, h, 7);
+    for (let i = 0; i < 6; i++) { // 표면의 혹
+      const a = i * 1.1 + .4, r = R * (.62 + .2 * ((i * 5) % 3) / 3);
+      g.fillStyle = hsl(h + 20, 60, 30, .55); g.beginPath(); g.arc(Math.cos(a) * r, Math.sin(a) * r * .9 + R * .1, R * (.06 + (i % 2) * .03), 0, TAU); g.fill();
+    }
+    const open = b.state === 'intro' ? .3 : .55 + .3 * Math.sin(t * 2.2) + (b.cast > 0 ? .25 : 0), mw = R * .72, mh = R * .46 * Math.min(1, open), my = R * .3;
+    g.fillStyle = '#18040c'; g.beginPath(); g.ellipse(0, my, mw, mh, 0, 0, TAU); g.fill();
+    g.fillStyle = hsl(335, 70, 46); g.beginPath(); g.ellipse(0, my + mh * .4, mw * .5, mh * .55, 0, 0, PI); g.fill();
+    g.fillStyle = '#f2f6dc'; g.strokeStyle = '#223014'; g.lineWidth = 1;
+    for (let i = 0; i < 7; i++) { const x = (i - 3) * mw * .29, tw = mw * .1; for (const sg of [-1, 1]) { g.beginPath(); g.moveTo(x - tw, my + sg * mh * .86); g.lineTo(x, my + sg * (mh * .86 - Math.min(mh * .9, R * .26))); g.lineTo(x + tw, my + sg * mh * .86); g.closePath(); g.fill(); g.stroke(); } }
+    for (const [ex, ey, er] of [[-R * .4, -R * .38, R * .17], [0, -R * .56, R * .21], [R * .4, -R * .38, R * .17]]) { // 눈 셋: 기체를 쫓는다
+      const dx = sh.x - b.x - ex, dy = sh.y - b.y - ey, d = Math.hypot(dx, dy) || 1, k = er * .32;
+      g.fillStyle = '#f2ffe0'; g.beginPath(); g.arc(ex, ey, er, 0, TAU); g.fill(); g.strokeStyle = hsl(h, 80, 14); g.lineWidth = 2; g.stroke();
+      g.fillStyle = hsl(h + 70, 90, 52); g.beginPath(); g.arc(ex + dx / d * k, ey + dy / d * k, er * .58, 0, TAU); g.fill();
+      g.fillStyle = '#10051a'; g.beginPath(); g.arc(ex + dx / d * k, ey + dy / d * k, er * .3, 0, TAU); g.fill();
+    }
   }
 };
 

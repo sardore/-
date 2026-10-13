@@ -8,6 +8,7 @@ import { capOf, o2max, fs } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { txt } from './gfx.js';
 import { flameColor } from './heat.js';
+import { drawMonster } from './draw-monster.js';
 
 /** 행성마다 고정된 의사난수(0~1): 크레이터·균열 모양에 쓴다 */
 const hash = (p, i) => { const x = Math.sin(p.ph * 12.9898 + i * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -77,6 +78,7 @@ export function drawWorld() {
   const top = viewTop(), bot = viewBot();
   for (const p of G.planets) { if (p.y < top - 140 || p.y > bot + 140) continue; drawPlanet(p); }
   drawForkGuides();
+  for (const m of G.mons) { if (m.y < top - 100 || m.y > bot + 100) continue; drawMonster(m); }
   for (const h of G.holes) { if (h.y < top - 60 || h.y > bot + 60) continue; drawHole(h); }
   for (const t of G.stars) { if (t.got || t.y < top - 30 || t.y > bot + 30) continue; drawStar(t); }
 }

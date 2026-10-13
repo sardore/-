@@ -1,7 +1,7 @@
 /* 항성 보스전: 아레나 구성, 턴제 예고·공격 패턴, 존(zone) 판정, 피격·충돌, 격파와 진행 */
 import { G, V } from './state.js';
 import { W0, PI, TAU, rnd, clamp, pickOf, save } from './util.js';
-import { BOSSES, STAGES, ATK, BIOMES } from './data.js';
+import { BOSSES, STAGES, ATK, BIOMES, MONSTER_ZONE } from './data.js';
 import { spd, capOf, shipR, ramMul, bossO2 } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, popText, addScore } from './fx.js';
@@ -24,7 +24,7 @@ export function startBoss() {
   const ks = clamp(V.VH / 860, .78, 1), d = Object.assign({}, d0, { R: d0.R * ks });
   G.arenaCam = P.y - V.VH + 110;
   const by = G.arenaCam + (V.VH < 760 ? 150 : 178) + d.R * .6;
-  G.stars = []; G.holes = [];
+  G.stars = []; G.holes = []; G.mons = [];
   P.cap = P.R + (P.cap - P.R) * ARENA_RING; s.r = Math.min(s.r, Math.max(P.R + 14, capOf(P) - 6));   // 서 있던 행성의 포획 범위도 같이 줄인다
   const list = buildArena(P, by, d.R, stage >= SWAY_FROM ? SWAY_Y : 0);
   P.seen = true; list.sort((a, b) => b.y - a.y); G.planets = list;
@@ -240,8 +240,11 @@ function finishBoss() {
   if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
   regrowAll();
   G.boss = null; G.haz = []; G.biome = 'normal';
-  G.nextBoss = G.hops + 14; G.nextBi = STAGES[G.kills % STAGES.length][0]; // 갈림길에서 고르면 덮어쓴다
-  scheduleFork();
+  const next = G.kills % STAGES.length; G.nextBi = STAGES[next][0];
+  if (next === MONSTER_ZONE.stage) { // 괴물 행성 지대: 갈림길 없이 지대를 지나 도전 보스를 만난다
+    G.biome = 'monster'; G.nextBoss = G.hops + MONSTER_ZONE.len;
+    G.banner = { t: 0, dur: 2.8, a: 'ZONE', b: BIOMES.monster.n + ' 지대', c: BIOMES.monster.c, sub: '도전 보스  ' + BOSSES[G.nextBi].n };
+  } else { G.nextBoss = G.hops + 14; scheduleFork(); }   // 갈림길에서 고르면 nextBi 를 덮어쓴다
   // 보스전이 끝난 직후엔 궤도가 무너지지 않게 보호한다
   s.grace = 4; s.air = s.mode === 'free' ? -2.5 : 0; s.inv = Math.max(s.inv, 1.5);
   if (s.mode === 'orb') s.r = Math.max(s.r, (s.p.R + capOf(s.p)) / 2);

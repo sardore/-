@@ -2,12 +2,13 @@
 import { G, V } from './state.js';
 import { PI, TAU, rnd, save } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
-import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef } from './stats.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit } from './stats.js';
 import { viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
 import { shatter, enterFork, commitRoute } from './world.js';
 import { bossTurn, ram } from './boss.js';
+import { hitMonsters } from './monsters.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 
 export const CHARGE_T = .8;      // 차지가 가득 차는 시간(초)
@@ -57,7 +58,7 @@ export function release(charge) {
 /* ---------- 포획 ---------- */
 export function latch(p, dx, dy, d) {
   const s = G.ship;
-  s.mode = 'orb'; s.p = p; s.r = Math.max(d, p.R + 12); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
+  s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
   s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; heatReset();
   p.pulse = 1; p.sq = .55;
@@ -140,11 +141,12 @@ export function stepShip(dt) {
     if (boss && s.y < G.arenaCam + 10 && s.vy < 0) { s.y = G.arenaCam + 10; s.vy *= -1; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
+    if (!boss) hitMonsters();
     for (const p of G.planets) {
       if (p === s.last || p.dead) continue;
       const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy);
       if (d >= capOf(p)) continue;
-      if (d < p.R * .55) { burst(s.x, s.y, '#ffb070', 16, 200); die('행성에 정면충돌'); break; }
+      if (d < p.R * .4) { burst(s.x, s.y, '#ffb070', 16, 200); die('행성에 정면충돌'); break; }
       if (dx * s.vx + dy * s.vy >= 0 || d < p.R + 10) { latch(p, dx, dy, d); break; }
     }
     if (G.st !== 'play') return false;

@@ -11,6 +11,8 @@ const pct = k => G.stats[k] / 100;
 export const curDef = () => SHIPS[G.shipId];
 /** 지형 배율: 필드가 넓어질수록 행성·기체·속도가 같이 조금씩 커져 체감 속도·난이도는 그대로 둔다 */
 export const fs = () => Math.sqrt(G.w / W0);
+/** 행성에 붙을 때의 최소 궤도 반지름. 한가운데로 파고들어도 이만큼은 바깥에서 돌게 한다 */
+export const minOrbit = p => p.R + 20 * fs();
 export const shipR = () => (7 + (G.tier - 1) * 1.6) * fs();                 // 기체 충돌 반경
 
 const baseSpd = () => (235 + Math.min(G.hops * 3, 165)) * fs();
