@@ -34,7 +34,7 @@ export function mkPlanet(i, x, y, biome = 'normal', forceType) {
   switch (t) {
     case 'g': R = rnd(34, 42); ring = 92; break;
     case 'r': R = rnd(16, 20); ring = 64; break;
-    case 'a': R = rnd(11, 16); ring = 46; break;
+    case 'a': R = rnd(18, 24); ring = 64; break;
     case 'm': R = rnd(60, 64); ring = 104; break;
     default: R = rnd(22, 30); ring = 76;
   }
