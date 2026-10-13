@@ -77,29 +77,20 @@ const FACE = {
   /** 크기가 다른 비대칭 눈 */
   uneven(R, h) { eye(-R * .3, -R * .14, R * .2, R * .13, -.3, h); eye(R * .36, -R * .02, R * .1, R * .06, .4, h); },
   /** 세로로 길게 째진 두 눈 */
-  slit(R, h) { for (const s of [-1, 1]) eye(s * R * .3, -R * .1, R * .07, R * .22, s * .12, h); },
-  /** 별똥별 같은 외눈 + 입 */
-  grin(R, h) {
-    for (const s of [-1, 1]) eye(s * R * .32, -R * .16, R * .13, R * .09, s * .3, h);
-    g.strokeStyle = 'rgba(30,4,0,.7)'; g.lineWidth = 2.5; g.beginPath();
-    for (let i = 0; i <= 6; i++) { const x = -R * .36 + i * R * .12, y = R * .22 + (i % 2 ? R * .07 : -R * .02); i ? g.lineTo(x, y) : g.moveTo(x, y); }
-    g.stroke();
-  }
+  slit(R, h) { for (const s of [-1, 1]) eye(s * R * .3, -R * .1, R * .07, R * .22, s * .12, h); }
 };
 const face = (name, R, h, state) => { if (state !== 'intro') FACE[name](R, h); };
 
 /* ---------- 보스별 몸 ---------- */
 const ART = {
-  /** 프록시마: 작고 사나운 플레어 별. 표면에서 홍염 고리가 튀어 오른다 */
+  /** 프록시마: 작고 둥근 붉은 별. 사방으로 뻗은 짧은 광선, 가끔 길게 튀는 플레어 */
   dwarf(b, R, h) {
-    g.lineCap = 'round';
-    for (let i = 0; i < 5; i++) {
-      const a = i * TAU / 5 + G.T * .2, lift = 1.55 + .45 * Math.max(0, Math.sin(G.T * 2.4 + i * 1.7)), sp = .3;
-      g.strokeStyle = hsl(h, 100, 68, .65); g.lineWidth = 4;
-      g.beginPath(); g.moveTo(Math.cos(a - sp) * R * .96, Math.sin(a - sp) * R * .96);
-      g.quadraticCurveTo(Math.cos(a) * R * lift * 1.25, Math.sin(a) * R * lift * 1.25, Math.cos(a + sp) * R * .96, Math.sin(a + sp) * R * .96); g.stroke();
+    const t = G.T;
+    for (let i = 0; i < 16; i++) {
+      const a = i / 16 * TAU + t * .25, L = R * (1.18 + .2 * Math.sin(t * 2.2 + i * 1.9) + (i % 5 === 0 ? .28 * Math.max(0, Math.sin(t * 3 + i)) : 0));
+      g.strokeStyle = hsl(h, 100, 70, .55); g.lineWidth = 4; g.beginPath(); g.moveTo(Math.cos(a) * R * .96, Math.sin(a) * R * .96); g.lineTo(Math.cos(a) * L, Math.sin(a) * L); g.stroke();
     }
-    fillBody(R, b.d.col, circle(R)); surface(R, h, 6); face('grin', R, h, b.state);
+    fillBody(R, b.d.col, circle(R)); surface(R, h, 6); face('angry', R, h, b.state);
   },
 
   /** 시리우스: 뾰족한 4각 별 몸. 중심의 밝은 핵에 바이저, 십자 회절 광선, 곁을 도는 동반성 */

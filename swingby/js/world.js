@@ -23,7 +23,7 @@ function pickType(i, biome) {
   switch (biome) {
     case 'belt': return r < .8 ? 'a' : 'n';
     case 'nebula': return r < .75 ? 'g' : 'n';
-    case 'redzone': return r < .65 ? 'r' : r < .8 ? 'n' : 'g';
+    case 'redzone': return r < .45 ? 'r' : r < .8 ? 'n' : 'g';
     default: return r < .2 ? 'r' : r < .36 ? 'g' : 'n';
   }
 }
