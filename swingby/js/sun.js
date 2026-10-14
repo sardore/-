@@ -7,15 +7,15 @@ const KEY = 'swingby_tuto';
 export const tutoClears = () => Math.max(0, Math.floor(+load(KEY, 0) || 0));
 export const addTutoClear = () => { const n = tutoClears() + 1; save(KEY, n); return n; };
 
-/** 깰 때마다 하나씩 늘어나는 패턴 순서 (2번 깰 때마다 한 종류) */
-const PATS = ['meteor', 'flare', 'comet', 'cross', 'beam', 'collapse', 'spokes', 'quake'];
+/** 깰 때마다 늘어나는 패턴 순서 (2번 깰 때마다 한 종류). 뒤쪽은 무한 모드 랜덤 보스의 전용 패턴이다 */
+const PATS = ['meteor', 'flare', 'comet', 'cross', 'beam', 'collapse', 'spokes', 'quake', 'rain', 'ripple', 'grid', 'sweep', 'snare'];
 
-/** 지금까지 깬 횟수에 맞춘 태양 */
+/** 지금까지 깬 횟수에 맞춘 태양. 체력은 로그로 늘어 갈수록 오름폭이 줄고, 대신 공격력이 깰 때마다 1씩 오른다 */
 export function makeSunBoss() {
   const n = tutoClears(), kinds = Math.min(PATS.length, 1 + Math.floor(n / 2));
   return {
     n: '태양', e: 'THE SUN', R: 50, hue: 42, kind: 'sun', col: ['#fffbe0', '#ffc23a', '#c8480a'], line: '우리의 별', tuto: true,
-    hp: Math.round((60 + 26 * n) / 10) * 10, atk: Math.round((4 + .6 * n) * 10) / 10,
+    hp: Math.round((60 + 100 * Math.log(1 + n / 3)) / 10) * 10, atk: 4 + n,
     pat: PATS.slice(0, kinds), q: n < 3 ? 1 : n < 8 ? 2 : 3
   };
 }
