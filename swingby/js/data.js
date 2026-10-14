@@ -34,7 +34,7 @@ export const BOSSES = [
   { n: '프록시마 센타우리', e: 'PROXIMA CENTAURI', R: 44, hp: 120,  atk: 6,    hue: 10,  kind: 'dwarf', col: ['#ffd9a8', '#ff7a3a', '#8a2208'], pat: ['flare', 'meteor'], q: 1, line: '가장 가까운 이웃 별' },
   { n: '시리우스',         e: 'SIRIUS',           R: 44, hp: 170,  atk: 7,  hue: 205, kind: 'spike', col: ['#ffffff', '#9fd8ff', '#2a62b8'], pat: ['beam', 'comet', 'cross'], q: 2, line: '밤하늘에서 가장 밝은 별' },
   { n: '베가',             e: 'VEGA',             R: 47, hp: 220,  atk: 6,    hue: 218, kind: 'ring',  col: ['#ffffff', '#b4c8ff', '#4660c8'], pat: ['comet', 'collapse', 'spokes'], q: 2, line: '빠르게 자전하는 푸른 별' },
-  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 290,  atk: 7,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['collapse', 'flare', 'quake'], q: 2, line: '황소의 눈, 늙은 거성' },
+  { n: '알데바란',         e: 'ALDEBARAN',        R: 55, hp: 400,  atk: 8,  hue: 28,  kind: 'bull', col: ['#ffe0a0', '#ff9a3a', '#a04a10'], pat: ['collapse', 'flare', 'quake'], q: 2, line: '황소의 눈, 늙은 거성' },
   { n: '안타레스',         e: 'ANTARES',          R: 59, hp: 470,  atk: 8,  hue: 2,   kind: 'pulse', col: ['#ffc0a0', '#e83a2a', '#6a0a10'], pat: ['beam', 'collapse', 'meteor', 'pulse'], q: 3, line: '전갈의 심장, 맥동하는 적색 초거성' },
   { n: '베텔게우스',       e: 'BETELGEUSE',       R: 63, hp: 680,  atk: 9,    hue: 16,  kind: 'super', col: ['#ffd0a0', '#ff6a2a', '#7a1608'], pat: ['meteor', 'collapse', 'beam', 'flare', 'nova'], q: 3, line: '곧 폭발할 초거성' },
   { n: 'TON 618',          e: 'TON 618',          R: 80, hp: 1100, atk: 11,   hue: 275, kind: 'quasar', col: ['#000', '#05030a', '#000'], pat: ['beam', 'jet', 'collapse', 'meteor', 'flare', 'sing'], q: 3, line: '태양 660억 개의 질량, 우주의 끝' }
