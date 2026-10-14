@@ -43,10 +43,9 @@ export function opsZones(k, b, pl, tg, fk, K, ymin, ymax) {
       ps.forEach((p, i) => zs.push({ shape: 'b', vert: true, x: p.x, w: 22 * fk, delay: i * .5, fuse: 1.2, blast: .45 }));
       break;
     }
-    case 'scissor': { // 교차 탐조: 바깥으로 벌어진 두 줄기가 먼저, 이어서 안쪽으로 엇갈리는 두 줄기
-      const o = .72 + rnd(-.08, .08), i2 = .28 + rnd(-.06, .06);
-      for (const sg of [-1, 1]) zs.push({ shape: 'w', rel: true, x: 0, y: 0, a: PI / 2 + sg * o, half: .1, len: 950 * K, fuse: 1.05, blast: .5 });
-      for (const sg of [-1, 1]) zs.push({ shape: 'w', rel: true, x: 0, y: 0, a: PI / 2 + sg * i2, half: .1, len: 950 * K, delay: .75, fuse: .85, blast: .5 });
+    case 'shockwave': { // 충격파: 함선 둘레로 고리가 겹겹이 바깥으로 퍼진다(항성 보스의 맥동파처럼). 고리 사이 틈이 안전하고, 후반엔 한 겹 더
+      const r0 = Math.max(150 * K, b.R * 1.45), n = b.phase > 0 ? 3 : 2;
+      for (let i = 0; i < n; i++) zs.push({ shape: 'o', rel: true, x: 0, y: 0, r1: r0 + i * 150 * K, r2: r0 + 55 * K + i * 150 * K, delay: i * .5, fuse: 1.0, blast: .4 });
       break;
     }
     case 'mines': { // 기뢰: 행성을 피해 흩뿌린 기뢰가 한동안 남는다
