@@ -20,8 +20,8 @@ export const arenaK = () => G.w / W0;
 export const shipR = () => (7 + (G.tier - 1) * 1.6) * fs();                 // 기체 충돌 반경
 
 /** 진행에 따라 오르는 난이도(궤도 속도·붕괴 속도)의 반영 비율.
- * 일반 항해는 보스 3 격파 뒤로 한 보스마다 18%p 씩 줄어 40% 까지 내려오고, 블랙쉽은 처음부터 훨씬 완만하게 오른다 */
-const relief = () => G.kills < 3 ? 1 : Math.max(.4, 1 - .18 * (G.kills - 2));
+ * 일반 항해는 보스 2 격파 뒤로 한 보스마다 18%p 씩 줄어 40% 까지 내려오고, 블랙쉽은 처음부터 훨씬 완만하게 오른다 */
+const relief = () => G.kills < 2 ? 1 : Math.max(.4, 1 - .18 * (G.kills - 1));
 const rampSpd = () => G.ops ? Math.min(G.hops * 1.4, 70) : Math.min(G.hops * 3, 165) * relief();
 const rampDec = () => G.ops ? Math.min(G.hops * .07, 3.5) : Math.min(G.hops * .22, 9) * relief();
 const baseSpd = () => (235 + rampSpd()) * fs();
