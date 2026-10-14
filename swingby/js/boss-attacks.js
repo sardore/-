@@ -133,6 +133,7 @@ export function queueAttack(kind) {
   const b = G.boss;
   let pool = b.d.pat.filter(k => k !== b.last && !(k === 'collapse' && aliveP().length < 4) && !(k === 'hole' && G.haz.filter(h => h.k === 'hole').length >= 2) && !(k === 'sing' && G.haz.some(h => h.k === 'hole')) && !b.q.some(a => a.k === k));
   if (!pool.length) pool = b.d.pat.filter(k => !(k === 'collapse' && aliveP().length < 4));
+  const fav = b.d.favor; if (fav) pool = pool.concat(pool.filter(k => fav.includes(k)));   // 우대 패턴은 뽑힐 확률이 두 배
   const k = kind || pickOf(pool); b.last = k;
   const a = mkTele(k); b.q.push(a); return a;
 }
@@ -153,7 +154,7 @@ export function bossTurn() {
   for (const p of G.planets) if (p.dead && --p.re <= 0) regrow(p);
   // 매 턴 쓰지 않는다: 가끔 새 공격을 예고하고, 오래 쉬면 확정 예고
   b.idle = (b.q.length || due.length) ? 0 : b.idle + 1;
-  if (b.q.length < b.d.q + b.phase && (Math.random() < .27 + .1 * b.phase || b.idle >= 4)) { queueAttack(); b.idle = 0; }
+  if (b.q.length < b.d.q + b.phase && (Math.random() < (b.d.fill != null ? b.d.fill : .27 + .1 * b.phase) || b.idle >= (b.d.fill != null ? 2 : 4))) { queueAttack(); b.idle = 0; }   // fill: 태양처럼 예고를 자주 채우는 보스
   for (const a of b.q) if (a.t === 1) { telePing(a); beep(560, .08, 'square', .06); }
 }
 
