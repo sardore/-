@@ -12,13 +12,14 @@ import { isDashing, impactDamage, bounceShip, bounceSpeed, standoff } from './im
 import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena, solidifyAll } from './boss-arena.js';
 import { queueAttack, beamAngle, updateHaz } from './boss-attacks.js';
 import { endlessNext, ENDLESS } from './endless.js';
+import { tutorialClear } from './tutorial.js';
 
 /* ---------- 프레임 갱신 ---------- */
 export function updateBoss(dt) {
   const b = G.boss;
   b.st += dt; for (const a of b.q) a.age += dt;
   if (b.flash > 0) b.flash -= dt; if (b.sq > 0) b.sq = Math.max(0, b.sq - dt * 5); if (b.hitT > 0) b.hitT -= dt;
-  if (b.state === 'intro') { if (b.st > 2.6) { b.state = 'fight'; b.st = 0; queueAttack().t = 3; toast('맵이 뒤로 밀려난다 — 아래로 떨어지면 끝! 계속 위로', '#ff9d7a'); } return; }
+  if (b.state === 'intro') { if (b.st > 2.6) { b.state = 'fight'; b.st = 0; queueAttack().t = 3; if (!G.tuto) toast('맵이 뒤로 밀려난다 — 아래로 떨어지면 끝! 계속 위로', '#ff9d7a'); } return; }
   if (b.state === 'dying') {
     if (Math.random() < dt * 14) {
       const an = rnd(0, TAU), r = rnd(0, b.R);
@@ -81,6 +82,7 @@ function bossDefeat() {
 }
 function finishBoss() {
   const b = G.boss, s = G.ship, stage = b.stage;
+  if (G.tuto) { regrowAll(); solidifyAll(); G.boss = null; G.haz = []; tutorialClear(); return; }   // 튜토리얼의 태양: 보상을 주고 끝낸다
   addScore(400 * (stage + 1) + b.loop * 500, s.x, s.y - 30, '#ffe27a', b.d.n + ' 격파!', 24);
   if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
   regrowAll(); solidifyAll();

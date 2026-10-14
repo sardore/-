@@ -19,14 +19,16 @@ export function drawHud() {
   const sd = SHIPS[G.shipId];
   txt('Lv ' + G.tier + '  ' + sd.n, OX + 14, 30, 14, 'hsl(' + sd.L.h + ',90%,75%)', 'left', 700);
   if (!b) {
-    const nx = G.tier === 1 ? '진화까지 ' + Math.max(0, 8 - G.hops) + '행성' : EVOLVE_AT[G.tier] ? '다음 진화: 보스 ' + EVOLVE_AT[G.tier] + ' 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
+    const nx = G.tier === 1 ? '진화까지 ' + Math.max(0, (G.tuto ? 4 : 8) - G.hops) + '행성' : EVOLVE_AT[G.tier] ? '다음 진화: 보스 ' + EVOLVE_AT[G.tier] + ' 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
     txt(nx, OX + 14, 48, 12, 'rgba(255,255,255,.55)', 'left', 500);
     const bl = G.nextBoss - G.hops;
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);
     if (G.biome !== 'normal') { const bm = BIOMES[G.biome]; g.fillStyle = bm.c; g.beginPath(); g.arc(OX + 18, 82, 4, 0, TAU); g.fill(); txt(bm.n, OX + 28, 86, 12, bm.c, 'left', 700); }
-  } else txt(b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
-  txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
-  if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W0 - 14, 50, 12, '#ff9d7a', 'right', 600);
+  } else txt(G.tuto ? '튜토리얼' : b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
+  if (!G.tuto) {
+    txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
+    if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W0 - 14, 50, 12, '#ff9d7a', 'right', 600);
+  }
   if (b && b.state !== 'intro') drawBossHud();
 }
 
@@ -107,7 +109,14 @@ export function drawScreens() {
     if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
-  if (G.st === 'clear') {
+  if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상
+    const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
+    txt('튜토리얼 완료', VW / 2, VH * .3, 40, '#ffe27a', 'center', 900);
+    txt('별 조각 +' + G.shardGain, VW / 2, VH * .3 + 76, 34, '#ffe27a', 'center', 900);
+    txt(G.tuto.cleared + '번째 클리어', VW / 2, VH * .3 + 106, 14, 'rgba(255,255,255,.6)', 'center', 600);
+    if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 타이틀로', VW / 2, VH - 80, 16, '#fff'); }
+    g.globalAlpha = 1;
+  } else if (G.st === 'clear') {
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('TON 618 격파', VW / 2, VH * .28, 44, '#ffe27a', 'center', 900); txt('우주의 끝에서 살아 돌아왔다', VW / 2, VH * .28 + 32, 15, 'rgba(255,255,255,.8)', 'center', 500);
     txt(String(G.score), VW / 2, VH * .28 + 112, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
@@ -117,7 +126,12 @@ export function drawScreens() {
     if (G.clearT > 1) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 계속', VW / 2, VH - 80, 16, '#fff'); }
     g.globalAlpha = 1;
   }
-  if (G.st === 'dead') {
+  if (G.st === 'dead' && G.tuto) {
+    const a = clamp(G.deadT * 2, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.72 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
+    txt('튜토리얼 실패', VW / 2, VH * .32, 36, '#fff', 'center', 900); txt(G.deadWhy, VW / 2, VH * .32 + 30, 15, '#ff8f8f', 'center', 500);
+    if (G.deadT > .7) { g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 다시 도전', VW / 2, VH - 80, 19, '#fff'); }
+    g.globalAlpha = 1;
+  } else if (G.st === 'dead') {
     const a = clamp(G.deadT * 2, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.72 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('항해 종료', VW / 2, VH * .3, 40, '#fff', 'center', 900); txt(G.deadWhy, VW / 2, VH * .3 + 30, 15, '#ff8f8f', 'center', 500);
     const b = G.boss; if (b && b.state === 'fight') txt(b.d.n + ' 남은 체력 ' + Math.max(1, Math.round(b.hp / b.max * 100)) + '%', VW / 2, VH * .3 + 52, 13, 'rgba(255,200,170,.85)', 'center', 600);

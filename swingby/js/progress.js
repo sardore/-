@@ -52,7 +52,7 @@ export function choose(i) {
 /* ---------- 진행 규칙 ---------- */
 /** 오빗 중 매 프레임: 진화·강화·보스 등장 조건 확인 */
 export function checkProgress() {
-  if (G.tier === 1 && G.hops >= 8) startEvo();                         // 첫 보스 직전에 2단 진화
+  if (G.tier === 1 && G.hops >= (G.tuto ? 4 : 8)) startEvo();          // 첫 보스 직전에 2단 진화 (튜토리얼은 더 일찍)
   else if (G.hops >= G.nextOffer) { G.nextOffer += 4; offer('강화 선택'); }
   else if (G.hops >= G.nextBoss && G.st === 'play') startBoss();
 }

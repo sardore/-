@@ -84,6 +84,33 @@ const face = (name, R, h, state) => { if (state !== 'intro') FACE[name](R, h); }
 
 /* ---------- 보스별 몸 ---------- */
 const ART = {
+  /** 태양(튜토리얼 보스): 눈부신 원반, 일렁이는 코로나와 홍염, 천천히 흐르는 흑점. 표정은 없다 */
+  sun(b, R, h) {
+    const T = G.T;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 16; i++) { // 코로나 광선
+      const a = i / 16 * TAU + T * .16, L = R * (1.5 + .22 * Math.sin(T * 2.1 + i * 1.7)), w = .1 + .03 * Math.sin(T * 3 + i);
+      const gr = g.createLinearGradient(Math.cos(a) * R * .9, Math.sin(a) * R * .9, Math.cos(a) * L, Math.sin(a) * L);
+      gr.addColorStop(0, 'rgba(255,214,110,.55)'); gr.addColorStop(1, 'rgba(255,150,40,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(Math.cos(a - w) * R * .9, Math.sin(a - w) * R * .9); g.lineTo(Math.cos(a) * L, Math.sin(a) * L); g.lineTo(Math.cos(a + w) * R * .9, Math.sin(a + w) * R * .9); g.closePath(); g.fill();
+    }
+    g.lineCap = 'round';
+    for (let i = 0; i < 4; i++) { // 홍염: 가장자리에서 솟았다 가라앉는 불꽃 고리
+      const a = i * 1.7 + T * .22, k = .5 + .5 * Math.sin(T * 1.3 + i * 2.1), r0 = R * .98, r1 = R * (1.12 + .24 * k);
+      g.strokeStyle = 'rgba(255,120,40,' + (.35 + .3 * k) + ')'; g.lineWidth = 3 + 2 * k;
+      g.beginPath(); g.arc(Math.cos(a) * (r0 + r1) / 2 * .98, Math.sin(a) * (r0 + r1) / 2 * .98, R * (.2 + .12 * k), a + PI * .55, a + PI * 1.45); g.stroke();
+    }
+    g.restore();
+    fillBody(R, b.d.col, circle(R));
+    surface(R, h, 9);
+    g.save(); g.beginPath(); g.arc(0, 0, R, 0, TAU); g.clip();   // 흑점
+    for (const [x, y, r, sp] of [[-.35, -.2, .13, .6], [.28, .3, .1, -.5], [.05, -.52, .08, .8]]) {
+      const a = T * .12 * sp, cx = Math.cos(a) * (x * R) - Math.sin(a) * (y * R), cy = Math.sin(a) * (x * R) + Math.cos(a) * (y * R);
+      g.fillStyle = 'rgba(120,40,0,.55)'; g.beginPath(); g.ellipse(cx, cy, R * r, R * r * .8, a, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(60,15,0,.5)'; g.beginPath(); g.ellipse(cx, cy, R * r * .55, R * r * .45, a, 0, TAU); g.fill();
+    }
+    g.restore();
+  },
   /** 프록시마: 작고 둥근 붉은 별. 사방으로 뻗은 짧은 광선, 가끔 길게 튀는 플레어 */
   dwarf(b, R, h) {
     const t = G.T;

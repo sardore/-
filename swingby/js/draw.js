@@ -11,6 +11,7 @@ import { drawBoss, drawTele, drawHaz, drawFloorWarn } from './draw-boss.js';
 import { drawHud, drawLowO2, drawMuteButton, drawOverlays, drawScreens } from './draw-ui.js';
 import { drawPick } from './draw-pick.js';
 import { drawShop } from './shop-ui.js';
+import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
@@ -29,6 +30,7 @@ export function draw() {
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }
   if (G.st !== 'dead') drawPlayer();
   drawFx();
+  drawTutoWorld();
   g.restore();
 
   if (G.flashA > 0) { g.globalAlpha = Math.min(1, G.flashA); g.fillStyle = G.flashC; g.fillRect(0, 0, VW, VH); g.globalAlpha = 1; }
@@ -39,4 +41,5 @@ export function draw() {
   drawOverlays();
   drawScreens();
   if (G.st === 'pick') drawPick();
+  drawTutoScreen();
 }

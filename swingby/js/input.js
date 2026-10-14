@@ -4,6 +4,7 @@ import { G, V, cv } from './state.js';
 import { audioUnlock, toggleMute, beep } from './audio.js';
 import { pressStart, pressEnd } from './player.js';
 import { choose, offer, startRun } from './progress.js';
+import { startTutorial, tutoPress } from './tutorial.js';
 import { pickLayout } from './draw-pick.js';
 import { MUTE_HIT } from './draw-ui.js';
 import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, titleMenuHit, deadShopHit } from './shop-ui.js';
@@ -12,10 +13,11 @@ import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, titleMenuHi
 export function pointerDown(px, py, key) {
   audioUnlock();
   const x = px / V.S, y = py / V.S;
+  if (G.tuto && !key && (G.st === 'play' || G.st === 'pick') && tutoPress(x, y)) return;   // 나가기·건너뛰기 버튼
   if (G.st === 'play') G.held = true;
   if (!key && x > V.VW - MUTE_HIT && y > V.VH - MUTE_HIT) { toggleMute(); return; }
   switch (G.st) {
-    case 'title': if (!key && titleMenuHit(x, y) === 'shop') openShop(); else { G.st = 'play'; beep(520, .1); } break;
+    case 'title': { const mk = key ? null : titleMenuHit(x, y); if (mk === 'shop') openShop(); else if (mk === 'tuto') startTutorial(); else { G.st = 'play'; beep(520, .1); } break; }
     case 'shop': if (!key) shopDown(x, y); break;
     case 'play': pressStart(); break;
     case 'pick': {
@@ -23,8 +25,8 @@ export function pointerDown(px, py, key) {
       pickLayout().rects.forEach((r, i) => { if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) choose(i); });
       break;
     }
-    case 'clear': if (G.clearT > 1) { offer(); if (G.st === 'clear') G.st = 'play'; } break;
-    case 'dead': if (G.deadT > .7) { if (!key && deadShopHit(x, y)) openShop(); else { startRun(); G.st = 'play'; } } break;
+    case 'clear': if (G.clearT > 1) { if (G.tuto) startRun(); else { offer(); if (G.st === 'clear') G.st = 'play'; } } break;
+    case 'dead': if (G.deadT > .7) { if (G.tuto) startTutorial(); else if (!key && deadShopHit(x, y)) openShop(); else { startRun(); G.st = 'play'; } } break;
   }
 }
 /** 뗐을 때. 상점에서는 탭·드래그 판정에 위치가 필요하다 (위치가 없으면 취소) */

@@ -105,7 +105,7 @@ function barState(it) {
 function act() {
   const it = ITEMS[P.sel]; if (!it) return;
   const st = barState(it), say = s => { P.msg = s; P.msgT = 1.6; };
-  if (!st || !st.ok && (it.spec || !owned(it))) { say(st && st.label === '최대' ? '이미 최대야' : '별 조각이 부족해'); beep(160, .1, 'sawtooth', .06); return; }
+  if (!st || !st.ok && (it.spec || !owned(it))) return;   // 조각이 모자라거나 최대면 버튼은 눌리지 않는다(문구·소리 없음)
   if (it.spec || !owned(it)) { if (buy(it) === 'ok') { say('구매 완료'); beep(880, .1); beep(1180, .12); } return; }
   if (equipped(it)) { unequip(it); say('해제했어'); } else { equip(it); say('장착됨'); }
   beep(700, .06);
@@ -251,14 +251,20 @@ function drawSpecSummary(R) {
 }
 
 /* ---------- 시작·사망 화면의 버튼 ---------- */
+/** 튜토리얼 버튼 그림: 궤도를 도는 점과 눌리는 손가락 점 */
+function drawTutoIcon(x, y) {
+  g.save(); g.strokeStyle = GOLD; g.lineWidth = 1.6; g.beginPath(); g.ellipse(x, y, 13, 7, -.5, 0, TAU); g.stroke();
+  g.fillStyle = GOLD; g.beginPath(); g.arc(x + 9, y - 8 * .9, 2.6, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x - 2, y + 2, 4.2, 0, TAU); g.stroke(); g.restore();
+}
 /** 시작화면 왼쪽 위 아이콘 메뉴 (앞으로 도감·기록 같은 메뉴를 같은 줄에 더 놓을 수 있다) */
-const MENU = [{ k: 'shop', n: '상점' }];
-const menuRect = i => ({ x: V.OX + 14 + i * 56, y: 14, w: 46, h: 46 });
+const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }];
+const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼)
 export function drawTitleMenu() {
   MENU.forEach((m, i) => {
     const r = menuRect(i);
     rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = 'rgba(255,226,122,.55)'; g.lineWidth = 1.4; g.stroke();
-    shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11);
+    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
     txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, 'rgba(255,255,255,.7)', 'center', 700);
   });
   const w = txt0(String(SHOP.shards), V.OX + 420 - 14, 38, 15); shard(V.OX + 420 - 14 - w - 12, 33, 7);   // 보유 별 조각

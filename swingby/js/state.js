@@ -19,6 +19,7 @@ export function resize() {
 function freshRun() {
   return {
     debug: false,                      // 디버그판(?debug)이면 기록을 저장하지 않는다
+    tuto: null,                        // 튜토리얼 중이면 진행 상태(tutorial.js). 점수·기록·별 조각 정산을 하지 않는다
     st: 'title',                       // title · shop · play · pick · clear · dead
     // 월드
     planets: [], stars: [], holes: [], mons: [], genY: 0, genI: 0, biome: 'normal', fork: null, pat: { k: '', left: 0, side: 1, gap: false },
