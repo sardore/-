@@ -40,6 +40,7 @@ const LAYERS = {
   gear:    { sp: 6,  L: [['gear', 1.2, .8, 3.6, 1.8, 0, 'f'], ['gear', .85, .6, 2.4, -2.8, .06, 'w'], ['gear', 1.5, .95, 1.4, 1, .12, '']] },
   flower:  { sp: 8,  L: [['flower', 1.25, .85, 3.4, 1.0, 0, 'f'], ['flower', 1.0, .7, 2.4, -1.4, .05, 'w'], ['flower', 1.65, 1, 1.3, .6, .12, '']] }
 };
+const TEMPO = .62;   // 연출 속도 배율(작을수록 빠르다)
 const PEAKS = { hex: 6, diamond: 4, tri: 3, star: 5, cross: 4, gear: 12, flower: 8 };
 
 /** 착지 링을 list 에(입자는 parts 에) 더한다. R 은 행성 반지름, cap 은 포획 범위, hue 는 기체 색상, shape 는 상품 값({style}) 또는 null(기본 원) */
@@ -49,12 +50,12 @@ export function spawnLand(list, parts, x, y, R, cap, hue, shape) {
   const rot = Math.random() * TAU, dir = Math.random() < .5 ? -1 : 1;
   for (const [s, m, dur, w, spin, delay, opt] of def.L) {
     const white = opt.includes('w');
-    list.push({ x, y, c: white ? '#fff' : col(72, .95), r0: R * .7, r1: cap * m, t: -delay, dur, w, shape: s, rot: rot + (white ? Math.PI / PEAKS[s] : 0), spin: spin * dir, fill: opt.includes('f') ? .16 : 0 });
+    list.push({ x, y, c: white ? '#fff' : col(72, .95), r0: R * .7, r1: cap * m, t: -delay * TEMPO, dur: dur * TEMPO, w, shape: s, rot: rot + (white ? Math.PI / PEAKS[s] : 0), spin: spin * dir, fill: opt.includes('f') ? .16 : 0 });
   }
   const main = def.L[0], n = def.sp;
   for (let i = 0; i < n; i++) {   // 꼭짓점 방향으로 뻗는 빛줄기
-    const a = rot + i / n * TAU + (main[0] === 'gear' ? TAU / 24 : 0), v = cap * 2.6;
-    parts.push({ x: x + Math.cos(a) * R * 1.1, y: y + Math.sin(a) * R * 1.1, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, l: .45, c: col(82, 1), s: 3.4, line: true });
+    const a = rot + i / n * TAU + (main[0] === 'gear' ? TAU / 24 : 0), v = cap * 3.8;
+    parts.push({ x: x + Math.cos(a) * R * 1.1, y: y + Math.sin(a) * R * 1.1, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, l: .3, c: col(82, 1), s: 3.4, line: true });
   }
 }
 

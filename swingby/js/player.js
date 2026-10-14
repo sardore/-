@@ -1,8 +1,8 @@
 /* 플레이어 기체: 입력 동작(발사·차지), 포획, 사망, 매 프레임의 이동·충돌 */
 import { G } from './state.js';
-import { PI, TAU, rnd, save } from './util.js';
+import { PI, TAU, rnd, save, clamp } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
-import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit, fs } from './stats.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit, fs, arenaK } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
 import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
@@ -49,7 +49,7 @@ export function release(charge) {
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
   sparks(s.x, s.y, '#bfeaff', 9, 260, back, .5); ringFx(s.x, s.y, 'rgba(190,235,255,.8)', 4, 26, .3, 2); shakeAdd(2.2);
-  s.gd = 0; s.gSkip = null;
+  s.gd = 0; s.gSkip = null; s.net = false;
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
     // 발사 직후 잠깐은 출발 행성과 포획 범위가 겹친 이웃에 다시 붙지 않게 한다(돌진 세기에 비례, 출발 행성의 포획 범위보다는 멀리)
@@ -71,7 +71,7 @@ export function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
-  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; heatReset();
+  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; s.net = false; heatReset();
   p.pulse = 1; p.sq = .55;
   spawnLand(G.fxr, G.parts, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
   if (cfg().landshape) burst(s.x, s.y, 'hsl(' + shipHue() + ',90%,70%)', 10, 160);
@@ -149,6 +149,7 @@ export function stepShip(dt) {
     if (bf && s.y > G.arenaBot + 40) { die('행성과 함께 뒤로 밀려나 표류'); if (G.st !== 'play') return false; }   // 행성이 화면 아래로 사라졌다
   } else {
     regulateSpeed(dt, v);
+    if (s.net && bf) netAssist(dt);
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (s.gd > 0) s.gd -= Math.hypot(s.vx, s.vy) * dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
@@ -160,7 +161,7 @@ export function stepShip(dt) {
     if (s.x > G.w - 6 && s.vx > 0) { s.x = G.w - 6; s.vx *= -1; wallHit(G.w - 6, s.y, PI, bf); }
     if (boss && s.y < G.arenaTop + 10 && s.vy < 0) { s.y = G.arenaTop + 10; s.vy *= -1; s.gd = 0; if (bf) heatUp(s.x, s.y, PI / 2); }
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
-    if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
+    if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); G.ship.net = true; if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     if (!boss) hitMonsters();
     for (const p of G.planets) {
       if (p === s.last || p.dead || p.ghost) continue;
@@ -176,6 +177,7 @@ export function stepShip(dt) {
       else if (s.air > o2max()) die('산소 고갈');
       if (G.st !== 'play') return false;
       if (boss && !bf) { if (s.y > G.arenaBot - 12 && s.vy > 0) { s.y = G.arenaBot - 12; s.vy *= -1; } }   // 등장·격파 연출 중에만 바닥이 막아 준다
+      else if (bf && s.net && s.y > G.arenaBot + 24 && s.vy > 0) { s.y = G.arenaBot + 24; s.vy = -Math.abs(s.vy) * .8; s.net = false; }   // 안전망의 마지막 수단: 이미 화면 밖이라 눈에 띄지 않는다
       else if (s.y > (boss ? G.arenaBot : viewBot()) + 40) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
       if (G.st !== 'play') return false;
     }
@@ -184,6 +186,24 @@ export function stepShip(dt) {
   collectStars();
   s.trail.push(s.x, s.y); if (s.trail.length > 48) s.trail.splice(0, 2);
   return true;
+}
+
+/** 보스에 부딪혀 튕긴 비행에만 붙는 눈에 안 보이는 안전망: 아래로 내려가 화면 밑이 가까워질수록 비행 방향을 가장 가까운 행성 쪽으로 슬쩍 꺾는다.
+ * 속도는 그대로고 방향만 돌리며, 바닥에서 멀 때는 거의 손대지 않는다. 행성에 붙거나 다시 발사하면 꺼진다(s.net) */
+function netAssist(dt) {
+  const s = G.ship, K = arenaK(), u = clamp((s.y - (G.arenaBot - 340 * K)) / (300 * K), 0, 1);
+  if (u <= 0 && s.vy <= 0) return;
+  let best = null, bd = 1e9;
+  for (const p of G.planets) {
+    if (p.dead || p.ghost || p.y > G.arenaBot - 30 * K) continue;
+    const d = Math.hypot(p.x - s.x, p.y - s.y) - capOf(p);
+    if (d < bd) { bd = d; best = p; }
+  }
+  if (!best) return;
+  const want = Math.atan2(best.y - s.y, best.x - s.x), cur = Math.atan2(s.vy, s.vx);
+  let diff = want - cur; while (diff > PI) diff -= TAU; while (diff < -PI) diff += TAU;
+  const turn = clamp(diff, -(.35 + 4.2 * u * u) * dt, (.35 + 4.2 * u * u) * dt), v = Math.hypot(s.vx, s.vy), a = cur + turn;
+  s.vx = Math.cos(a) * v; s.vy = Math.sin(a) * v;
 }
 
 /** 옆 벽에 튕김. 보스전에서는 열기가 쌓인다 */
