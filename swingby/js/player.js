@@ -95,6 +95,7 @@ function latch(p, dx, dy, d) {
 /** 기체를 dt 만큼 움직이고 충돌·산소·별을 처리한다. 판이 끝났으면 false */
 export function stepShip(dt) {
   const s = G.ship, v = spd(), boss = G.boss, bf = boss && boss.state === 'fight';
+  const forkWait = !boss && !!G.fork && G.fork.state === 'hub';   // 갈림길 선택 대기 중
   if (chSnd && !(s.charging && s.mode === 'orb')) stopChargeSnd();   // 피격·보스 연출 등으로 충전이 풀렸으면 소리도 끈다
   if (s.inv > 0) s.inv -= dt; if (s.ramT > 0) s.ramT -= dt; if (s.grace > 0) s.grace -= dt;
   if (s.evoT > 0) s.evoT = Math.max(0, s.evoT - dt / 1.1);
@@ -113,7 +114,8 @@ export function stepShip(dt) {
     if (bf && s.y > G.arenaBot + 40) { die('행성과 함께 뒤로 밀려나 표류'); if (G.st !== 'play') return false; }   // 행성이 화면 아래로 사라졌다
   } else {
     regulateSpeed(dt, v);
-    if (s.net) { if (bf) netAssist(dt); else if (!boss) rescueAssist(dt); }
+    if (s.net && bf) netAssist(dt);
+    else if (!boss && (s.net || forkWait)) rescueAssist(dt);   // 격파 직후 · 갈림길 대기 중(월드 생성이 멈춰 있어 놓치면 갈 곳이 없다)
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (s.gd > 0) s.gd -= Math.hypot(s.vx, s.vy) * dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
@@ -138,11 +140,11 @@ export function stepShip(dt) {
     if (G.st !== 'play') return false;
     if (s.mode === 'free') {
       if (boss) { if (boss.state === 'fight') { G.bo2 -= dt; if (G.bo2 <= 0) { G.bo2 = 0; die('산소 고갈'); } } }
-      else if (s.air > o2max()) die('산소 고갈');
+      else if (s.air > o2max() && !forkWait) die('산소 고갈');   // 갈림길 대기 중엔 월드 생성이 멈춰 있어, 놓친 비행을 죽이지 않고 assist.js 가 행성으로 되돌린다
       if (G.st !== 'play') return false;
       if (boss && !bf) { if (s.y > G.arenaBot - 12 && s.vy > 0) { s.y = G.arenaBot - 12; s.vy *= -1; } }   // 등장·격파 연출 중에만 바닥이 막아 준다
       else if (bf && s.net && s.y > G.arenaBot + 24 && s.vy > 0) { s.y = G.arenaBot + 24; s.vy = -Math.abs(s.vy) * .8; s.net = false; }   // 안전망의 마지막 수단: 이미 화면 밖이라 눈에 띄지 않는다
-      else if (s.y > (boss ? G.arenaBot : viewBot()) + 40) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
+      else if (s.y > (boss ? G.arenaBot : viewBot()) + 40 && !forkWait) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
       if (G.st !== 'play') return false;
     }
   }
