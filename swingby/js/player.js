@@ -88,7 +88,6 @@ export function latch(p, dx, dy, d) {
     if (combo >= 5 && combo % 5 === 0) { flashScreen(.18, '#7dd3ff'); punch(.03); toast('x' + combo + ' 콤보!', '#7dd3ff'); }
   } else beep(300, .06);
   forkArrive(p);
-  if (G.held && canAct()) pressStart();   // 비행 중에 미리 눌러 두었다면 안착한 순간부터 충전
 }
 
 /** 갈림길 도착 처리: 허브면 시야가 넓어지고, 항로의 첫 행성이면 길이 정해진다.
@@ -144,6 +143,7 @@ export function stepShip(dt) {
     s.a += s.dir * da; s.swept += da;
     s.x = p.x + Math.cos(s.a) * s.r; s.y = p.y + Math.sin(s.a) * s.r;
     if (s.charging) chargeFx(dt);
+    else if (G.held && canAct()) pressStart();   // 누르고 있는데 충전 중이 아니면(비행 중 선입력·보스 연출·피격으로 풀림) 행동 가능해진 순간부터 충전
     if (s.r <= p.R + 3) { die('궤도가 붕괴해 행성에 추락'); if (G.st !== 'play') return false; }
     if (bf && s.y > G.arenaBot + 40) { die('행성과 함께 뒤로 밀려나 표류'); if (G.st !== 'play') return false; }   // 행성이 화면 아래로 사라졌다
   } else {
