@@ -9,6 +9,7 @@ import { pointerDown, pointerUp } from './input.js';
 import { pressStart, pressEnd } from './player.js';
 import { choose, evolveTo } from './progress.js';
 import { forceTele, bossTurn } from './boss-attacks.js';
+import { knock } from './ops-knock.js';
 import { SHOP, buy, equip, settleRun } from './shop.js';
 import { ITEMS } from './shop-data.js';
 import { openShop, previewItem } from './shop-ui.js';
@@ -74,7 +75,7 @@ export function installDebug() {
     /** 지정한 단계까지 진화시킨다. path 는 각 단계에서 고를 후보 번호 */
     tier(n, path) { path = path || [0, 0, 0]; while (G.tier < n) { const o = SHIPS[SHIPS[G.shipId].kids[path[G.tier - 1] || 0]]; if (!o) break; evolveTo(o); } },
     ship: () => ({ tier: G.tier, shipId: G.shipId, stats: Object.assign({}, G.stats), nextOffer: G.nextOffer, dash: curDef().dash }),
-    atk: (k, t) => forceTele(k, t), turn: () => bossTurn(),
+    atk: (k, t) => forceTele(k, t), turn: () => bossTurn(), knock: (nx, ny, mul) => knock(nx, ny, mul),
     down: () => pressStart(), up: () => pressEnd(), tapDown: () => pointerDown(0, 0, true), tapUp: () => pointerUp(),
     /** 상점 테스트: give(n) 별 조각 지급 · own(id) 공짜로 보유+장착 · open() 상점 열기 · settle() 정산 */
     shop: { SHOP, give: n => { SHOP.shards += n; }, own: id => { SHOP.own[id] = 1; equip(ITEMS[id]); }, buy: id => buy(ITEMS[id]), open: openShop, preview: previewItem, settle: settleRun },
