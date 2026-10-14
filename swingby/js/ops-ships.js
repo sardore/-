@@ -23,6 +23,6 @@ export const OPS_SHIPS = [
   ['os2b', 4, '습격선', '무장한 쾌속 돌격선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 18 }, { spd: 12, ram: 40 }, [], .9],
   ['oh1a', 4, '피난선', '모두를 태우는 하얀 방주', 200, { ops: 1, main: 'white', trim: 'tan', acc: 140 }, { o2: 60, shield: 1 }],
   ['oh1b', 4, '보급함', '산더미 같은 짐을 실은 배', 32, { ops: 1, main: 'tan', trim: 'white', acc: 44 }, { mult: 40, o2: 30, grav: 20 }],
-  ['oh2a', 4, '철갑 수송함', '포탑까지 단 장갑 수송선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 24 }, { decay: 40, ram: 30, shield: 1 }],
-  ['oh2b', 4, '이동 요새', '움직이는 항구', 32, { ops: 1, main: 'brown', trim: 'tan', acc: 200 }, { shield: 2, o2: 40, decay: 15 }]
+  ['oh2a', 4, '철갑 수송함', '포탑까지 단 장갑 수송선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 24 }, { decay: 40, ram: 30, shield: 1 }, [], 0, { n: 4, dmg: 9 }],
+  ['oh2b', 4, '이동 요새', '움직이는 항구', 32, { ops: 1, main: 'brown', trim: 'tan', acc: 200 }, { shield: 2, o2: 40, decay: 15 }, [], 0, { n: 6, dmg: 10 }]
 ];

@@ -13,12 +13,16 @@ function apart(list, n, min, key) {
   return out;
 }
 
-/** 무단 투하가 비워 두는 세로 길(행성 두 곳 위): [[x0,x1], …] 왼쪽부터 */
-export function cageGaps(pl, fk) {
-  const ps = apart(pl, 2, 110 * fk, 'x').sort((a, b) => a.x - b.x), gaps = [];
+/** 무단 투하: 비워 두는 안전한 세로 길(행성 두 곳 위)과, 그 밖에서 쓰레기가 떨어질 x 들 */
+export function dumpLanes(pl, fk) {
+  const ps = apart(pl, 2, 110 * fk, 'x').sort((a, b) => a.x - b.x), gaps = [], xs = [];
   for (const p of ps) { const hw = Math.max(62 * fk, p.R + 30 * fk); gaps.push([clamp(p.x - hw, 0, G.w), clamp(p.x + hw, 0, G.w)]); }
-  if (!gaps.length) gaps.push([G.w / 2 - 70 * fk, G.w / 2 + 70 * fk]);
-  return gaps;
+  const step = 36 * fk;
+  for (let x = step / 2; x < G.w; x += step) {
+    if (gaps.some(gp => x > gp[0] - 14 * fk && x < gp[1] + 14 * fk)) continue;
+    xs.push(x + rnd(-9, 9) * fk); if (Math.random() < .4) xs.push(x + rnd(-9, 9) * fk);   // 일부 길에는 한 조각 더
+  }
+  return { gaps, xs };
 }
 
 export function opsZones(k, b, pl, tg, fk, K, ymin, ymax) {

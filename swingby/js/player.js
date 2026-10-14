@@ -13,6 +13,7 @@ import { bossTurn } from './boss-attacks.js';
 import { ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
 import { hitOps } from './ops.js';
+import { batteryStart } from './ops-battery.js';
 import { onLand } from './ops-gimmick.js';
 import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
@@ -54,6 +55,7 @@ function release(charge) {
   s.gd = 0; s.gSkip = null; s.net = false;
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
+    if (G.ops) batteryStart();   // 블랙쉽: 돌진 포대가 있는 기체는 비행 중 포탄을 쏜다
     // 발사 직후 잠깐은 출발 행성과 포획 범위가 겹친 이웃에 다시 붙지 않게 한다(돌진 세기에 비례, 출발 행성의 포획 범위보다는 멀리)
     s.gd = Math.max(capOf(from) * 1.1 + 20 * fs(), f * 300 * fs());
     s.gSkip = G.planets.filter(q => q !== from && Math.hypot(q.x - from.x, q.y - from.y) < capOf(from) + capOf(q));

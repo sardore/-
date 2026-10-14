@@ -15,6 +15,7 @@ import { endlessNext, ENDLESS } from './endless.js';
 import { tutorialClear } from './tutorial.js';
 import { opsAfterBoss, opsProgress } from './ops.js';
 import { opsFinalForm } from './ops-core.js';
+import { moveOpsBoss } from './ops-boss-move.js';
 
 /* ---------- 프레임 갱신 ---------- */
 export function updateBoss(dt) {
@@ -42,6 +43,7 @@ export function updateBoss(dt) {
 }
 /** 2스테이지부터 보스가 아레나 안을 천천히 떠다닌다. 보스 위치에서 뻗는 공격(빔·제트·플레어)이 나가는 동안은 멈춰 선다 */
 function moveBoss(dt, b) {
+  if (b.d.ship) { moveOpsBoss(b, dt, G.haz.some(h => h.anchor && !h.dead && h.t < h.delay + h.fuse + h.blast)); return; }   // 블랙쉽의 적 함선: 늘 흔들리고 가끔 급이동
   if (b.stage < SWAY_FROM) { b.y = b.hy; return; }       // 스크롤 때문에 제자리여도 y 는 계속 올라간다
   const planted = G.haz.some(h => h.anchor && !h.dead && h.t < h.delay + h.fuse + h.blast);
   b.mv += ((planted ? 0 : 1) - b.mv) * Math.min(1, dt * 5);
@@ -68,6 +70,10 @@ export function ram() {
   thump(190, 38, .3, .42); noise(.22, .3, 6000, 300); beep(820 + Math.min(G.bcombo, 6) * 60, .05, 'square', .07);
   G.texts.push({ x: b.x + nx * (b.hr + 22), y: b.y + ny * (b.hr + 22), t: 0, s: '-' + dmg, c: '#ffe27a', sz: clamp(18 + dmg * .45, 20, 40) });
   addScore(dmg * 3, s.x, s.y - 14, '#ffe27a', dashing ? '돌격!' : '충돌', 16);
+  afterHit(b);
+}
+/** 피해를 받은 뒤: 분노 단계 진입 · 체력 0 이면 격파(블랙쉽의 기함은 핵 응축선으로 한 번 더) */
+function afterHit(b) {
   const phases = b.d.kind === 'quasar' ? [.66, .33] : [.5];
   if (b.phase < phases.length && b.hp <= b.max * phases[b.phase] && b.hp > 0) {
     b.phase++;
@@ -76,6 +82,13 @@ export function ram() {
     if (b.q.length < b.d.q + b.phase) queueAttack();
   }
   if (b.hp <= 0) { b.hp = 0; if (!opsFinalForm(b)) bossDefeat(); }   // 블랙쉽의 기함은 터진 뒤 핵 응축선으로 한 번 더
+}
+
+/** 충돌이 아닌 피해(블랙쉽 돌진 포대의 포탄): 체력을 깎고 분노·격파 처리까지 같이 한다 */
+export function bossShot(dmg) {
+  const b = G.boss; if (!b || b.state !== 'fight') return;
+  b.hp -= dmg; b.flash = .12; b.sq = Math.max(b.sq, .35); b.hitT = .3;
+  afterHit(b);
 }
 
 /* ---------- 격파 ---------- */

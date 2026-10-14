@@ -79,7 +79,7 @@ export function drawPlayer() {
   // 돌격 잔상
   for (const gh of s.ghosts) {
     g.save(); g.translate(gh.x, gh.y); g.rotate(gh.a); g.globalAlpha = (1 - gh.t / .32) * .4;
-    g.shadowColor = 'hsl(' + def.L.h + ',100%,70%)'; g.shadowBlur = 8; drawShip(g, def, 1, T, fs(), opts); g.restore();
+    g.drawImage(ghostSprite(def, opts, fs()), -GR, -GR, GR * 2, GR * 2); g.restore();
   }
   g.globalAlpha = 1;
   if (s.heat) drawFlames(s, hx, hy);
@@ -125,6 +125,18 @@ function drawFlames(s, hx, hy) {
 }
 
 /** 차지: 기체 둘레의 충전 링 (디자인·색은 상점에서 바꾼다 — charge-fx.js) */
+/** 돌격 잔상용 스프라이트: 기체를 한 번만 불투명하게 그려 두고 잔상마다 한 장으로 반투명하게 얹는다.
+ * (부품마다 반투명으로 겹쳐 그리면 겹친 곳이 거의 불투명해져 부자연스럽다 — 부품이 많은 고단계 기체일수록 심했다) */
+const ghostCache = new Map(), GR = 80;
+function ghostSprite(def, opts, k) {
+  const key = def.id + '|' + k.toFixed(2) + '|' + def.L.h + '|' + (opts.fh == null ? '' : opts.fh) + (opts.nobay ? 'n' : '') + (opts.art || '');
+  let sp = ghostCache.get(key); if (sp) return sp;
+  const cv = document.createElement('canvas'); cv.width = cv.height = GR * 4;
+  const c = cv.getContext('2d'); c.scale(2, 2); c.translate(GR, GR);
+  c.shadowColor = 'hsl(' + def.L.h + ',100%,70%)'; c.shadowBlur = 8; drawShip(c, def, 1, 1, k, opts);
+  ghostCache.set(key, cv); if (ghostCache.size > 48) ghostCache.delete(ghostCache.keys().next().value);
+  return cv;
+}
 const drawChargeRing = (s, def) => drawCharge(s.x, s.y, cfg(), def.L.h, s.charge, G.T);
 
 /** 파티클·링·떠오르는 글자 */

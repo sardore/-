@@ -8,13 +8,14 @@ import { txt } from './gfx.js';
 import { drawWallList } from './ops-walls.js';
 import { drawMookList } from './ops-mook-art.js';
 import { drawFleet, hasBay } from './ops-fleet.js';
+import { drawShells } from './ops-battery.js';
 import { drawShip } from './ship-art.js';
 import { OPSREC, fmtTime } from './ops.js';
 
 /** 월드 좌표 안에서: 벽 · 소형함 · 포탄 */
 export function drawOpsWorld() {
   const top = viewTop(), bot = viewBot();
-  drawWallList(g, top, bot, G.T); drawMookList(g, top, bot, G.T);
+  drawWallList(g, top, bot, G.T); drawMookList(g, top, bot, G.T); drawShells();
 }
 /** 본체 바로 뒤에 선단을 그린다 */
 export const drawOpsFleet = () => drawFleet(g, G.T, G.ship.mode === 'free');

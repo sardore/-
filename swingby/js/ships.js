@@ -5,8 +5,8 @@ import { OPS_SHIPS } from './ops-ships.js';
 export const SHIPS = {};
 const WEAK_DASH = .4, WEAK_POW = .6, STRONG_POW = 1;
 
-function defShip(id, tier, name, desc, hue, look, delta, kids, dash) {
-  SHIPS[id] = { id, t: tier, n: name, d: desc, L: Object.assign({ h: hue }, look), delta: delta || {}, kids: kids || [], dash: dash || WEAK_DASH, strong: !!dash, pow: dash ? STRONG_POW : WEAK_POW };
+function defShip(id, tier, name, desc, hue, look, delta, kids, dash, bat) {
+  SHIPS[id] = { id, t: tier, n: name, d: desc, L: Object.assign({ h: hue }, look), delta: delta || {}, kids: kids || [], dash: dash || WEAK_DASH, strong: !!dash, pow: dash ? STRONG_POW : WEAK_POW, bat: bat || null };   // bat: 돌진 포대(돌진을 시작하면 포탄 n 발, 포탄당 피해 dmg) — 강한 돌진이 없는 기체 몇 척이 가진다
 }
 
 defShip('base', 1, '스카우트', '평범한 정찰선', 200, { arrow: 1 }, {}, ['str', 'cru', 'sur']);

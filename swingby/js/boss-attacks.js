@@ -9,8 +9,8 @@ import { die } from './death.js';
 import { heatReset } from './heat.js';
 import { regrow, aliveP } from './boss-arena.js';
 import { place, randIn, uniqueZones } from './boss-zones.js';
-import { cageGaps } from './ops-zones.js';
-import { spawnCage } from './ops-walls.js';
+import { dumpLanes } from './ops-zones.js';
+import { spawnJunk } from './ops-walls.js';
 
 /* ---------- 공격 예고 ---------- */
 function mkTele(k) {
@@ -38,7 +38,7 @@ function mkTele(k) {
   else if (k === 'sing') { // 특이점: 필드 한가운데 가까이 생기는 거대한 블랙홀
     o.pull = 260 * fk; o.hr = 26 * fk;
     for (let n = 0; n < 40; n++) { o.x = rnd(G.w * .3, G.w * .7); o.y = rnd(ymin + 40 * fk, ymax - 60 * K); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60 * fk)) break; }
-  } else if (k === 'cage') o.gaps = cageGaps(al.length ? al : G.planets, fk);   // 블랙쉽: 쓰레기 벽이 떨어지고 비워 둔 길만 안전하다
+  } else if (k === 'dump') Object.assign(o, dumpLanes(al.length ? al : G.planets, fk));   // 블랙쉽: 쓰레기가 쏟아지고 비워 둔 길(gaps)만 안전하다
   else { o.zones = uniqueZones(k, b, al, fk, K, ymin, ymax); if (k === 'nova') o.t = 3; }
   return o;
 }
@@ -59,7 +59,7 @@ function telePing(a) {
   const fk = fs();
   if (a.zs) for (const z of a.zs) ringFx(z.x, z.y, c, z.r * .3, z.r * 1.1, .5, 3);
   else if (a.zones) { let any = false; for (const z of a.zones) { const p = place(z, b); if (p.shape === 'c' && p.r < 200) ringFx(p.x, p.y, c, p.r * .3, p.r * 1.1, .5, 3); else if (!any) { any = true; ringFx(b.x, b.y, c, b.hr, b.hr + 75 * fk, .5, 3); } } }
-  else if (a.gaps) for (const gp of a.gaps) ringFx((gp[0] + gp[1]) / 2, G.arenaTop + 90 * fk, c, 10 * fk, (gp[1] - gp[0]) / 2, .5, 3);
+  else if (a.gaps) for (const gp of a.gaps) ringFx((gp[0] + gp[1]) / 2, G.arenaTop + 90 * fk, '#8aff9a', 10 * fk, (gp[1] - gp[0]) / 2, .5, 3);
   else if (a.k === 'beam' || a.k === 'jet') ringFx(b.x, b.y, c, b.hr, b.hr + 75 * fk, .5, 3);
   else if (a.k === 'flare') ringFx(b.x, b.y, c, b.hr, a.r, .6, 3);
   else if (a.k === 'hole' || a.k === 'sing') ringFx(a.x, a.y, c, 10 * fk, 80 * fk, .5, 3);
@@ -128,7 +128,7 @@ function execAttack(a) {
     case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: at.keep }); noise(1.2, .12, 1800, 300); break;
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
     case 'sing': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: at.keep, r: a.hr, pull: a.pull, str: 26000, t: 0, born: 0, pow }); beep(90, .7, 'sawtooth', .14); shakeAdd(6); break;
-    case 'cage': spawnCage(G.arenaTop - 30 * fs(), 300 * fs(), a.gaps, 150); thump(70, 30, .7, .4, 'sawtooth'); noise(.7, .2, 1500, 200); break;
+    case 'dump': spawnJunk(a.xs, G.arenaTop - 30 * fs(), 300 * fs(), 70); thump(70, 30, .7, .4, 'sawtooth'); noise(.7, .2, 1500, 200); break;
     default: if (a.zones) a.zones.forEach(z => zone(Object.assign({ kind: a.k, col: c, pow }, place(z, b), { anchor: !!(z.rel || z.vert) }))); break;
   }
 }

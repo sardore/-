@@ -15,6 +15,7 @@ import { updateWalls, clearWalls, maybeWall, hitWalls, hitLanded, squeezeWalls, 
 import { updateMooks, clearMooks, maybeMook, hitMooks, squeezeMooks, cullMooks } from './ops-mook.js';
 import { updateGimmicks, resetGimmicks, gimmickType, giantify } from './ops-gimmick.js';
 import { hurt } from './boss-attacks.js';
+import { updateBattery } from './ops-battery.js';
 
 /** 기록: time 최단 클리어 시간(초, 0 이면 없음) · best 최고 점수 · boss 가장 멀리 간 보스 수 */
 export const OPSREC = { time: +load('swingby_ops_time', 0) || 0, best: +load('swingby_ops_best', 0) || 0, boss: +load('swingby_ops_boss', 0) || 0 };
@@ -27,6 +28,7 @@ const freshOps = () => ({
   bonus: {},            // 강화 카드로 올린 능력치(후계자에게 이어진다)
   rescued: 0, succ: 0,  // 구출한 함선 수(누적) · 승계 횟수
   walls: [], mooks: [], shots: [], gim: { due: 9, n: 0 },
+  bat: null, shells: [],   // 돌진 포대: 남은 발사 · 날아가는 포탄
   pendingEvo: false,    // 보급 부두의 보상: 다음 오빗에서 진화를 고른다
   newTime: false, newBest: false
 });
@@ -62,7 +64,7 @@ export function startOpsFromUrl(q) {
 /* ---------- 매 틱 ---------- */
 /** 플레이 중 한 틱(game.js 의 update). 작전 시간은 game.js 가 실제 시간으로 센다 */
 export function updateOps(dt) {
-  updateFleet(dt); updateWalls(dt);
+  updateFleet(dt); updateWalls(dt); updateBattery(dt);
   if (G.boss && G.boss.state === 'fight') hitLanded((x, y) => hurt(x, y, .9));
   if (!G.boss) { updateMooks(dt); updateGimmicks(dt); }
 }

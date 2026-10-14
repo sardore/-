@@ -93,6 +93,12 @@ function bump(m, nx, ny) {
   popText(bx + nx * 18, by + ny * 18, '-' + dmg, '#ffd6a0', clamp(15 + dmg * .3, 16, 30));
   if (m.hp <= 0) kill(m);
 }
+/** 돌진 포대의 포탄이 맞았다(ops-battery.js) */
+export function shootMook(m, dmg) {
+  m.hp -= dmg; m.flash = .12; m.sq = Math.max(m.sq || 0, .5);
+  popText(m.x, m.y - m.R - 6, '-' + dmg, '#ffd6a0', 14);
+  if (m.hp <= 0) kill(m);
+}
 function kill(m) {
   m.dead = true; G.ops.mooks = list().filter(q => !q.dead);
   burst(m.x, m.y, '#ffb48a', 22, 260); burst(m.x, m.y, '#fff', 10, 180); ringFx(m.x, m.y, '#ffb48a', m.R * .6, m.R * 2.4, .5, 4); ringFx(m.x, m.y, '#fff', 4, m.R * 1.5, .3, 3);

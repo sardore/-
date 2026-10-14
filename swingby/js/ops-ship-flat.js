@@ -29,8 +29,8 @@ export function drawOpsFlat(c, d, flame, tm, sc, o) {
   const pts = outline(H), gr = c.createLinearGradient(0, -H.w, 0, H.w); gr.addColorStop(0, lite); gr.addColorStop(.55, mid); gr.addColorStop(1, dark);
   c.fillStyle = gr; c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = .8; c.beginPath(); path(c, pts); c.closePath(); c.fill(); c.stroke();
   c.save(); c.beginPath(); path(c, pts); c.closePath(); c.clip();
-  c.fillStyle = trim[1]; c.globalAlpha = .92; c.fillRect(-12, -H.w - 1, 8.5, H.w * 2 + 2);
-  c.globalAlpha = 1; c.fillStyle = trim[0]; c.fillRect(-4, -.55, 17, 1.1);
+  const pa = c.globalAlpha; c.fillStyle = trim[1]; c.globalAlpha = pa * .92; c.fillRect(-12, -H.w - 1, 8.5, H.w * 2 + 2);
+  c.globalAlpha = pa; c.fillStyle = trim[0]; c.fillRect(-4, -.55, 17, 1.1);
   c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = .6; c.beginPath(); c.moveTo(-3.5, -H.w); c.lineTo(-3.5, H.w); c.stroke();
   c.restore();
   // 화물 상자(호송정)

@@ -77,7 +77,7 @@ function seam(c, x0, y0, x1, y1) {
   c.lineWidth = .45; c.strokeStyle = 'rgba(0,0,0,.5)'; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
   c.strokeStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.moveTo(x0 + .45, y0 + .3); c.lineTo(x1 + .45, y1 + .3); c.stroke();
 }
-const lamp = (c, x, y, r, col, a) => { c.globalAlpha = a == null ? 1 : a; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = 1; };
+const lamp = (c, x, y, r, col, a) => { const p = c.globalAlpha; c.globalAlpha = p * (a == null ? 1 : a); c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.globalAlpha = p; };   // 부른 쪽의 투명도(잔상·페이드)를 곱해 쓰고 되돌린다
 /** 조종석 유리: 어두운 곡면 + 흰 반사 */
 function cab(k, x, y, rx, ry) {
   const c = k.c, gr = c.createLinearGradient(0, y - ry, 0, y + ry); gr.addColorStop(0, '#6a7a88'); gr.addColorStop(.5, '#141a20'); gr.addColorStop(1, '#05070a');

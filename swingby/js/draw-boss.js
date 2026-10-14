@@ -6,6 +6,7 @@ import { ATK } from './data.js';
 import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
 import { place } from './boss-zones.js';
+import { drawBossGhosts } from './ops-boss-move.js';
 
 /* ---------- 작은 도형 도우미: 현재 fillStyle / strokeStyle 로 원을 채우거나 두른다 ---------- */
 const disc = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
@@ -37,6 +38,7 @@ export function drawBoss(b) {
     g.strokeStyle = 'rgba(255,255,255,' + .6 * (1 - kc) + ')'; g.lineWidth = 2; ring(0, 0, R * (1.05 + .9 * kc));
   }
   if (quasar) { drawQuasar(b, R); g.restore(); return; }
+  if (b.gh) drawBossGhosts(g, b, h);   // 블랙쉽 함선의 급이동 잔상
   drawBossBody(b);
   if (b.flash > 0) { g.fillStyle = 'rgba(255,255,255,' + clamp(b.flash * 5, 0, .9) + ')'; disc(0, 0, R); }
   g.restore();
@@ -117,12 +119,13 @@ export function drawTele(a, b) {
       g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
       txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
     }
-    case 'cage': { // 무단 투하: 벽이 덮칠 자리는 붉게, 비워 둔 길은 밝은 줄로 보여 준다(글자 없음)
-      const top = G.arenaTop, bot = G.arenaBot, edges = [0, ...a.gaps.flat(), G.w];
-      for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 6) { shape(() => { g.beginPath(); g.rect(edges[i], top, edges[i + 1] - edges[i], bot - top); }); g.fillStyle = hexA('#ff5a4a', .07 + .05 * pul); g.fillRect(edges[i], top, edges[i + 1] - edges[i], bot - top); }
+    case 'dump': { // 무단 투하: 쓰레기가 떨어질 길은 붉게, 비워 둔 길은 초록 줄로 보여 준다(글자 없음)
+      const top = G.arenaTop, bot = G.arenaBot, fk = fs();
+      g.fillStyle = hexA('#ff6a4a', .05 + .05 * pul); for (const x of a.xs) g.fillRect(x - 15 * fk, top, 30 * fk, bot - top);
+      shape(() => { g.beginPath(); for (const x of a.xs) g.rect(x - 15 * fk, top, 30 * fk, bot - top); });
       g.fillStyle = hexA('#8aff9a', .13 + .07 * pul);
       for (const gp of a.gaps) { g.fillRect(gp[0], top, gp[1] - gp[0], bot - top); g.strokeStyle = hexA('#8aff9a', .5 + .3 * pul); g.lineWidth = 1.5; line(gp[0], top, gp[0], bot); line(gp[1], top, gp[1], bot); }
-      cnt(G.w / 2, top + 70 * fs()); break;
+      cnt(G.w / 2, top + 70 * fk); break;
     }
     default: if (a.zones) { // 고유 패턴: 존 정의를 그대로 예고로 그린다
       const ps = a.zones.map(z => place(z, b));

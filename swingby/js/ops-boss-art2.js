@@ -91,7 +91,7 @@ export const SHIPS2 = {
   /** 핵 응축선: 기함이 터진 뒤 남는 작은 핵. 두 갈래 가지가 광선이 가는 방향(b.coreA)을 가리키고, 핵 둘레로 빛이 응축되며 돈다 */
   core(b, h, c) {
     const T = G.T, k = easeOut(clamp(b.coreT / 1.1, 0, 1)), pu = .5 + .5 * Math.sin(T * 6);
-    g.scale(k * 1.7, k * 1.7); g.rotate((b.coreA || PI / 2) - 0);
+    g.scale(k * 2.1, k * 2.1); g.rotate((b.coreA || PI / 2) - 0);
     glow(0, 0, 60, h, .45 + .25 * pu);
     for (const s of [-1, 1]) { // 두 갈래 가지
       g.save(); g.scale(s, 1);

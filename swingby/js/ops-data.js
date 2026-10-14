@@ -57,13 +57,13 @@ export const OPS_BOSSES = [
   { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 50, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'curtain', 'lockon'], q: 2, cap: 2, line: '포로를 컨테이너에 싣고 가는 호송함' },
   { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 52, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['scissor', 'mines', 'sniper'], q: 2, cap: 2, line: '신호를 찢어 놓는 전자전함' },
   { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 50, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'railgun', 'lockon', 'curtain'], q: 3, cap: 2, line: '한 번 문 표적은 놓치지 않는다' },
-  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 58, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'scissor', 'curtain', 'cage', 'sniper'], q: 3, cap: 3, line: '잊혀진 이들을 가두는 감옥선' },
+  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 58, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'scissor', 'curtain', 'dump', 'sniper'], q: 3, cap: 3, line: '잊혀진 이들을 가두는 감옥선' },
   { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 60, hp: 700, atk: 9,  hue: 322, kind: 'ship', pat: ['railgun', 'vform', 'lockon', 'scissor'], q: 3, cap: 3, line: '함체를 가로지르는 거대한 레일건' },
   { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 68, hp: 960, atk: 10, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'scissor', 'mines', 'curtain', 'vform'], q: 3, cap: 3, line: '모든 항로를 내려다보는 사령 기함' }
 ];
 
 /** 마지막 보스(기함)가 터진 뒤 남는 '핵 응축선': 작은 핵에서 두 갈래 가지가 뻗고, 가지 끝에서 느리게 도는 광선이 계속 이어진다. 이것까지 부숴야 클리어 */
-export const OPS_CORE = { n: '핵 응축선', e: 'CORE', ship: 'core', R: 30, hp: 320, atk: 10, hue: 38, kind: 'ship', pat: [], q: -9, line: '꺼지지 않는 핵', spd: .3, half: .05 };
+export const OPS_CORE = { n: '핵 응축선', e: 'CORE', ship: 'core', R: 40, hp: 320, atk: 10, hue: 38, kind: 'ship', pat: [], q: -9, line: '꺼지지 않는 핵', spd: .3, half: .05 };
 
 /* ---------- 함선 전용 공격 패턴 (ATK 에 합쳐진다. 존 구성은 ops-zones.js) ---------- */
 export const OPS_ATK = {
@@ -74,5 +74,5 @@ export const OPS_ATK = {
   mines:    { n: '기뢰',     c: '#8aff9a', cast: '기뢰 살포',      pow: .9 },
   curtain:  { n: '차단막',   c: '#ff7ac8', cast: '탄막 차단',      pow: 1 },
   vform:    { n: '편대 급습', c: '#a8b8ff', cast: '편대 급습',      pow: 1.1 },
-  cage:     { n: '무단 투하', c: '#ffc27a', cast: '무단 투하',      pow: 1.2 }   // 존이 아니라 급하게 떨어지는 쓰레기 벽(ops-walls.js 의 cage). 보스전에 벽이 나오는 유일한 경우
+  dump:     { n: '무단 투하', c: '#ffc27a', cast: '무단 투하',      pow: 1.2 }   // 존이 아니라 쓰레기 더미가 쏟아진다(ops-walls.js 의 spawnJunk). 보스전에 쓰레기가 나오는 유일한 경우
 };

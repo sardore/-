@@ -24,7 +24,7 @@ function finish(x, y, R, h) {
   g.fillStyle = sh; g.fillRect(x - R * 1.3, y - R * 1.3, R * 2.6, R * 2.6);
 }
 const rim = (x, y, R, h) => { g.strokeStyle = hsl(h, 40, 86, .45); g.lineWidth = Math.max(1, R * .05); g.beginPath(); g.arc(x, y, R - g.lineWidth * .5, PI * .92, PI * 1.58); g.stroke(); };
-const lamp = (x, y, r, col, a) => { g.globalAlpha = a == null ? 1 : a; g.fillStyle = col; circle(x, y, r); g.fill(); g.globalAlpha = 1; };
+const lamp = (x, y, r, col, a) => { const p = g.globalAlpha; g.globalAlpha = p * (a == null ? 1 : a); g.fillStyle = col; circle(x, y, r); g.fill(); g.globalAlpha = p; };
 
 export function drawOpsPlanet(p, R) {
   const T = G.T, x = p.x, y = p.y, h = p.hue;
