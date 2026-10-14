@@ -10,7 +10,7 @@ export function canKnock() { const s = G.ship; return s.mode === 'free' && G.st 
 export function knock(nx, ny, mul, col) {
   if (!canKnock()) return false;
   const s = G.ship, m = Math.hypot(nx, ny) || 1, v = spd() * mul;
-  s.vx = nx / m * v + s.vx * .15; s.vy = ny / m * v + s.vy * .15; s.inv = .6; s.gd = 0; s.bumped = true;
+  s.vx = nx / m * v + s.vx * .15; s.vy = ny / m * v + s.vy * .15; s.inv = .6; s.gd = 0; s.bumped = true; s.last = null;
   col = col || '#ff8a6a';
   burst(s.x, s.y, col, 12, 220); ringFx(s.x, s.y, '#fff', 4, 40, .3, 3); shakeAdd(6); hitstop(.05); flashScreen(.1, col); vibe(25); thump(150, 40, .22, .3); noise(.15, .2, 2500, 300);
   popText(s.x, s.y - 20, '밀려났다', col, 14);
