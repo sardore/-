@@ -47,7 +47,7 @@ function release(charge) {
   const s = G.ship; if (s.mode !== 'orb') return;
   if (G.boss && G.boss.state !== 'fight') return;
   const boost = 1 + curDef().dash * Math.max(0, (charge - .1) / .9), v = spd() * boost, from = s.p;
-  s.grace = 0; s.mode = 'free'; s.vx = -Math.sin(s.a) * s.dir * v; s.vy = Math.cos(s.a) * s.dir * v;
+  s.grace = 0; s.fallT = .4; s.mode = 'free'; s.vx = -Math.sin(s.a) * s.dir * v; s.vy = Math.cos(s.a) * s.dir * v;
   s.last = from; s.air = 0; s.hitF = false; s.boost = boost; s.charging = false; G.starChain = 0;
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
@@ -102,7 +102,7 @@ export function stepShip(dt) {
   const s = G.ship, v = spd(), boss = G.boss, bf = boss && boss.state === 'fight';
   const forkWait = !boss && !!G.fork && G.fork.state === 'hub';   // 갈림길 선택 대기 중
   if (chSnd && !(s.charging && s.mode === 'orb')) stopChargeSnd();   // 피격·보스 연출 등으로 충전이 풀렸으면 소리도 끈다
-  if (s.inv > 0) s.inv -= dt; if (s.ramT > 0) s.ramT -= dt; if (s.grace > 0) s.grace -= dt;
+  if (s.inv > 0) s.inv -= dt; if (s.ramT > 0) s.ramT -= dt; if (s.grace > 0) s.grace -= dt; if (s.fallT > 0) s.fallT -= dt;
   if (s.evoT > 0) s.evoT = Math.max(0, s.evoT - dt / 1.1);
   for (let i = s.ghosts.length - 1; i >= 0; i--) { s.ghosts[i].t += dt; if (s.ghosts[i].t > .32) s.ghosts.splice(i, 1); }
 
@@ -151,7 +151,7 @@ export function stepShip(dt) {
       if (G.st !== 'play') return false;
       if (boss && !bf) { if (s.y > G.arenaBot - 12 && s.vy > 0) { s.y = G.arenaBot - 12; s.vy *= -1; } }   // 등장·격파 연출 중에만 바닥이 막아 준다
       else if (bf && s.net && s.y > G.arenaBot + 24 && s.vy > 0) { s.y = G.arenaBot + 24; s.vy = -Math.abs(s.vy) * .8; s.net = false; }   // 안전망의 마지막 수단: 이미 화면 밖이라 눈에 띄지 않는다
-      else if (s.y > (boss ? G.arenaBot : viewBot()) + 40 && !forkWait) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
+      else if (s.y > (boss ? G.arenaBot : viewBot()) + 40 && !forkWait && !(s.fallT > 0)) die(boss ? '뒤처져 심우주로 표류' : '심우주로 표류');   // 보스전도 일반 지형과 같은 낙사
       if (G.st !== 'play') return false;
     }
   }
