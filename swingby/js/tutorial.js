@@ -1,6 +1,6 @@
 /* 튜토리얼: 실제 게임 엔진 위에서 한 판을 안내한다. 말보다 그림(화살표·손가락·강조 링)으로 보여 주고, 마지막에 태양(sun.js)과 싸운다.
  * 이 파일은 진행(단계 전환·보스 힌트 선택·보상)만 맡고, 그림은 tutorial-draw.js 가 그린다.
- * 튜토리얼 중(G.tuto)에는 점수·기록·별 조각 정산을 하지 않고, 태양을 깰 때만 별 조각 30개를 준다. */
+ * 튜토리얼 중(G.tuto)에는 점수·기록·별 조각 정산을 하지 않고, 태양을 깰 때만 별 조각 20개를 준다. */
 import { G, V, newRun } from './state.js';
 import { W0 } from './util.js';
 import { beep, thump, noise, vibe } from './audio.js';
@@ -73,7 +73,7 @@ export function tutoPress(x, y) {
   return false;
 }
 
-/** 태양을 쓰러뜨렸다: 깬 횟수를 올리고 별 조각 30개를 준다 */
+/** 태양을 쓰러뜨렸다: 깬 횟수를 올리고 별 조각 20개를 준다 */
 export function tutorialClear() {
   const T = G.tuto, n = addTutoClear();
   grantShards(TUTO_SHARDS); G.shardGain = TUTO_SHARDS; T.cleared = n;
