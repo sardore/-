@@ -11,6 +11,7 @@ import { regrow, aliveP } from './boss-arena.js';
 import { place, randIn, uniqueZones } from './boss-zones.js';
 import { dumpLanes } from './ops-zones.js';
 import { spawnJunk } from './ops-walls.js';
+import { isSkill, skillTele, skillExec, skillUpdate, skillTurn, skillPing } from './ops-skills.js';
 
 /* ---------- 공격 예고 ---------- */
 function mkTele(k) {
@@ -39,6 +40,7 @@ function mkTele(k) {
     o.pull = 260 * fk; o.hr = 26 * fk;
     for (let n = 0; n < 40; n++) { o.x = rnd(G.w * .3, G.w * .7); o.y = rnd(ymin + 40 * fk, ymax - 60 * K); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60 * fk)) break; }
   } else if (k === 'dump') Object.assign(o, dumpLanes(al.length ? al : G.planets, fk));   // 블랙쉽: 쓰레기가 쏟아지고 비워 둔 길(gaps)만 안전하다
+  else if (isSkill(k)) Object.assign(o, skillTele(k, b, al, fk, K, ymin, ymax));   // 블랙쉽 보스 전용 스킬(ops-skills.js)
   else { o.zones = uniqueZones(k, b, al, fk, K, ymin, ymax); if (k === 'nova') o.t = 3; }
   return o;
 }
@@ -64,6 +66,7 @@ function telePing(a) {
   else if (a.k === 'flare') ringFx(b.x, b.y, c, b.hr, a.r, .6, 3);
   else if (a.k === 'hole' || a.k === 'sing') ringFx(a.x, a.y, c, 10 * fk, 80 * fk, .5, 3);
   else if (a.k === 'collapse') ringFx(a.p.x, a.p.y, c, a.p.R, a.r, .5, 3);
+  else if (isSkill(a.k)) skillPing(a, b);
 }
 export function queueAttack(kind) {
   const b = G.boss;
@@ -85,7 +88,7 @@ export function bossTurn() {
   for (const a of b.q) a.t--;
   const due = b.q.filter(a => a.t <= 0); b.q = b.q.filter(a => a.t > 0);
   for (const a of due) execAttack(a);
-  for (const h of G.haz) if (h.turns != null) h.turns--;
+  for (const h of G.haz) if (h.turns != null) { h.turns--; skillTurn(h); }
   G.haz = G.haz.filter(h => h.turns == null || h.turns > 0);
   for (const p of G.planets) if (p.dead && --p.re <= 0) regrow(p);
   // 매 턴 쓰지 않는다: 가끔 새 공격을 예고하고, 오래 쉬면 확정 예고
@@ -129,6 +132,7 @@ function execAttack(a) {
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
     case 'sing': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: at.keep, r: a.hr, pull: a.pull, str: 26000, t: 0, born: 0, pow }); beep(90, .7, 'sawtooth', .14); shakeAdd(6); break;
     case 'dump': spawnJunk(a.xs, G.arenaTop - 30 * fs(), 300 * fs(), 70); thump(70, 30, .7, .4, 'sawtooth'); noise(.7, .2, 1500, 200); break;
+    case 'scan': case 'turret': case 'crate': case 'arc': case 'homing': case 'ricochet': case 'cage': skillExec(a, b, c, pow); break;
     default: if (a.zones) a.zones.forEach(z => zone(Object.assign({ kind: a.k, col: c, pow }, place(z, b), { anchor: !!(z.rel || z.vert) }))); break;
   }
 }
@@ -233,6 +237,7 @@ export function updateHaz(dt, b) {
     else if (h.k === 'hole') updateHole(h, dt, s);
     else if (h.k === 'horizon') updateHorizon(h, dt);
     else if (h.k === 'rbeam') updateRBeam(h, dt, b, s);
+    else if (h.k.startsWith('o_')) skillUpdate(h, dt, b, s);
     else if (h.k === 'wind') {
       if (s.mode === 'free') s.vx += h.dir * 230 * fs() * dt;
       if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : G.w + 5, y: rnd(G.arenaTop, G.arenaBot), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });

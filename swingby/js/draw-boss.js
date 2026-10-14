@@ -7,6 +7,7 @@ import { drawBossBody } from './boss-art.js';
 import { txt } from './gfx.js';
 import { place } from './boss-zones.js';
 import { drawBossGhosts } from './ops-boss-move.js';
+import { isSkill, skillDrawTele, skillDraw } from './ops-skills.js';
 
 /* ---------- 작은 도형 도우미: 현재 fillStyle / strokeStyle 로 원을 채우거나 두른다 ---------- */
 const disc = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
@@ -127,7 +128,8 @@ export function drawTele(a, b) {
       for (const gp of a.gaps) { g.fillRect(gp[0], top, gp[1] - gp[0], bot - top); g.strokeStyle = hexA('#8aff9a', .5 + .3 * pul); g.lineWidth = 1.5; line(gp[0], top, gp[0], bot); line(gp[1], top, gp[1], bot); }
       cnt(G.w / 2, top + 70 * fk); break;
     }
-    default: if (a.zones) { // 고유 패턴: 존 정의를 그대로 예고로 그린다
+    default: if (isSkill(a.k)) skillDrawTele(a, b, { c, shape, cnt, warn, gr, pul });
+    else if (a.zones) { // 고유 패턴: 존 정의를 그대로 예고로 그린다
       const ps = a.zones.map(z => place(z, b));
       ps.forEach(p => { shape(() => zonePath(p, gr)); if (p.shape === 'c' && p.r < 200) warn(p.x, p.y - 2, 22); });
       const p0 = ps[0], fk = fs();
@@ -275,6 +277,7 @@ export function drawHaz(h) {
       break;
     }
     case 'zone': drawZone(h); break;
+    default: if (h.k.startsWith('o_')) skillDraw(h); break;
     case 'hole': {
       const rr0 = h.r * easeOut(h.born);
       g.strokeStyle = 'rgba(200,140,255,.28)'; g.lineWidth = 1.5; dashed(4, 8); ring(h.x, h.y, h.pull || 150 * fs()); solid();

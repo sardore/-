@@ -52,14 +52,14 @@ export const OPS_PLANET_TYPES = 'sdhlkv';
  * 몸체는 검정·회색의 거대한 철갑이고, 주포 둘레만 위협적인 붉은색·보라색으로 빛난다(hue 는 그 빛의 색상)
  * ship: 그리는 함선(ops-boss-art.js) · cap: 갇힌 아군 함선 수(수송 능력이 있어야 구출한다. 두 번째 보스부터 한 척씩). 별이 아니라 함선이라 항성 패턴 대신 전용 패턴을 쓴다 */
 export const OPS_BOSSES = [
-  { n: '감시정 아르거스',   e: 'ARGUS',       ship: 'argus',      R: 58, hp: 90,  atk: 4,  hue: 355, kind: 'ship', pat: ['sniper', 'lockon'], q: 1, cap: 0, line: '국경 너머를 훑는 감시정' },
-  { n: '순찰함 센트리',     e: 'SENTRY',      ship: 'sentry',     R: 66, hp: 170, atk: 6,  hue: 8,  kind: 'ship', pat: ['lockon', 'curtain', 'sniper'], q: 2, cap: 1, line: '포탑이 달린 방벽형 순찰함' },
-  { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 76, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'curtain', 'lockon'], q: 2, cap: 1, line: '포로를 컨테이너에 싣고 가는 호송함' },
-  { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 84, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['shockwave', 'mines', 'sniper'], q: 2, cap: 1, line: '신호를 찢어 놓는 전자전함' },
-  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 84, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'railgun', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
-  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 96, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'shockwave', 'curtain', 'dump', 'sniper'], q: 3, cap: 1, line: '잊혀진 이들을 가두는 감옥선' },
-  { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 100, hp: 700, atk: 9,  hue: 322, kind: 'ship', pat: ['railgun', 'vform', 'lockon', 'shockwave'], q: 3, cap: 1, line: '함체를 가로지르는 거대한 레일건' },
-  { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 114, hp: 960, atk: 10, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'shockwave', 'mines', 'curtain', 'vform'], q: 3, cap: 1, line: '모든 항로를 내려다보는 사령 기함' }
+  { n: '감시정 아르거스',   e: 'ARGUS',       ship: 'argus',      R: 58, hp: 90,  atk: 4,  hue: 355, kind: 'ship', pat: ['sniper', 'scan'], q: 1, cap: 0, line: '국경 너머를 훑는 감시정' },
+  { n: '순찰함 센트리',     e: 'SENTRY',      ship: 'sentry',     R: 66, hp: 170, atk: 6,  hue: 8,  kind: 'ship', pat: ['curtain', 'turret', 'lockon'], q: 2, cap: 1, line: '포탑이 달린 방벽형 순찰함' },
+  { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 76, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'crate', 'curtain'], q: 2, cap: 1, line: '포로를 컨테이너에 싣고 가는 호송함' },
+  { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 84, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['shockwave', 'arc', 'mines'], q: 2, cap: 1, line: '신호를 찢어 놓는 전자전함' },
+  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 84, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'homing', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
+  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 96, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'shockwave', 'dump', 'sniper'], q: 3, cap: 1, line: '잊혀진 이들을 가두는 감옥선' },
+  { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 100, hp: 700, atk: 9,  hue: 322, kind: 'ship', pat: ['railgun', 'ricochet', 'vform'], q: 3, cap: 1, line: '함체를 가로지르는 거대한 레일건' },
+  { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 114, hp: 960, atk: 10, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'shockwave', 'cage', 'vform'], q: 3, cap: 1, line: '모든 항로를 내려다보는 사령 기함' }
 ];
 
 /** 마지막 보스(기함)가 터진 뒤 남는 '핵 응축선': 작은 핵에서 두 갈래 가지가 뻗고, 가지 끝에서 느리게 도는 광선이 계속 이어진다. 이것까지 부숴야 클리어 */
@@ -74,5 +74,12 @@ export const OPS_ATK = {
   mines:    { n: '기뢰',     c: '#8aff9a', cast: '기뢰 살포',      pow: .9 },
   curtain:  { n: '차단막',   c: '#ff7ac8', cast: '탄막 차단',      pow: 1 },
   vform:    { n: '편대 급습', c: '#a8b8ff', cast: '편대 급습',      pow: 1.1 },
+  scan:     { n: '탐조', c: '#ffe9a0', cast: '탐조 추적', pow: .3 },   // 아레나 전체를 훑지만 위로 올라가 튕겨 나오면 되니 피해는 아주 낮다
+  turret:   { n: '포대', c: '#ff9a5a', cast: '포대 전개', pow: 1 },
+  crate:    { n: '컨테이너', c: '#e0b080', cast: '컨테이너 투하', pow: 1.1 },
+  arc:      { n: '방전', c: '#b8a0ff', cast: '연쇄 방전', pow: 1.1 },
+  homing:   { n: '추격탄', c: '#ff7a6a', cast: '추격탄 발사', pow: 1 },
+  ricochet: { n: '반사', c: '#9fe8ff', cast: '반사 레일 사격', pow: 1.3 },
+  cage:     { n: '봉쇄', c: '#ff7ac8', cast: '수감 봉쇄', pow: 1.2 },
   dump:     { n: '무단 투하', c: '#ffc27a', cast: '무단 투하',      pow: 1.2 }   // 존이 아니라 쓰레기 더미가 쏟아진다(ops-walls.js 의 spawnJunk). 보스전에 쓰레기가 나오는 유일한 경우
 };
