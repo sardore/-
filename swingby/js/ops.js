@@ -105,7 +105,7 @@ export function opsAfterBoss(b) {
 export function opsProgress() {
   if (G.ops.card) { openRescue(); return; }   // 구출·강화한 함선을 먼저 보여 준 뒤(탭하면 closeRescue) 진화·카드로 넘어간다
   if (G.tier < opsTarget(G.kills) && SHIPS[G.shipId].kids.length) startEvo();
-  else offer('보스 격파 — 강화 선택');
+  else offer('보스 격파 — 강화 선택', true);
 }
 
 /** 구출·동행 강화 안내 화면(draw-pick.js 의 drawRescue). 진화·카드 선택과 같은 'pick' 상태를 쓴다 */

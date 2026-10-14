@@ -12,8 +12,9 @@ import { opsCheck, closeRescue } from './ops.js';
 
 /* ---------- 강화 카드 (4단 진화 이후) ---------- */
 const canTake = c => G.stats[c.k] < c.cap;
-export function offer(title) {
-  const pool = CARDS.filter(canTake); G.cards = [];
+/** 비상 추진기 카드(사망 방지)는 쌓이면 죽질 않아서 보스를 쓰러뜨렸을 때(bossClear)만 후보에 든다 */
+export function offer(title, bossClear) {
+  const pool = CARDS.filter(c => canTake(c) && (bossClear || c.k !== 'shield')); G.cards = [];
   while (G.cards.length < 3 && pool.length) G.cards.push(pool.splice(Math.random() * pool.length | 0, 1)[0]);
   if (!G.cards.length) return;
   G.st = 'pick'; G.pickMode = 'card'; G.pickTitle = title || '강화 선택'; G.pickT = 0;
@@ -68,5 +69,5 @@ export function afterBoss(stage) {
     if (G.score > G.best && !G.debug) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
     settleRun();
   } else if (EVOLVE_AT[G.tier] && G.kills >= EVOLVE_AT[G.tier]) startEvo();
-  else if (G.tier >= 4) offer('보스 격파 — 강화 선택');
+  else if (G.tier >= 4) offer('보스 격파 — 강화 선택', true);
 }
