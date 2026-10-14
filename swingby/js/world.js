@@ -7,6 +7,7 @@ import { mkPlanet } from './planets.js';
 import { addStars, maybeHole } from './scatter.js';
 import { buildFork } from './fork.js';
 import { maybeMonster } from './monsters.js';
+import { opsGen, opsSqueeze } from './ops.js';
 
 /* ---------- 필드 폭 ----------
  * 진행할수록 필드가 점점 넓어지고(카메라는 줌아웃) 행성·간격도 같이 커진다. 보스 아레나는 항상 기본 폭. */
@@ -24,6 +25,7 @@ function squeeze(r) {
   for (const p of G.planets) { p.x *= r; if (p.drift) p.drift.x0 *= r; }
   for (const L of [G.stars, G.holes]) for (const o of L) o.x *= r;
   for (const m of G.mons) { m.x *= r; if (m.x0 != null) m.x0 *= r; }
+  if (G.ops) opsSqueeze(r);
   if (G.ship && G.ship.mode === 'free') G.ship.x *= r;
 }
 
@@ -79,12 +81,15 @@ export function gen() {
     if (F && F.state === 'queued' && G.genI >= F.at) { buildFork(prev); return; }
     const { x, dy, mod } = place(prev);
     G.genY -= dy;
-    const p = mkPlanet(G.genI++, x, G.genY, G.biome, mod === 'giant' && G.biome !== 'belt' ? 'g' : undefined);
+    const gt = G.ops && opsGen.type();   // 블랙쉽: 거대 행성 기믹이 나올 차례인가
+    const p = mkPlanet(G.genI++, x, G.genY, G.biome, gt || (mod === 'giant' && G.biome !== 'belt' ? 'g' : undefined));
+    if (gt) opsGen.giantify(p);
     if (mod === 'giant' && p.t === 'g') { const ring = p.cap - p.R; p.R *= 1.5; p.cap = p.R + ring * 1.35; p.giant = true; }
     if (mod === 'drift' && p.t !== 'm') p.drift = { x0: x, amp: Math.min(70 * fs(), x - 40, G.w - 40 - x), sp: rnd(.5, .8), t: rnd(0, TAU) };
     G.planets.push(p);
     addStars(prev, p);
     maybeHole(prev, p, dy);
     if (G.biome === 'monster') maybeMonster(prev, p, dy);
+    if (G.ops) opsGen.extras(prev, p, dy);   // 벽·소형함
   }
 }

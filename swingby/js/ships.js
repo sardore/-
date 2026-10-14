@@ -1,6 +1,7 @@
 /* 기체 테크트리. 능력치는 부모 기체에 더해지는 증가량(delta, 퍼센트포인트)으로 정의한다.
  * look: 외형 파라미터(ship-art.js), dash: 차지 돌진 세기. 모든 기체가 누르고 있으면 차지, 떼면 돌진한다.
  * 돌진 전용으로 짜인 기체(dash 를 따로 준 기체: strong)는 속도 배율과 충돌 피해 계수(pow)가 크고, 나머지는 약한 돌진(WEAK_DASH)이다 */
+import { OPS_SHIPS } from './ops-ships.js';
 export const SHIPS = {};
 const WEAK_DASH = .4, WEAK_POW = .6, STRONG_POW = 1;
 
@@ -39,6 +40,9 @@ defShip('gol', 4, '황금 상선',  '점수 배율 극대화',       46,  { kind
 
 /* 디버그판(?debug) 전용: 진화 트리에 속하지 않는다. 능력치를 상한 근처까지 올린 기체 */
 defShip('dbg', 4, '디버그함', '테스트 전용 초고스펙', 48, { kind: 'dart', fins: 3, engines: 4, cannons: 2, plates: 2, spike: 1, halo: 1, ring: 1, drones: 3 }, { spd: 30, ram: 300, grav: 120, decay: 220, o2: 200, mult: 300, shield: 9 }, [], 1);
+
+/* 블랙쉽 모드의 기체 트리(ops-ships.js): 같은 SHIPS 에 등록된다 */
+for (const a of OPS_SHIPS) defShip(...a);
 
 /** 현재 능력치에 이 기체의 증가량을 더한 결과(새 객체) */
 export function statsAfter(stats, def) {

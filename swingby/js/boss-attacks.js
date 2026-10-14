@@ -9,6 +9,8 @@ import { die } from './death.js';
 import { heatReset } from './heat.js';
 import { regrow, aliveP } from './boss-arena.js';
 import { place, randIn, uniqueZones } from './boss-zones.js';
+import { cageGaps } from './ops-zones.js';
+import { spawnCage } from './ops-walls.js';
 
 /* ---------- 공격 예고 ---------- */
 function mkTele(k) {
@@ -36,7 +38,8 @@ function mkTele(k) {
   else if (k === 'sing') { // 특이점: 필드 한가운데 가까이 생기는 거대한 블랙홀
     o.pull = 260 * fk; o.hr = 26 * fk;
     for (let n = 0; n < 40; n++) { o.x = rnd(G.w * .3, G.w * .7); o.y = rnd(ymin + 40 * fk, ymax - 60 * K); if (G.planets.every(p => Math.hypot(p.x - o.x, p.y - o.y) > p.R + 60 * fk)) break; }
-  } else { o.zones = uniqueZones(k, b, al, fk, K, ymin, ymax); if (k === 'nova') o.t = 3; }
+  } else if (k === 'cage') o.gaps = cageGaps(al.length ? al : G.planets, fk);   // 블랙쉽: 쓰레기 벽이 떨어지고 비워 둔 길만 안전하다
+  else { o.zones = uniqueZones(k, b, al, fk, K, ymin, ymax); if (k === 'nova') o.t = 3; }
   return o;
 }
 
@@ -56,6 +59,7 @@ function telePing(a) {
   const fk = fs();
   if (a.zs) for (const z of a.zs) ringFx(z.x, z.y, c, z.r * .3, z.r * 1.1, .5, 3);
   else if (a.zones) { let any = false; for (const z of a.zones) { const p = place(z, b); if (p.shape === 'c' && p.r < 200) ringFx(p.x, p.y, c, p.r * .3, p.r * 1.1, .5, 3); else if (!any) { any = true; ringFx(b.x, b.y, c, b.hr, b.hr + 75 * fk, .5, 3); } } }
+  else if (a.gaps) for (const gp of a.gaps) ringFx((gp[0] + gp[1]) / 2, G.arenaTop + 90 * fk, c, 10 * fk, (gp[1] - gp[0]) / 2, .5, 3);
   else if (a.k === 'beam' || a.k === 'jet') ringFx(b.x, b.y, c, b.hr, b.hr + 75 * fk, .5, 3);
   else if (a.k === 'flare') ringFx(b.x, b.y, c, b.hr, a.r, .6, 3);
   else if (a.k === 'hole' || a.k === 'sing') ringFx(a.x, a.y, c, 10 * fk, 80 * fk, .5, 3);
@@ -124,6 +128,7 @@ function execAttack(a) {
     case 'wind': G.haz.push({ k: 'wind', dir: a.dir, turns: at.keep }); noise(1.2, .12, 1800, 300); break;
     case 'collapse': if (!a.p.dead) zone({ kind: 'collapse', shape: 'c', x: a.p.x, y: a.p.y, r: a.r, p: a.p, fuse: 1.1, blast: .4, fade: .9, col: c, pow }); break;
     case 'sing': G.haz.push({ k: 'hole', x: a.x, y: a.y, turns: at.keep, r: a.hr, pull: a.pull, str: 26000, t: 0, born: 0, pow }); beep(90, .7, 'sawtooth', .14); shakeAdd(6); break;
+    case 'cage': spawnCage(G.arenaTop - 30 * fs(), 300 * fs(), a.gaps, 150); thump(70, 30, .7, .4, 'sawtooth'); noise(.7, .2, 1500, 200); break;
     default: if (a.zones) a.zones.forEach(z => zone(Object.assign({ kind: a.k, col: c, pow }, place(z, b), { anchor: !!(z.rel || z.vert) }))); break;
   }
 }
@@ -168,7 +173,7 @@ function hurtZone(h, s) {
 
 /* ---------- 피격 / 충돌 ---------- */
 /** 보스 공격에 맞았다: 보스마다 다른 atk(초) × 패턴 배율만큼 산소를 잃는다 */
-function hurt(x, y, pow = 1) {
+export function hurt(x, y, pow = 1) {
   const s = G.ship, b = G.boss; if (s.inv > 0 || G.st !== 'play' || !b) return;
   const dm = b.d.atk * pow * (1 + .15 * b.loop);
   s.inv = 1.3; s.gd = 0; G.bo2 -= dm; G.bcombo = 0; G.combo = 0; s.charging = false; heatReset();
@@ -212,6 +217,13 @@ function updateHole(h, dt, s) {
   if (Math.random() < dt * 50) { const an = rnd(0, TAU); G.parts.push({ x: h.x + Math.cos(an) * 80, y: h.y + Math.sin(an) * 80, vx: -Math.cos(an) * 100, vy: -Math.sin(an) * 100, t: 0, l: .7, c: '#c88aff', s: 2 }); }
 }
 
+/** 핵 응축선의 광선: 핵에서 반대 방향 두 줄기가 느리게 돈다. 꺼지지 않고, 체력이 줄수록 조금 빨라진다(ops-core.js) */
+function updateRBeam(h, dt, b, s) {
+  h.ang += h.spd * (1 + .7 * (1 - b.hp / b.max)) * dt; b.coreA = h.ang; h.born = Math.min(1, h.born + dt * .8);
+  if (h.t < 1.3) return;   // 막 나왔을 때는 판정이 없다
+  for (const sg of [0, PI]) { const z = { shape: 'w', x: b.x, y: b.y, a: h.ang + sg, half: h.half, len: h.len, pow: h.pow }; if (inZone(z, s)) hurtZone(z, s); }
+}
+
 /** 매 프레임 위험 요소(존·블랙홀·항성풍)를 갱신한다 */
 export function updateHaz(dt, b) {
   const s = G.ship;
@@ -220,6 +232,7 @@ export function updateHaz(dt, b) {
     if (h.k === 'zone') updateZone(h, dt, b, s);
     else if (h.k === 'hole') updateHole(h, dt, s);
     else if (h.k === 'horizon') updateHorizon(h, dt);
+    else if (h.k === 'rbeam') updateRBeam(h, dt, b, s);
     else if (h.k === 'wind') {
       if (s.mode === 'free') s.vx += h.dir * 230 * fs() * dt;
       if (Math.random() < dt * 40) G.parts.push({ x: h.dir > 0 ? -5 : G.w + 5, y: rnd(G.arenaTop, G.arenaBot), vx: h.dir * rnd(300, 500), vy: rnd(-10, 10), t: 0, l: .9, c: 'rgba(150,255,210,.6)', s: 2, line: true });

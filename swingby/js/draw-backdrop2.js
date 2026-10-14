@@ -4,6 +4,7 @@ import { TAU } from './util.js';
 import { BIOMES } from './data.js';
 import { viewTop, viewBot } from './camera.js';
 import { drawBackdrop } from './draw-backdrop.js';
+import { drawOpsBackdrop } from './draw-backdrop-ops.js';
 
 const TINT = ['255,255,255', '200,225,255', '255,240,210', '215,205,255'];
 // 별 배치는 고정 시드로 만든다(Math.random 을 쓰지 않아 다른 난수 흐름을 건드리지 않는다)
@@ -13,6 +14,7 @@ for (let i = 0; i < 130; i++) stars.push({ x: R(), y: R() * 4000, z: i < 70 ? .0
 
 export function drawBackdrop2() {
   drawBackdrop();
+  if (G.ops) drawOpsBackdrop();   // 블랙쉽: 지역별 먼 풍경
   const { VW, VH } = V, T = G.T, dm = VH + 20;
   for (const s of stars) {
     const tw = .5 + .5 * Math.sin(T * s.sp + s.ph), a = Math.min(1, (.28 + s.z * 2) * (.45 + .55 * tw));

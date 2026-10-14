@@ -7,6 +7,9 @@ import { isMuted } from './audio.js';
 import { rr, txt, GFX } from './gfx.js';
 import { drawTitle2 } from './draw-title2.js';
 import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
+import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
+import { OPSREC, fmtTime } from './ops.js';
+import { OPS_BOSSES } from './ops-data.js';
 
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
 
@@ -19,13 +22,14 @@ export function drawHud() {
   const sd = SHIPS[G.shipId];
   txt('Lv ' + G.tier + '  ' + sd.n, OX + 14, 30, 14, 'hsl(' + sd.L.h + ',90%,75%)', 'left', 700);
   if (!b) {
-    const nx = G.tier === 1 ? '진화까지 ' + Math.max(0, (G.tuto ? 4 : 8) - G.hops) + '행성' : EVOLVE_AT[G.tier] ? '다음 진화: 보스 ' + EVOLVE_AT[G.tier] + ' 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
+    const nx = G.ops ? '' : G.tier === 1 ? '진화까지 ' + Math.max(0, (G.tuto ? 4 : 8) - G.hops) + '행성' : EVOLVE_AT[G.tier] ? '다음 진화: 보스 ' + EVOLVE_AT[G.tier] + ' 격파' : '다음 강화 ' + Math.max(0, G.nextOffer - G.hops) + '행성';
     txt(nx, OX + 14, 48, 12, 'rgba(255,255,255,.55)', 'left', 500);
     const bl = G.nextBoss - G.hops;
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);
     if (G.biome !== 'normal') { const bm = BIOMES[G.biome]; g.fillStyle = bm.c; g.beginPath(); g.arc(OX + 18, 82, 4, 0, TAU); g.fill(); txt(bm.n, OX + 28, 86, 12, bm.c, 'left', 700); }
-  } else txt(G.tuto ? '튜토리얼' : b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
-  if (!G.tuto) {
+  } else txt(G.tuto ? '튜토리얼' : G.ops ? '목표 ' + (b.stage + 1) + ' / ' + OPS_BOSSES.length : b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
+  if (G.ops) drawOpsHud();
+  else if (!G.tuto) {
     txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
     if (G.stats.shield > 0) txt('추진기 ×' + G.stats.shield, OX + W0 - 14, 50, 12, '#ff9d7a', 'right', 600);
   }
@@ -99,6 +103,7 @@ export function drawOverlays() {
 /** 타이틀 · 클리어 · 사망 화면 */
 export function drawScreens() {
   const { VW, VH } = V, T = G.T;
+  if (G.ops && (G.st === 'clear' || G.st === 'dead')) { drawOpsEnd(); return; }
   if (G.st === 'title') {
     g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
     if (GFX.v >= 2) drawTitle2();
@@ -107,6 +112,7 @@ export function drawScreens() {
     drawTitleMenu();
     if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);   // 어느 버전을 받았는지 확인용
     if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
+    if (OPSREC.time > 0 || OPSREC.boss > 0) txt('블랙쉽  ' + (OPSREC.time > 0 ? '최단 ' + fmtTime(OPSREC.time) : '보스 ' + OPSREC.boss + '/' + OPS_BOSSES.length), VW / 2, VH - 34, 12, 'rgba(230,220,192,.55)', 'center', 600);
     if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
   if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상

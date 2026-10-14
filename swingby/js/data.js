@@ -1,4 +1,5 @@
 /* 정적 데이터: 능력치 정의, 업그레이드 카드, 보스, 공격 패턴, 스테이지, 바이옴 */
+import { OPS_ATK, OPS_BIOMES, OPS_DEC } from './ops-data.js';   // 블랙쉽 모드의 몫은 ops-data.js 에 있고 여기서 합쳐진다
 
 /* ---------- 능력치 ----------
  * 모든 능력치는 퍼센트이며 100% = Lv1 기본 기체. 추진기(shield)만 개수. */
@@ -55,7 +56,7 @@ export const EVOLVE_AT = { 2: 2, 3: 5 };
 export const LAST_STAGE = STAGES.length - 1;
 
 /* 공격 패턴: n 짧은 이름, c 색, cast 시전 문구, pow 피해 배율(보스 atk 에 곱한다), keep 발동 뒤 유지되는 턴 수(예고 지연 없이 바로 작동하는 지속형만) */
-export const ATK = {
+export const ATK = Object.assign({
   meteor:   { n: '운석',     c: '#ffb06a', cast: '운석 낙하',      pow: 1 },
   comet:    { n: '혜성군',   c: '#9fe8ff', cast: '혜성군 폭격',    pow: .8 },
   beam:     { n: '부채꼴',   c: '#ff6a8a', cast: '부채꼴 광선',    pow: 1.2 },
@@ -84,20 +85,20 @@ export const ATK = {
   snare:    { n: '올가미',   c: '#a0a8ff', cast: '중력 올가미',    pow: 1.1 },
   // 패턴 풀에는 없는 특수 공격: TON 618 체력이 1/3 이하가 된 다음 턴에 발동해 보스전이 끝날 때까지 지속
   horizon:  { n: '사건의 지평선', c: '#b070ff', cast: '사건의 지평선', pow: 0 }
-};
+}, OPS_ATK);
 
 /* ---------- 행성 종류 ----------
  * dec: 궤도 붕괴 속도 배율 (n 일반 · r 적색왜성 · g 가스행성 · a 소행성 · m 거대 암석행성) */
-export const PLANET_DEC = { n: 1, r: 1.8, g: .5, a: 1.15, m: .08 };
+export const PLANET_DEC = Object.assign({ n: 1, r: 1.8, g: .5, a: 1.15, m: .08 }, OPS_DEC);
 
 /* ---------- 바이옴: 갈림길 이후 다음 보스까지의 행성 스타일과 배경 ----------
  * sc 점수 배율 · ph 일반 행성 색상(hue) 범위
  * look: sky 하늘 위/아래 색 · haze 구름 색(h,s,l) · cl 구름 세기 · dust 먼지(색, 크기, 떠오르는 속도) · vig 가장자리 어둠/색(색, 세기) */
-export const BIOMES = {
+export const BIOMES = Object.assign({
   normal:  { n: '일반',      c: '#9fb4ff', hue: 230, sc: 1,    ph: [190, 320], look: { sky: ['#070818', '#0c0a1f'], haze: [230, 60, 45], cl: .05, dust: ['#cfd8ff', 1, 0],    vig: ['#000000', 0] } },
   belt:    { n: '소행성대',  c: '#e0a878', hue: 28,  sc: 1.25, ph: [18, 48],   look: { sky: ['#1c1006', '#3a230e'], haze: [30, 75, 46],  cl: .13, dust: ['#f0c690', 1.9, -1], vig: ['#4a2400', .4] } },
   nebula:  { n: '가스 성운', c: '#b68aff', hue: 268, sc: .8,   ph: [265, 325], look: { sky: ['#16063c', '#34105a'], haze: [305, 85, 52], cl: .3,  dust: ['#ecd0ff', 1.1, 1],  vig: ['#7a28b8', .35] } },
   redzone: { n: '적색 지대', c: '#ff7a6a', hue: 4,   sc: 1.4,  ph: [200, 330],  look: { sky: ['#2c0507', '#4c0b10'], haze: [4, 92, 48],   cl: .24, dust: ['#ffb070', 1.5, 3],  vig: ['#ff2a14', .38] } },
   monster: { n: '독 행성',  c: '#8dff7a', hue: 128, sc: 1.3,  ph: [180, 255], look: { sky: ['#031208', '#0a2614'], haze: [135, 70, 36], cl: .22, dust: ['#b8ff9a', 1.4, 1], vig: ['#22ff5a', .34] } },
   void:    { n: '공허대',    c: '#8a8aff', hue: 248, sc: 1.5,  ph: [222, 268], look: { sky: ['#010105', '#05031a'], haze: [255, 70, 32], cl: .14, dust: ['#8a8aff', .8, 0],   vig: ['#000000', .65] } }
-};
+}, OPS_BIOMES);

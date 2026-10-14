@@ -12,6 +12,8 @@ import { netAssist, rescueAssist } from './assist.js';
 import { bossTurn } from './boss-attacks.js';
 import { ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
+import { hitOps } from './ops.js';
+import { onLand } from './ops-gimmick.js';
 import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 import { cfg, shipHue, emitDecor, starHsl } from './cos.js';
@@ -76,6 +78,7 @@ function latch(p, dx, dy, d) {
   spawnLand(G.fxr, G.parts, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
   if (cfg().landshape) burst(s.x, s.y, 'hsl(' + shipHue() + ',90%,70%)', 10, 160);
   thump(170, 60, .16, .2);
+  if (G.ops && p.gim) onLand(p);   // 거대 행성 기믹(보급 부두의 보상)
   if (G.boss) {
     if (G.boss.state === 'fight') { G.bcombo = s.hitF ? G.bcombo + 1 : 0; s.hitF = false; beep(330, .07); bossTurn(); }
     return;
@@ -129,6 +132,7 @@ export function stepShip(dt) {
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); G.ship.net = true; if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     if (!boss) hitMonsters();
+    if (G.ops) hitOps();
     for (const p of G.planets) {
       if (p === s.last || p.dead || p.ghost) continue;
       const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy);

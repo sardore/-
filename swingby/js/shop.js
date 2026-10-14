@@ -66,3 +66,9 @@ export function grantShards(n) { SHOP.shards += n; persist(); }
 export function applyStartSpecs(stats) {
   for (const k in SHOP.spec) if (k === 'shield') stats.shield += SHOP.spec[k]; else stats[k] += SPEC_STEP * SHOP.spec[k];
 }
+
+/** 별 조각을 쓴다(블랙쉽 티켓 같은 내부 결제용). 모자라면 false */
+export function spendShards(n) {
+  if (SHOP.shards < n) return false;
+  SHOP.shards -= n; persist(); return true;
+}

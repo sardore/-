@@ -12,6 +12,7 @@ import { drawHud, drawLowO2, drawMuteButton, drawOverlays, drawScreens } from '.
 import { drawPick } from './draw-pick.js';
 import { drawShop } from './shop-ui.js';
 import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
+import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
@@ -26,8 +27,10 @@ export function draw() {
   g.beginPath(); g.moveTo(0, viewTop() - 20); g.lineTo(0, viewBot() + 20); g.moveTo(G.w, viewTop() - 20); g.lineTo(G.w, viewBot() + 20); g.stroke();
   if (GFX.v >= 2) drawWalls2();
   drawWorld();
+  if (G.ops) drawOpsWorld();   // 블랙쉽: 벽·소형함·포탄
   const b = G.boss;
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }
+  if (G.ops && G.st !== 'dead') drawOpsFleet();   // 동행 함선은 본체 뒤에
   if (G.st !== 'dead') drawPlayer();
   drawFx();
   drawTutoWorld();

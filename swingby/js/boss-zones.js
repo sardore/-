@@ -3,6 +3,7 @@
 import { G } from './state.js';
 import { PI, TAU, rnd, clamp, pickOf, shuffle } from './util.js';
 import { arenaH } from './camera.js';
+import { opsZones } from './ops-zones.js';
 
 /** rel 이면 좌표가 보스 기준(보스와 함께 올라감), vert 이면 아레나 전체 높이를 덮는 세로 띠 */
 export function place(z, b) {
@@ -84,6 +85,7 @@ export function uniqueZones(k, b, al, fk, K, ymin, ymax) {
     }
     case 'lobes': // 쌍엽 분출: 보스 양옆으로 세로 기둥 두 줄
       zs.push({ shape: 'b', rel: true, vert: true, x: -92 * fk, w: 30 * fk, fuse: 1.1, blast: .9 }, { shape: 'b', rel: true, vert: true, x: 92 * fk, w: 30 * fk, delay: .3, fuse: 1.1, blast: .9 }); break;
+    default: return opsZones(k, b, pl, tg, fk, K, ymin, ymax);   // 블랙쉽 모드의 적 함선 전용 패턴
   }
   return zs;
 }

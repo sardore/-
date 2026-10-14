@@ -47,6 +47,7 @@ export function shipOpts(c, def, T) {
   const o = {};
   if (c.flame) { o.fh = hueOf(c.flame, 0, T); o.fs = satOf(c.flame); }
   if (c.decor) o.art = c.decor.art;
+  if (G.ops && !G.ops.bay) o.nobay = true;   // 블랙쉽: 승계한 기체는 수송 구획이 없다
   return o;
 }
 

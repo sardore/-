@@ -257,14 +257,16 @@ function drawTutoIcon(x, y) {
   g.fillStyle = GOLD; g.beginPath(); g.arc(x + 9, y - 8 * .9, 2.6, 0, TAU); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x - 2, y + 2, 4.2, 0, TAU); g.stroke(); g.restore();
 }
+/** 블랙쉽 버튼 그림: 하양·검정 선체의 해방선이 비스듬히 떠 있다 */
+function drawOpsIcon(x, y) { g.save(); g.translate(x, y); g.rotate(-.55); drawShip(g, SHIPS.os2, .8, G.T, .62); g.restore(); }
 /** 시작화면 왼쪽 위 아이콘 메뉴 (앞으로 도감·기록 같은 메뉴를 같은 줄에 더 놓을 수 있다) */
-const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }];
-const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼)
+const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }];
+const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼, 그 아래에 블랙쉽 모드)
 export function drawTitleMenu() {
   MENU.forEach((m, i) => {
     const r = menuRect(i);
     rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = 'rgba(255,226,122,.55)'; g.lineWidth = 1.4; g.stroke();
-    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
+    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
     txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, 'rgba(255,255,255,.7)', 'center', 700);
   });
   const w = txt0(String(SHOP.shards), V.OX + 420 - 14, 38, 15); shard(V.OX + 420 - 14 - w - 12, 33, 7);   // 보유 별 조각

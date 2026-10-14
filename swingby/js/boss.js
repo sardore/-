@@ -13,11 +13,14 @@ import { SWAY_FROM, SWAY_Y, regrowAll, scrollArena, solidifyAll } from './boss-a
 import { queueAttack, beamAngle, updateHaz } from './boss-attacks.js';
 import { endlessNext, ENDLESS } from './endless.js';
 import { tutorialClear } from './tutorial.js';
+import { opsAfterBoss, opsProgress } from './ops.js';
+import { opsFinalForm } from './ops-core.js';
 
 /* ---------- 프레임 갱신 ---------- */
 export function updateBoss(dt) {
   const b = G.boss;
   b.st += dt; for (const a of b.q) a.age += dt;
+  if (b.core) b.coreT += dt;
   if (b.flash > 0) b.flash -= dt; if (b.sq > 0) b.sq = Math.max(0, b.sq - dt * 5); if (b.hitT > 0) b.hitT -= dt;
   if (b.state === 'intro') { if (b.st > 2.6) { b.state = 'fight'; b.st = 0; queueAttack().t = 3; if (!G.tuto) toast('맵이 뒤로 밀려난다 — 아래로 떨어지면 끝! 계속 위로', '#ff9d7a'); } return; }
   if (b.state === 'dying') {
@@ -72,7 +75,7 @@ export function ram() {
     G.shake = 18; flashScreen(.5, '#ff6a6a'); thump(60, 25, 1, .4); noise(1, .3, 1500, 80);
     if (b.q.length < b.d.q + b.phase) queueAttack();
   }
-  if (b.hp <= 0) { b.hp = 0; bossDefeat(); }
+  if (b.hp <= 0) { b.hp = 0; if (!opsFinalForm(b)) bossDefeat(); }   // 블랙쉽의 기함은 터진 뒤 핵 응축선으로 한 번 더
 }
 
 /* ---------- 격파 ---------- */
@@ -84,9 +87,14 @@ function finishBoss() {
   const b = G.boss, s = G.ship, stage = b.stage;
   if (G.tuto) { regrowAll(); solidifyAll(); G.boss = null; G.haz = []; tutorialClear(); return; }   // 튜토리얼의 태양: 보상을 주고 끝낸다
   addScore(400 * (stage + 1) + b.loop * 500, s.x, s.y - 30, '#ffe27a', b.d.n + ' 격파!', 24);
-  if (G.kills > G.bestBoss && !G.debug) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
+  if (G.kills > G.bestBoss && !G.debug && !G.ops) { G.bestBoss = G.kills; save('swingby_boss', G.bestBoss); }
   regrowAll(); solidifyAll();
-  G.boss = null; G.haz = []; G.biome = 'normal';
+  G.boss = null; G.haz = [];
+  if (G.ops) { // 블랙쉽: 갈림길·무한 모드가 없다. 구출·기록·다음 구역은 ops.js
+    if (opsAfterBoss(b)) return;   // 마지막 보스: 클리어
+    settleAfterBoss(s); opsProgress(); return;
+  }
+  G.biome = 'normal';
   const next = G.kills % STAGES.length;
   G.nextBi = endlessNext() ? -1 : STAGES[next][0];   // -1: 다음 보스는 무한 모드의 무작위 카탈로그 보스
   if (endlessNext()) { G.nextBoss = G.hops + ENDLESS.gap; scheduleFork(); }
@@ -94,9 +102,12 @@ function finishBoss() {
     G.biome = 'monster'; G.nextBoss = G.hops + MONSTER_ZONE.len;
     G.banner = { t: 0, dur: 2.8, a: 'ZONE', b: BIOMES.monster.n + ' 지대', c: BIOMES.monster.c, sub: '도전 보스  ' + BOSSES[G.nextBi].n };
   } else { G.nextBoss = G.hops + 14; scheduleFork(); }   // 갈림길에서 고르면 nextBi 를 덮어쓴다
-  // 보스전이 끝난 직후엔 궤도가 무너지지 않게 보호한다
+  settleAfterBoss(s);
+  afterBoss(stage);
+}
+/** 보스전이 끝난 직후엔 궤도가 무너지지 않게 보호하고, 월드 생성을 아레나의 가장 높은 행성 위에서 이어 간다 */
+function settleAfterBoss(s) {
   s.grace = 4; s.air = s.mode === 'free' ? -2.5 : 0; s.inv = Math.max(s.inv, 1.5);
   if (s.mode === 'orb') s.r = Math.max(s.r, (s.p.R + capOf(s.p)) / 2);
   G.genY = Math.min(...G.planets.map(p => p.y)) - 30;
-  afterBoss(stage);
 }

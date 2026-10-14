@@ -4,6 +4,8 @@ import { G, g } from './state.js';
 import { PI, TAU, easeOut } from './util.js';
 import { capOf } from './stats.js';
 import { hash, drawPlanet, drawCraters } from './draw-planet.js';
+import { drawOpsPlanet } from './ops-planet-art.js';
+import { OPS_PLANET_TYPES } from './ops-data.js';
 
 const LX = -.42, LY = -.5;           // 빛이 오는 방향(왼쪽 위)
 const hsl = (h, s, l, a) => 'hsla(' + h + ',' + s + '%,' + l + '%,' + (a == null ? 1 : a) + ')';
@@ -65,6 +67,7 @@ export function drawPlanet2(p) {
     at.addColorStop(0, hsl(h, 90, 75, 0)); at.addColorStop(.42, hsl(h, 90, 72, t === 'r' ? .55 : t === 'm' ? .2 : .42)); at.addColorStop(1, hsl(h, 90, 70, 0));
     g.globalCompositeOperation = 'lighter'; g.fillStyle = at; circle(x, y, R * 1.25); g.fill(); g.globalCompositeOperation = 'source-over';
   }
+  if (OPS_PLANET_TYPES.includes(t)) { drawOpsPlanet(p, R); return; }   // 블랙쉽 전용 행성은 본체를 따로 그린다
   if (t === 'g') gasRing(p, R, true);
   // 본체: 빛 쪽이 밝은 구
   const sat = t === 'm' ? 38 : t === 'a' ? 30 : 70, hiS = t === 'm' ? 45 : t === 'a' ? 40 : 85, hiL = t === 'm' ? 68 : t === 'r' ? 82 : 80;

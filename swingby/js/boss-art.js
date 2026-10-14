@@ -3,6 +3,7 @@
 import { G, g } from './state.js';
 import { PI, TAU } from './util.js';
 import { drawGen } from './boss-gen.js';
+import { drawOpsBoss } from './ops-boss-art.js';
 
 const hsl = (h, s, l, a = 1) => 'hsla(' + h + ',' + s + '%,' + l + '%,' + a + ')';
 
@@ -307,6 +308,7 @@ const ART = {
 
 /** 보스 몸을 그린다. 호출 전에 보스 중심으로 translate/scale 되어 있어야 한다 */
 export function drawBossBody(b) {
+  if (b.d.ship) { drawOpsBoss(b); return; }   // 블랙쉽 모드의 적 함선
   if (b.d.look) { drawGen(b); return; }   // 무한 모드 보스: 조합형 외형
   g.lineCap = 'round';
   (ART[b.d.kind] || ART.dwarf)(b, b.R, b.d.hue);

@@ -49,6 +49,7 @@ function drawEvo() {
     const maxX = r.x + r.w - 96; let x = r.x + 86, y = r.y + 68;
     const chips = Object.keys(o.delta).map(k => k === 'shield' ? ['추진기 +' + o.delta[k], STAT_INFO[k].c] : [STAT_INFO[k].n + ' ' + after[k] + '%', STAT_INFO[k].c]);
     if (o.strong) chips.push(['강력한 돌진', '#ffb070']);
+    if (G.ops && G.ops.bay && o.L.ops && o.t >= 3) chips.push(['수송 능력', '#9fe0c0']);   // 블랙쉽: Lv3 부터 갇힌 함선을 구출할 수 있다
     for (const [t, c] of chips) {
       const w = chipWidth(t) + 6;
       if (x + w > maxX && x > r.x + 90) { x = r.x + 86; y += 20; }

@@ -8,6 +8,7 @@ import { startBoss } from './boss-arena.js';
 import { save } from './util.js';
 import { applyDebugRun } from './debug-run.js';
 import { applyStartSpecs, settleRun } from './shop.js';
+import { opsCheck } from './ops.js';
 
 /* ---------- 강화 카드 (4단 진화 이후) ---------- */
 const canTake = c => G.stats[c.k] < c.cap;
@@ -19,12 +20,13 @@ export function offer(title) {
   beep(660, .12); setTimeout(() => beep(880, .14), 90);
 }
 function pickCard(c) {
-  G.stats[c.k] = Math.min(c.cap, G.stats[c.k] + c.step); G.st = 'play'; beep(780, .1);
+  const was = G.stats[c.k]; G.stats[c.k] = Math.min(c.cap, was + c.step); G.st = 'play'; beep(780, .1);
+  if (G.ops) G.ops.bonus[c.k] = (G.ops.bonus[c.k] || 0) + G.stats[c.k] - was;   // 승계한 함선에게도 이어지도록 카드로 얻은 몫을 적어 둔다
   const info = STAT_INFO[c.k]; popText(G.ship.x, G.ship.y - 24, c.n, info.c, 16); ringFx(G.ship.x, G.ship.y, info.c, 6, 70, .5, 3);
 }
 
 /* ---------- 기체 진화 ---------- */
-function startEvo() {
+export function startEvo() {
   G.evoOpts = SHIPS[G.shipId].kids.map(k => SHIPS[k]);
   if (!G.evoOpts.length) { offer(); return; }
   G.st = 'pick'; G.pickMode = 'evo'; G.pickT = 0;
@@ -38,7 +40,7 @@ export function evolveTo(d) {
   flashScreen(.7, '#fff'); punch(.07); slowmo(.45, .9); shakeAdd(10); vibe([30, 30, 70]);
   burst(s.x, s.y, col, 40, 320); burst(s.x, s.y, '#fff', 22, 240); ringFx(s.x, s.y, '#fff', 6, 170, .7, 5); ringFx(s.x, s.y, col, 6, 120, .55, 3);
   thump(90, 30, .5, .4); noise(.6, .25, 6000, 200); [0, 1, 2, 3].forEach(i => setTimeout(() => beep(520 * Math.pow(1.26, i), .16, 'triangle', .1), i * 90));
-  if (G.tier >= 4) G.nextOffer = G.hops + 4;
+  if (G.tier >= 4 && !G.ops) G.nextOffer = G.hops + 4;   // 블랙쉽은 주기적인 카드 없이 보스를 쓰러뜨릴 때만 준다
 }
 
 /** 새 판 시작: 상점의 영구 초기 스펙을 얹고, 디버그판이면 초고스펙 설정으로 덮어쓴다 */
@@ -52,6 +54,7 @@ export function choose(i) {
 /* ---------- 진행 규칙 ---------- */
 /** 오빗 중 매 프레임: 진화·강화·보스 등장 조건 확인 */
 export function checkProgress() {
+  if (G.ops) { if (!opsCheck() && G.hops >= G.nextBoss && G.st === 'play') startBoss(); return; }   // 블랙쉽: 진화는 보스 격파·보급 부두, 카드 주기는 없다
   if (G.tier === 1 && G.hops >= (G.tuto ? 4 : 8)) startEvo();          // 첫 보스 직전에 2단 진화 (튜토리얼은 더 일찍)
   else if (G.hops >= G.nextOffer) { G.nextOffer += 4; offer('강화 선택'); }
   else if (G.hops >= G.nextBoss && G.st === 'play') startBoss();

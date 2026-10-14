@@ -6,6 +6,7 @@ import { W0 } from './util.js';
 import { SHIPS } from './ships.js';
 import { PLANET_DEC, BIOMES, BOSS_MUL } from './data.js';
 import { endlessGrav } from './endless.js';
+import { OPS } from './ops-data.js';
 
 const pct = k => G.stats[k] / 100;
 
@@ -38,4 +39,4 @@ export const ramMul = () => pct('ram');
 /** 보스전 산소 풀: 스테이지·루프에 따라 늘고 산소 능력치가 절반만큼 반영된다 */
 export const bossO2 = (stage, loop) => (24 + 6 * stage + 2 * loop) * (1 + (G.stats.o2 - 100) / 200);
 /** 점수 배율: 능력치 × 보스 격파 복리 × 바이옴(보스전 중에는 바이옴 무시) */
-export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc);   // 보스 격파마다 ×BOSS_MUL 복리
+export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc) * (G.ops ? 1 + OPS.rescueMul * G.ops.fol.length : 1);   // 블랙쉽: 함께 있는 함선이 많을수록 점수 배율이 오른다   // 보스 격파마다 ×BOSS_MUL 복리

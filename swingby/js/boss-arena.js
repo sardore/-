@@ -1,6 +1,6 @@
 /* 보스 아레나: 서 있던 행성을 기준으로 전투장을 만들고(행성 배치·보스 등장), 부서진 행성을 되살린다 */
 import { G, V } from './state.js';
-import { W0, TAU, rnd, clamp } from './util.js';
+import { W0, TAU, rnd, clamp, pickOf } from './util.js';
 import { BIOMES, BOSSES, STAGES } from './data.js';
 import { capOf, bossO2, fs, arenaK } from './stats.js';
 import { arenaH } from './camera.js';
@@ -9,6 +9,8 @@ import { burst, ringFx, flashScreen } from './fx.js';
 import { mkPlanet } from './planets.js';
 import { endlessNext, makeEndlessBoss } from './endless.js';
 import { makeSunBoss } from './sun.js';
+import { OPS_BOSSES } from './ops-data.js';
+import { opsPrepare } from './ops.js';
 
 const ARENA_RING = .78;               // 보스전에서 서 있던 행성의 포획 링 폭 비율 (아레나 행성은 처음부터 좁게 만든다)
 export const SWAY_FROM = 1, SWAY_Y = 26;   // 보스가 움직이기 시작하는 스테이지(0부터)와 위아래 흔들림 폭
@@ -32,9 +34,9 @@ const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length - 1) /
 
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
-  const s = G.ship, P = s.p, tuto = !!G.tuto, endless = !tuto && endlessNext(), n = G.kills - STAGES.length;   // endless: TON 618 이후의 무한 모드 보스(카탈로그 이름, 무작위 패턴) · tuto: 튜토리얼의 태양
-  const bi = tuto ? -2 : endless ? -1 : G.nextBi, d0 = tuto ? makeSunBoss() : endless ? makeEndlessBoss(n) : BOSSES[bi];
-  const stage = tuto ? 0 : endless ? STAGES.length - 2 : G.kills % STAGES.length, loop = endless ? 0 : tuto ? 0 : Math.floor(G.kills / STAGES.length);
+  const s = G.ship, P = s.p, tuto = !!G.tuto, ops = !!G.ops, endless = !tuto && !ops && endlessNext(), n = G.kills - STAGES.length;   // endless: TON 618 이후의 무한 모드 보스(카탈로그 이름, 무작위 패턴) · tuto: 튜토리얼의 태양
+  const bi = tuto ? -2 : ops ? -3 : endless ? -1 : G.nextBi, d0 = tuto ? makeSunBoss() : ops ? OPS_BOSSES[G.kills] : endless ? makeEndlessBoss(n) : BOSSES[bi];   // ops: 블랙쉽의 적 함선(OPS_BOSSES)
+  const stage = tuto ? 0 : ops ? G.kills : endless ? STAGES.length - 2 : G.kills % STAGES.length, loop = endless || tuto || ops ? 0 : Math.floor(G.kills / STAGES.length);
   // 아레나는 보스가 시작될 때의 필드 폭에 스테이지 가산(ARENA_GROW)을 곱한 폭이다. 필드 폭은 보스전 동안 고정이고, 크기는 fk(√), 거리는 K(선형) 배율을 따른다
   const grow = arenaGrow(endless ? STAGES.length - 1 : stage), px = P.x / G.w;
   G.w *= grow; P.x = px * G.w;
@@ -57,13 +59,14 @@ export function startBoss() {
   };
   G.bo2max = G.bo2 = endless ? bossO2(STAGES.length - 1, n) : bossO2(stage, loop) + (tuto ? 8 : 0);
   if (tuto) G.stats.shield = 1;   // 튜토리얼 앞부분에서는 몇 번을 떨어져도 되살려 줬지만 보스전에는 한 번만 G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
-  G.banner = { t: 0, dur: 3, a: tuto ? 'TUTORIAL' : endless ? 'ENDLESS ' + d.endless : 'BOSS ' + (stage + 1) + ' / ' + STAGES.length + (loop ? '  ·  ' + (loop + 1) + '회차' : ''), b: d.n, c: 'hsl(' + d.hue + ',100%,70%)', sub: d.line };
+  G.banner = { t: 0, dur: 3, a: tuto ? 'TUTORIAL' : ops ? 'TARGET ' + (stage + 1) + ' / ' + OPS_BOSSES.length : endless ? 'ENDLESS ' + d.endless : 'BOSS ' + (stage + 1) + ' / ' + STAGES.length + (loop ? '  ·  ' + (loop + 1) + '회차' : ''), b: d.n, c: 'hsl(' + d.hue + ',100%,70%)', sub: d.line };
+  if (ops) opsPrepare();
   G.shake = 8; flashScreen(.35, 'hsl(' + d.hue + ',100%,70%)'); thump(70, 28, 1.4, .4); noise(1.6, .25, 900, 60); vibe([40, 30, 80]);
 }
 
 /** 아레나용 행성: 일반 행성보다 포획 링이 좁다 (gas 면 가스행성) */
 function arenaPlanet(x, y, gas) {
-  const fk = fs(), q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : 'n');
+  const fk = fs(), q = mkPlanet(G.genI++, x, y, 'normal', gas ? 'g' : G.ops && Math.random() < .07 ? pickOf(['s', 'd', 'h', 'l']) : 'n');   // 블랙쉽의 아레나에는 시설 행성이 아주 드물게만 섞인다(난잡하지 않게)
   q.R = (gas ? rnd(32, 38) : rnd(20, 27)) * fk; q.cap = q.R + (gas ? 58 : rnd(40, 48)) * fk; q.hue = gas ? 36 : rnd(...BIOMES[G.biome].ph); q.seen = true;
   if (G.biome === 'belt') q.brittle = true;
   return q;

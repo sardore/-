@@ -15,7 +15,7 @@ const dashed = (on, off, offset) => { g.setLineDash([on, off]); if (offset != nu
 const solid = () => g.setLineDash([]);
 
 /** 몸 바깥으로 번지는 빛의 반지름 배율 (뿔·고리가 큰 보스는 더 넓게) */
-const GLOW = { bull: 3.4, swirl: 3.4, quasar: 3 };
+const GLOW = { bull: 3.4, swirl: 3.4, quasar: 3, ship: 1.5 };
 
 /* ---------- 보스 ---------- */
 export function drawBoss(b) {
@@ -116,6 +116,13 @@ export function drawTele(a, b) {
       gg.addColorStop(0, hexA(c, .22)); gg.addColorStop(1, hexA(c, 0));
       g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
       txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
+    }
+    case 'cage': { // 무단 투하: 벽이 덮칠 자리는 붉게, 비워 둔 길은 밝은 줄로 보여 준다(글자 없음)
+      const top = G.arenaTop, bot = G.arenaBot, edges = [0, ...a.gaps.flat(), G.w];
+      for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 6) { shape(() => { g.beginPath(); g.rect(edges[i], top, edges[i + 1] - edges[i], bot - top); }); g.fillStyle = hexA('#ff5a4a', .07 + .05 * pul); g.fillRect(edges[i], top, edges[i + 1] - edges[i], bot - top); }
+      g.fillStyle = hexA('#8aff9a', .13 + .07 * pul);
+      for (const gp of a.gaps) { g.fillRect(gp[0], top, gp[1] - gp[0], bot - top); g.strokeStyle = hexA('#8aff9a', .5 + .3 * pul); g.lineWidth = 1.5; line(gp[0], top, gp[0], bot); line(gp[1], top, gp[1], bot); }
+      cnt(G.w / 2, top + 70 * fs()); break;
     }
     default: if (a.zones) { // 고유 패턴: 존 정의를 그대로 예고로 그린다
       const ps = a.zones.map(z => place(z, b));
@@ -247,6 +254,23 @@ function drawPool(h, e, dur) {
 /* ---------- 위험 요소 (존 · 블랙홀 · 항성풍) ---------- */
 export function drawHaz(h) {
   switch (h.k) {
+    case 'rbeam': { // 핵 응축선의 광선: 반대쪽으로 뻗는 두 줄기가 느리게 돈다
+      const b = G.boss; if (!b) break;
+      const ap = clamp((h.t - .3) / 1.0, 0, 1), live = h.t >= 1.3, pu = .5 + .5 * Math.sin(G.T * 7);
+      for (const sg of [0, PI]) {
+        const an = h.ang + sg, hf = h.half * (live ? 1 : .35 + .65 * Math.min(1, (h.t - .3) / 1.0));
+        g.save(); g.globalAlpha = ap;
+        g.beginPath(); g.moveTo(b.x, b.y); g.arc(b.x, b.y, h.len, an - hf, an + hf); g.closePath(); g.clip();
+        const gg = g.createLinearGradient(b.x, b.y, b.x + Math.cos(an) * h.len, b.y + Math.sin(an) * h.len);
+        gg.addColorStop(0, 'rgba(255,255,255,.95)'); gg.addColorStop(.2, 'rgba(255,170,90,' + (live ? .8 : .35) + ')'); gg.addColorStop(1, 'rgba(255,120,60,' + (live ? .3 : .1) + ')');
+        g.fillStyle = gg; g.fillRect(b.x - h.len, b.y - h.len, h.len * 2, h.len * 2);
+        g.strokeStyle = 'rgba(255,255,255,' + (.5 + .4 * pu) + ')'; g.lineWidth = 2.2; line(b.x, b.y, b.x + Math.cos(an) * h.len, b.y + Math.sin(an) * h.len);
+        for (let i = 0; i < 5; i++) { const r = (G.T * 420 + i * h.len / 5) % h.len; g.strokeStyle = 'rgba(255,255,255,' + .4 * (1 - r / h.len) + ')'; g.lineWidth = 3; g.beginPath(); g.arc(b.x, b.y, r, an - hf, an + hf); g.stroke(); }
+        g.restore();
+        if (!live) { g.save(); g.globalAlpha = .6; g.strokeStyle = 'rgba(255,200,140,.8)'; g.lineWidth = 1.5; dashed(8, 8, -G.T * 30); for (const e of [-1, 1]) line(b.x, b.y, b.x + Math.cos(an + e * h.half) * h.len, b.y + Math.sin(an + e * h.half) * h.len); solid(); g.restore(); }
+      }
+      break;
+    }
     case 'zone': drawZone(h); break;
     case 'hole': {
       const rr0 = h.r * easeOut(h.born);
