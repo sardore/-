@@ -10,7 +10,7 @@ import { bossShot } from './boss.js';
 import { shootMook } from './ops-mook.js';
 import { shootWall } from './ops-walls.js';
 
-const SPEED = 780, GAP = .085;
+const SPEED = 780, GAP = .085, BOSS_DMG = .2;   // 보스에게는 포탄 피해의 20% 만 들어간다(돌진하며 쏘는 포가 보스전을 쉽게 만들지 않도록)
 
 /** 돌진을 시작할 때(player.js release) */
 export function batteryStart() {
@@ -42,7 +42,7 @@ export function updateBattery(dt) {
   for (const sh of o.shells) {
     sh.x += sh.vx * dt; sh.y += sh.vy * dt; sh.life -= dt;
     let hit = false;
-    if (b && b.state === 'fight' && Math.hypot(sh.x - b.x, sh.y - b.y) < b.hr + 3) { bossShot(sh.dmg); hit = true; }
+    if (b && b.state === 'fight' && Math.hypot(sh.x - b.x, sh.y - b.y) < b.hr + 3) { bossShot(sh.dmg * BOSS_DMG); hit = true; }
     else if (shootWall(sh.x, sh.y, sh.dmg)) hit = true;
     else for (const m of o.mooks) if (!m.nohit && Math.hypot(sh.x - m.x, sh.y - m.y) < m.R + 3) { shootMook(m, sh.dmg); hit = true; break; }
     if (hit) { sh.life = 0; burst(sh.x, sh.y, 'hsl(' + sh.h + ',100%,70%)', 5, 150); sparks(sh.x, sh.y, '#fff', 4, 260, Math.atan2(-sh.vy, -sh.vx), .9); }

@@ -120,12 +120,10 @@ export function drawTele(a, b) {
       g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
       txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
     }
-    case 'dump': { // 무단 투하: 쓰레기가 떨어질 길은 붉게, 비워 둔 길은 초록 줄로 보여 준다(글자 없음)
+    case 'dump': { // 무단 투하: 쓰레기가 떨어질 길만 붉게 보여 준다. 다른 패턴처럼 안전한 길은 따로 표시하지 않는다(글자 없음)
       const top = G.arenaTop, bot = G.arenaBot, fk = fs();
       g.fillStyle = hexA('#ff6a4a', .05 + .05 * pul); for (const x of a.xs) g.fillRect(x - 15 * fk, top, 30 * fk, bot - top);
       shape(() => { g.beginPath(); for (const x of a.xs) g.rect(x - 15 * fk, top, 30 * fk, bot - top); });
-      g.fillStyle = hexA('#8aff9a', .13 + .07 * pul);
-      for (const gp of a.gaps) { g.fillRect(gp[0], top, gp[1] - gp[0], bot - top); g.strokeStyle = hexA('#8aff9a', .5 + .3 * pul); g.lineWidth = 1.5; line(gp[0], top, gp[0], bot); line(gp[1], top, gp[1], bot); }
       cnt(G.w / 2, top + 70 * fk); break;
     }
     default: if (isSkill(a.k)) skillDrawTele(a, b, { c, shape, cnt, warn, gr, pul });

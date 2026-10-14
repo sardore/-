@@ -5,6 +5,7 @@ export const OPS = {
   ticketOn: false, ticket: 150,   // 티켓 판매: 내부 기능만 있고 지금은 꺼 둔다(켜면 모드에 들어갈 때 별 조각 ticket 개를 받는다)
   first: 14, gap: 22,             // 첫 보스까지 · 보스 사이의 행성 수 (일반 항해의 14보다 길다)
     bayTier: 3,                     // 이 단계부터 수송 능력(포로 구출)을 가진다
+  scrollMax: 1.8,                 // 보스전 맵이 밀려나는 템포 배율: 첫 보스 1.0 → 마지막 보스(8번째) 1.8 까지 일정하게 오른다. 일반 항해(7번째 1.4)보다 가파르다
   fallSlack: 130,                 // 충돌에 밀려 내려가도 죽지 않게, 카메라가 가장 높이 간 위치보다 내려갈 수 있는 높이(px). 그만큼 아래 맵이 남는다
   maxFollowers: 3,                // 한 번에 따라다닐 수 있는 함선 수. 보스 하나당 한 척뿐이라(두 번째 보스부터) 가득 차면 가진 함선을 한 단계 올려 준다
   rescueMul: { 1: .08, 2: .12, 3: .18 },   // 함께 있는 함선 한 척당 점수 배율 증가(그 함선의 단계별). 셋이 다 Lv3 여도 ×1.54
@@ -57,10 +58,10 @@ export const OPS_BOSSES = [
   { n: '순찰함 센트리',     e: 'SENTRY',      ship: 'sentry',     R: 66, hp: 170, atk: 6,  hue: 8,  kind: 'ship', pat: ['curtain', 'turret', 'lockon'], q: 2, cap: 1, line: '포탑이 달린 방벽형 순찰함' },
   { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 76, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'crate', 'curtain'], q: 2, cap: 1, line: '포로를 컨테이너에 싣고 가는 호송함' },
   { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 84, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['shockwave', 'arc', 'mines'], q: 2, cap: 1, line: '신호를 찢어 놓는 전자전함' },
-  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 84, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'homing', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
-  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 96, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'shockwave', 'dump', 'sniper'], q: 3, cap: 1, line: '잊혀진 이들을 가두는 감옥선' },
-  { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 100, hp: 700, atk: 9,  hue: 322, kind: 'ship', pat: ['railgun', 'ricochet', 'vform'], q: 3, cap: 1, line: '함체를 가로지르는 거대한 레일건' },
-  { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 114, hp: 960, atk: 10, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'shockwave', 'cage', 'vform'], q: 3, cap: 1, line: '모든 항로를 내려다보는 사령 기함' }
+  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 84, hp: 430, atk: 9,  hue: 0,   kind: 'ship', pat: ['vform', 'homing', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
+  { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 96, hp: 560, atk: 10,  hue: 295,  kind: 'ship', pat: ['mines', 'shockwave', 'dump', 'sniper'], q: 3, cap: 1, line: '잊혀진 이들을 가두는 감옥선' },
+  { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 100, hp: 700, atk: 12,  hue: 322, kind: 'ship', pat: ['railgun', 'ricochet', 'vform'], q: 3, cap: 1, line: '함체를 가로지르는 거대한 레일건' },
+  { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 114, hp: 960, atk: 14, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'shockwave', 'quake', 'vform'], q: 3, cap: 1, line: '모든 항로를 내려다보는 사령 기함' }
 ];
 
 /** 마지막 보스(기함)가 터진 뒤 남는 '핵 응축선': 작은 핵에서 두 갈래 가지가 뻗고, 가지 끝에서 느리게 도는 광선이 계속 이어진다. 이것까지 부숴야 클리어 */
@@ -81,6 +82,6 @@ export const OPS_ATK = {
   arc:      { n: '방전', c: '#b8a0ff', cast: '연쇄 방전', pow: 1.1 },
   homing:   { n: '추격탄', c: '#ff7a6a', cast: '추격탄 발사', pow: 1 },
   ricochet: { n: '반사', c: '#9fe8ff', cast: '반사 레일 사격', pow: 1.3 },
-  cage:     { n: '봉쇄', c: '#ff7ac8', cast: '수감 봉쇄', pow: 1.2 },
+  quake:    { n: '삼중 충격', c: '#ff7ac8', cast: '삼중 충격', pow: 1.0 },   // 모든 행성 지정 → 0.5·1.0·1.5초 뒤 행성 근처 충격파 3번(ops-skills.js). 맞으면 무적이라 실제로는 한 대
   dump:     { n: '무단 투하', c: '#ffc27a', cast: '무단 투하',      pow: 1.2 }   // 존이 아니라 쓰레기 더미가 쏟아진다(ops-walls.js 의 spawnJunk). 보스전에 쓰레기가 나오는 유일한 경우
 };

@@ -9,7 +9,7 @@ import { burst, ringFx, flashScreen } from './fx.js';
 import { mkPlanet } from './planets.js';
 import { endlessNext, makeEndlessBoss } from './endless.js';
 import { makeSunBoss } from './sun.js';
-import { OPS_BOSSES } from './ops-data.js';
+import { OPS_BOSSES, OPS } from './ops-data.js';
 import { opsPrepare } from './ops.js';
 
 const ARENA_RING = .78;               // 보스전에서 서 있던 행성의 포획 링 폭 비율 (아레나 행성은 처음부터 좁게 만든다)
@@ -22,8 +22,10 @@ export const aliveP = () => G.planets.filter(p => !p.dead && !p.ghost);
 const SCROLL = { base: 12, max: 1.4, ton: 1.8, accel: .8, gap: [58, 86] };
 /** 새 행성은 보스 바로 아래에서 유령(투명·포획 불가)으로 나타나, 등장선에서 ACT.ghost 만큼 더 내려와야 실체가 된다(ACT.ramp 동안 서서히 짙어진다) */
 const ACT = { ghost: 40, ramp: 24, alpha: .1 };
-/** 이동 템포 배율: 첫 보스 1.0 → 후반 보스 1.4(스테이지에 따라 일정하게), TON 618 은 예외로 1.8 */
-const scrollTempo = b => b.d.kind === 'quasar' ? SCROLL.ton : 1 + (SCROLL.max - 1) * Math.min(b.stage, STAGES.length - 2) / (STAGES.length - 2);
+/** 이동 템포 배율: 첫 보스 1.0 → 후반 보스 1.4(스테이지에 따라 일정하게), TON 618 은 예외로 1.8. 블랙쉽은 첫 보스 1.0 → 마지막 보스 1.8(OPS.scrollMax) */
+const scrollTempo = b => b.d.kind === 'quasar' ? SCROLL.ton
+  : G.ops ? 1 + (OPS.scrollMax - 1) * Math.min(b.stage, STAGES.length - 1) / (STAGES.length - 1)   // 블랙쉽: 8번째 보스까지 더 가파르게 오른다
+  : 1 + (SCROLL.max - 1) * Math.min(b.stage, STAGES.length - 2) / (STAGES.length - 2);
 const HORIZON_SCROLL = 2;   // TON 618 의 사건의 지평선: 맵이 밀려나는 속도 배율
 const scrollSpeed = b => SCROLL.base * scrollTempo(b) * arenaK() * (b.horizon ? HORIZON_SCROLL : 1);   // 행성 간격은 거리 기준이라 빨라지면 행성이 나오는 빈도(시간당)도 같은 비율로 늘어난다
 
