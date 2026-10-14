@@ -31,6 +31,7 @@ const freshOps = () => ({
   fol: [], hist: [],    // 따라다니는 함선 · 본체가 지나온 길
   bonus: {},            // 강화 카드로 올린 능력치(후계자에게 이어진다)
   rescued: 0, succ: 0,  // 구출한 함선 수(누적) · 승계 횟수
+  card: null,           // 구출·강화 안내 화면에 띄울 함선 { kind:'join'|'up', id, from }
   walls: [], mooks: [], shots: [], gim: { due: 9, n: 0 },
   bat: null, shells: [],   // 돌진 포대: 남은 발사 · 날아가는 포탄
   pendingEvo: false,    // 보급 부두의 보상: 다음 오빗에서 진화를 고른다
@@ -85,8 +86,8 @@ export function opsAfterBoss(b) {
   if (b.d.cap) {
     const bay = hasBay() || (!!o.bay && G.tier + 1 >= OPS.bayTier && G.tier < opsTarget(G.kills) && SHIPS[G.shipId].kids.length > 0);   // 곧 이어질 진화로 Lv3 가 되는 함선도 구출을 마친다
     const r = bay ? rescue(b.d.cap, b.stage, b.x, b.y) : null;
-    if (r && r.join) { toast('함선 구출 — 뒤를 따라온다', '#e6e0c8'); popText(b.x, b.y - 30, '함선 구출', '#fff', 20); flashScreen(.35, '#fff'); }
-    else if (r && r.up.length) { const u = r.up[0]; toast('구출한 함선이 동행 ' + u.name + '(Lv' + u.to + ')에게 합류해 강화됐다', '#e6e0c8'); popText(b.x, b.y - 30, '동행 강화 Lv' + u.from + ' → Lv' + u.to, '#fff', 18); flashScreen(.3, '#fff'); }
+    if (r && r.join) { o.card = { kind: 'join', id: r.ids[0] }; popText(b.x, b.y - 30, '함선 구출', '#fff', 20); flashScreen(.35, '#fff'); }   // 안내 화면은 보스가 완전히 사라진 뒤(opsProgress)
+    else if (r && r.up.length) { const u = r.up[0]; o.card = { kind: 'up', id: u.toId, from: u.fromId }; popText(b.x, b.y - 30, '동행 강화 Lv' + u.from + ' → Lv' + u.to, '#fff', 18); flashScreen(.3, '#fff'); }
     else toast(bay ? '동행이 가득 찼다' : '수송 능력이 없어 갇힌 함선을 두고 간다', '#c8b89a');
   }
   if (!G.debug && G.kills > OPSREC.boss) { OPSREC.boss = G.kills; save('swingby_ops_boss', OPSREC.boss); }
@@ -101,9 +102,18 @@ export function opsAfterBoss(b) {
 
 /** 보스 격파 뒤의 성장: 정해진 단계까지는 진화, 그 뒤로는 강화 카드. 오래 못 올린 후계자는 한 번에 한 단계씩 따라잡는다 */
 export function opsProgress() {
+  if (G.ops.card) { openRescue(); return; }   // 구출·강화한 함선을 먼저 보여 준 뒤(탭하면 closeRescue) 진화·카드로 넘어간다
   if (G.tier < opsTarget(G.kills) && SHIPS[G.shipId].kids.length) startEvo();
   else offer('보스 격파 — 강화 선택');
 }
+
+/** 구출·동행 강화 안내 화면(draw-pick.js 의 drawRescue). 진화·카드 선택과 같은 'pick' 상태를 쓴다 */
+function openRescue() {
+  G.st = 'pick'; G.pickMode = 'rescue'; G.pickT = 0; G.held = false;
+  flashScreen(.4, '#fff');
+  [0, 1, 2].forEach(i => setTimeout(() => beep(520 * Math.pow(1.26, i), .16, 'triangle', .1), i * 110));
+}
+export function closeRescue() { G.ops.card = null; G.st = 'play'; beep(660, .08); opsProgress(); }
 
 /** 오빗 중 매 프레임(progress.js 의 checkProgress): 진화 조건. 처리했으면 true */
 export function opsCheck() {

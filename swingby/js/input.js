@@ -22,6 +22,7 @@ export function pointerDown(px, py, key) {
     case 'shop': if (!key) shopDown(x, y); break;
     case 'play': pressStart(); break;
     case 'pick': {
+      if (G.pickMode === 'rescue') { if (G.pickT > .8) choose(0); return; }   // 구출 안내: 어디를 눌러도(키 포함) 넘어간다
       if (G.pickT < .45 || key) return;
       pickLayout().rects.forEach((r, i) => { if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) choose(i); });
       break;

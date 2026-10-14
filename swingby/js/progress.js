@@ -8,7 +8,7 @@ import { startBoss } from './boss-arena.js';
 import { save } from './util.js';
 import { applyDebugRun } from './debug-run.js';
 import { applyStartSpecs, settleRun } from './shop.js';
-import { opsCheck } from './ops.js';
+import { opsCheck, closeRescue } from './ops.js';
 
 /* ---------- 강화 카드 (4단 진화 이후) ---------- */
 const canTake = c => G.stats[c.k] < c.cap;
@@ -47,6 +47,7 @@ export function evolveTo(d) {
 export function startRun() { newRun(); applyStartSpecs(G.stats); applyDebugRun(); }
 
 export function choose(i) {
+  if (G.pickMode === 'rescue') { closeRescue(); return; }
   if (G.pickMode === 'evo') { if (G.evoOpts[i]) evolveTo(G.evoOpts[i]); return; }
   if (G.cards[i]) pickCard(G.cards[i]);
 }

@@ -42,13 +42,13 @@ export const fleetMul = () => 1 + (G.ops ? fleetBonus(G.ops.fol) : 0);
 /** 구출: 보스가 있던 자리(x, y)에서 n 척이 풀려난다. 동행이 가득 차 있으면 새로 합류하는 대신 가진 함선 하나가 한 단계 오른다
  * (Lv2 가 있으면 Lv2 → Lv3 가 먼저, 없으면 스카우트 → Lv2. 모두 Lv3 이면 더 올릴 곳이 없다). { join: 합류한 수, up: 올라간 함선 목록 } 을 돌려준다 */
 export function rescue(n, stage, x, y) {
-  const o = G.ops, res = { join: 0, up: [] };
+  const o = G.ops, res = { join: 0, up: [], ids: [] };
   for (let i = 0; i < n; i++) {
     const a = rnd(0, TAU), r = rnd(20, 60), cx = x + Math.cos(a) * r, cy = y + Math.sin(a) * r;
     if (o.fol.length < OPS.maxFollowers) {
       const id = captiveId(stage);
       o.fol.push({ id, t: SHIPS[id].t, x: cx, y: cy, a: rnd(0, TAU), born: 0 });
-      res.join++; o.rescued++;
+      res.join++; o.rescued++; res.ids.push(id);
       ringFx(cx, cy, '#fff', 4, 50, .5, 3);
     } else {
       const up = upgradeOne(); if (!up) break;
@@ -62,11 +62,11 @@ export function rescue(n, stage, x, y) {
 function upgradeOne() {
   const o = G.ops, c = o.fol.filter(f => f.t < 3 && SHIPS[f.id].kids.length);
   if (!c.length) return null;
-  const top = Math.max(...c.map(f => f.t)), f = pickOf(c.filter(g => g.t === top)), from = SHIPS[f.id], to = SHIPS[pickOf(from.kids)];
+  const top = Math.max(...c.map(f => f.t)), f = pickOf(c.filter(g => g.t === top)), from = SHIPS[f.id], to = SHIPS[pickOf(from.kids)], fromId = f.id;
   f.id = to.id; f.t = to.t; f.born = .3;
   const col = 'hsl(' + to.L.h + ',95%,66%)';
   burst(f.x, f.y, col, 14, 160); ringFx(f.x, f.y, '#fff', 6, 70, .5, 3); popText(f.x, f.y - 20, 'Lv' + from.t + ' → Lv' + to.t, col, 14);
-  return { from: from.t, to: to.t, name: to.n };
+  return { from: from.t, to: to.t, name: to.n, fromId, toId: to.id };
 }
 
 /** 지나온 길을 비우고 지금 자리에서 다시 시작한다(필드 폭이 바뀌거나 되살아나 자리가 크게 바뀔 때) */
