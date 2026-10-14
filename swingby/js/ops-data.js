@@ -52,11 +52,11 @@ export const OPS_PLANET_TYPES = 'sdhlkv';
  * 몸체는 검정·회색의 거대한 철갑이고, 주포 둘레만 위협적인 붉은색·보라색으로 빛난다(hue 는 그 빛의 색상)
  * ship: 그리는 함선(ops-boss-art.js) · cap: 갇힌 아군 함선 수(수송 능력이 있어야 구출한다. 두 번째 보스부터 한 척씩). 별이 아니라 함선이라 항성 패턴 대신 전용 패턴을 쓴다 */
 export const OPS_BOSSES = [
-  { n: '감시정 아르거스',   e: 'ARGUS',       ship: 'argus',      R: 72, hp: 90,  atk: 4,  hue: 355, kind: 'ship', pat: ['sniper', 'lockon'], q: 1, cap: 0, line: '국경 너머를 훑는 감시정' },
-  { n: '순찰함 센트리',     e: 'SENTRY',      ship: 'sentry',     R: 80, hp: 170, atk: 6,  hue: 8,  kind: 'ship', pat: ['lockon', 'curtain', 'sniper'], q: 2, cap: 1, line: '포탑이 달린 방벽형 순찰함' },
-  { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 88, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'curtain', 'lockon'], q: 2, cap: 1, line: '포로를 컨테이너에 싣고 가는 호송함' },
-  { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 88, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['scissor', 'mines', 'sniper'], q: 2, cap: 1, line: '신호를 찢어 놓는 전자전함' },
-  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 86, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'railgun', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
+  { n: '감시정 아르거스',   e: 'ARGUS',       ship: 'argus',      R: 58, hp: 90,  atk: 4,  hue: 355, kind: 'ship', pat: ['sniper', 'lockon'], q: 1, cap: 0, line: '국경 너머를 훑는 감시정' },
+  { n: '순찰함 센트리',     e: 'SENTRY',      ship: 'sentry',     R: 66, hp: 170, atk: 6,  hue: 8,  kind: 'ship', pat: ['lockon', 'curtain', 'sniper'], q: 2, cap: 1, line: '포탑이 달린 방벽형 순찰함' },
+  { n: '호송함 홀러',       e: 'HAULER',      ship: 'hauler',     R: 76, hp: 260, atk: 6,  hue: 350,  kind: 'ship', pat: ['mines', 'curtain', 'lockon'], q: 2, cap: 1, line: '포로를 컨테이너에 싣고 가는 호송함' },
+  { n: '교란함 스태틱',     e: 'STATIC',      ship: 'static',     R: 84, hp: 340, atk: 7,  hue: 280, kind: 'ship', pat: ['scissor', 'mines', 'sniper'], q: 2, cap: 1, line: '신호를 찢어 놓는 전자전함' },
+  { n: '추격함 하운드',     e: 'HOUND',       ship: 'hound',      R: 84, hp: 430, atk: 8,  hue: 0,   kind: 'ship', pat: ['vform', 'railgun', 'lockon', 'curtain'], q: 3, cap: 1, line: '한 번 문 표적은 놓치지 않는다' },
   { n: '수용선 오블리엣',   e: 'OUBLIETTE',   ship: 'oubliette',  R: 96, hp: 560, atk: 8,  hue: 295,  kind: 'ship', pat: ['mines', 'scissor', 'curtain', 'dump', 'sniper'], q: 3, cap: 1, line: '잊혀진 이들을 가두는 감옥선' },
   { n: '레일 순양함 랜서',  e: 'LANCER',      ship: 'lancer',     R: 100, hp: 700, atk: 9,  hue: 322, kind: 'ship', pat: ['railgun', 'vform', 'lockon', 'scissor'], q: 3, cap: 1, line: '함체를 가로지르는 거대한 레일건' },
   { n: '기함 파놉티콘',     e: 'PANOPTICON',  ship: 'panopticon', R: 114, hp: 960, atk: 10, hue: 272,  kind: 'ship', pat: ['sniper', 'lockon', 'railgun', 'scissor', 'mines', 'curtain', 'vform'], q: 3, cap: 1, line: '모든 항로를 내려다보는 사령 기함' }
