@@ -13,8 +13,8 @@ export const OPS_SHIPS = [
   /* Lv3 — 수송 능력 */
   ['os1', 3, '그림자', '기척 없이 지나가는 스텔스선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 172 }, { spd: 14, grav: 15, ram: 10 }, ['os1a', 'os1b'], .6],
   ['os2', 3, '해방선', '갇힌 이들을 낚아채는 돌격선', 205, { ops: 1, main: 'white', trim: 'black', acc: 46 }, { ram: 35, decay: 10, shield: 1 }, ['os2a', 'os2b'], .5],
-  ['oh1', 3, '구호선', '많이 싣고 오래 버티는 구조선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 6 }, { o2: 50, mult: 15, shield: 1 }],
-  ['oh2', 3, '중수송함', '두꺼운 장갑의 화물선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 34 }, { decay: 40, o2: 30, ram: 20 }],
+  ['oh1', 3, '구호선', '많이 싣고 오래 버티는 구조선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 6 }, { o2: 50, mult: 15, shield: 1 }, ['oh1a', 'oh1b']],
+  ['oh2', 3, '중수송함', '두꺼운 장갑의 화물선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 34 }, { decay: 40, o2: 30, ram: 20 }, ['oh2a', 'oh2b']],
 
   /* Lv4 */
   ['os1a', 4, '유령선', '보이지 않는 가장 빠른 배', 200, { ops: 1, main: 'white', trim: 'black', acc: 190 }, { spd: 14, grav: 20, mult: 20 }, [], 1],
