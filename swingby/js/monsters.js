@@ -69,7 +69,7 @@ export function hitMonsters() {
 
 function bump(m, nx, ny) {
   const s = G.ship, dmg = impactDamage();
-  m.hp -= dmg; m.flash = .16; m.sq = 1; s.ramT = HIT_COOLDOWN;
+  m.hp -= dmg; m.flash = .16; m.sq = 1; s.ramT = HIT_COOLDOWN; s.bumped = true;
   bounceShip(m.x, m.y, nx, ny, standoff(reachOf(m), 4), bounceSpeed());
   const col = 'hsl(' + m.hue + ',90%,62%)', ang = Math.atan2(ny, nx), bx = m.x + nx * m.R, by = m.y + ny * m.R;
   sparks(s.x, s.y, '#fff', 10, 380, ang, .9); sparks(bx, by, col, 12, 300, ang, 1.2);

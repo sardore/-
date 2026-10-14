@@ -1,6 +1,7 @@
 /* 카메라: 월드 y 좌표(camY = 화면 맨 위), 갈림길 줌(vz), 보이는 범위 계산 */
 import { G, V } from './state.js';
 import { W0 } from './util.js';
+import { OPS } from './ops-data.js';
 
 const FORK_ZOOM = .72;      // 갈림길에서의 줌 배율(작을수록 넓게 보인다)
 const HUB_FRAME = .3;              // 줌 상태에서 허브 행성이 화면 아래쪽 어디에 오는지
@@ -19,7 +20,15 @@ export function updateCamera(dt) {
   let ty;
   if (G.boss) ty = G.arenaTop + (arenaH() - V.VH) / 2;      // 아레나 윗변이 화면 맨 위에 오도록
   else if (zoomed) ty = F.hub.y - V.VH / 2 - HUB_FRAME * V.VH / tv;
-  else ty = Math.min(G.camY, (s.mode === 'orb' ? s.p.y : s.y) - V.VH / 2 - .14 * V.VH / G.vz);
+  else {
+    const want = (s.mode === 'orb' ? s.p.y : s.y) - V.VH / 2 - .14 * V.VH / G.vz;
+    ty = Math.min(G.camY, want);
+    if (G.ops) {   // 블랙쉽: 소형함·벽·넉백에 밀려 조금 내려가는 것은 허용한다. 지금까지 가장 높이 올라간 카메라보다 최대 fallSlack 만큼은 내려가서 아래 맵(이미 지나온 행성)이 남아 있다
+      const o = G.ops, slack = OPS.fallSlack * Math.sqrt(G.w / W0);
+      o.camTop = o.camTop == null ? want : Math.min(o.camTop, want);
+      ty = Math.max(ty, Math.min(want, o.camTop + slack));
+    }
+  }
   if (G.boss) G.camY -= G.boss.sv * dt;                      // 보스전 스크롤을 미리 따라가서 카메라가 뒤처지지 않게
   G.camY += (ty - G.camY) * Math.min(1, dt * (G.boss ? 3 : zoomed ? 3.5 : 4.5));
 }

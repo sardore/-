@@ -58,7 +58,7 @@ export function newRun() {
   G.planets.push(p); G.genI = 1; G.genY = 0; G.camY = -V.VH * .64;
   G.ship = {
     mode: 'orb', p, a: PI / 2, r: p.R + 52, dir: 1, x: p.x, y: p.y + p.R + 52, vx: 0, vy: 0,
-    air: 0, swept: 0, trail: [], last: null, inv: 0, ramT: 0, hitF: false, evoT: 0, grace: 0,
+    air: 0, swept: 0, trail: [], last: null, inv: 0, ramT: 0, bumped: false, hitF: false, evoT: 0, grace: 0,
     charging: false, charge: 0, boost: 1, heat: 0, ghosts: []
   };
 }

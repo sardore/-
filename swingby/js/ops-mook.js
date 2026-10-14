@@ -117,7 +117,7 @@ export function hitMooks() {
 }
 function bump(m, nx, ny) {
   const s = G.ship, dmg = impactDamage();
-  m.hp -= dmg; m.flash = .16; m.sq = 1; s.ramT = HIT_COOLDOWN;
+  m.hp -= dmg; m.flash = .16; m.sq = 1; s.ramT = HIT_COOLDOWN; s.bumped = true;
   bounceShip(m.x, m.y, nx, ny, standoff(m.R, 4), bounceSpeed());
   const ang = Math.atan2(ny, nx), bx = m.x + nx * m.R, by = m.y + ny * m.R;
   sparks(s.x, s.y, '#fff', 10, 380, ang, .9); sparks(bx, by, '#ff9a7a', 10, 300, ang, 1.2); ringFx(bx, by, '#fff', 4, 44, .3, 3);

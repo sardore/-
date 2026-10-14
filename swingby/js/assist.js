@@ -1,16 +1,17 @@
 /* 기체 비행 보정: 보스전·격파 직후의 눈에 안 보이는 안전장치. 둘 다 속도는 그대로 두고 방향만 슬쩍 꺾는다 */
 import { G } from './state.js';
+import { viewBot } from './camera.js';
 import { clamp, angDiff } from './util.js';
 import { capOf, fs, arenaK, o2max } from './stats.js';
 
-/** 보스에 부딪혀 튕긴 비행에만 붙는 눈에 안 보이는 안전망: 아래로 내려가 화면 밑이 가까워질수록 비행 방향을 가장 가까운 행성 쪽으로 슬쩍 꺾는다.
+/** 보스에 부딪히거나(보스전) 독 행성·소형함·넉백 공격에 부딪혀(`s.bumped`, 벽은 제외) 튕긴 비행에만 붙는 눈에 안 보이는 안전망: 아래로 내려가 화면 밑이 가까워질수록 비행 방향을 가장 가까운 행성 쪽으로 슬쩍 꺾는다.
  * 속도는 그대로고 방향만 돌리며, 바닥에서 멀 때는 거의 손대지 않는다. 꺾는 세기는 비행 산소를 쓴 비율에 따라 커진다. 보스 격파 뒤에는 행성에 붙거나 다시 발사하면 꺼지고(s.net), 갈림길에서는 갈림길이 정해질 때까지 계속 지켜본다 */
 export function netAssist(dt) {
-  const s = G.ship, K = arenaK(), u = clamp((s.y - (G.arenaBot - 340 * K)) / (300 * K), 0, 1);
+  const s = G.ship, K = arenaK(), bot = G.boss ? G.arenaBot : viewBot(), u = clamp((s.y - (bot - 340 * K)) / (300 * K), 0, 1);   // 보스전이 아니면 화면 아래(viewBot)가 바닥
   if (u <= 0 && s.vy <= 0) return;
   let best = null, bd = 1e9;
   for (const p of G.planets) {
-    if (p.dead || p.ghost || p.y > G.arenaBot - 30 * K) continue;
+    if (p.dead || p.ghost || p.y > bot - 30 * K) continue;
     const d = Math.hypot(p.x - s.x, p.y - s.y) - capOf(p);
     if (d < bd) { bd = d; best = p; }
   }

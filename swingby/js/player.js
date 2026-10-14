@@ -52,7 +52,7 @@ function release(charge) {
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
   sparks(s.x, s.y, '#bfeaff', 9, 260, back, .5); ringFx(s.x, s.y, 'rgba(190,235,255,.8)', 4, 26, .3, 2); shakeAdd(2.2);
-  s.gd = 0; s.gSkip = null; s.net = false;
+  s.gd = 0; s.gSkip = null; s.net = false; s.bumped = false;
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
     if (G.ops) batteryStart();   // 블랙쉽: 돌진 포대가 있는 기체는 비행 중 포탄을 쏜다
@@ -75,7 +75,7 @@ function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
-  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; s.net = false; heatReset();
+  s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; s.net = false; s.bumped = false; heatReset();
   p.pulse = 1; p.sq = .55;
   spawnLand(G.fxr, G.parts, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
   if (cfg().landshape) burst(s.x, s.y, 'hsl(' + shipHue() + ',90%,70%)', 10, 160);
@@ -120,7 +120,8 @@ export function stepShip(dt) {
   } else {
     regulateSpeed(dt, v);
     if (s.net && bf) netAssist(dt);
-    else if (!boss && (s.net || forkWait)) rescueAssist(dt);   // 격파 직후 · 갈림길 대기 중(월드 생성이 멈춰 있어 놓치면 갈 곳이 없다)
+    else if (!boss && (s.net || forkWait)) rescueAssist(dt);
+    if (!boss && s.bumped) netAssist(dt);   // 독 행성·소형함·넉백에 튕겼으면 보스를 때렸을 때처럼 바닥이 가까워질수록 행성 쪽으로 서서히 끌려간다   // 격파 직후 · 갈림길 대기 중(월드 생성이 멈춰 있어 놓치면 갈 곳이 없다)
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (s.gd > 0) s.gd -= Math.hypot(s.vx, s.vy) * dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
