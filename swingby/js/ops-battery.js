@@ -22,7 +22,7 @@ function aimAt(s, d) {
   const b = G.boss;
   if (b && b.state === 'fight') return Math.atan2(b.y - s.y, b.x - s.x);
   let best = null, bd = 520;
-  for (const m of G.ops.mooks) { const dd = Math.hypot(m.x - s.x, m.y - s.y); if (dd < bd) { bd = dd; best = m; } }
+  for (const m of G.ops.mooks) { if (m.nohit) continue; const dd = Math.hypot(m.x - s.x, m.y - s.y); if (dd < bd) { bd = dd; best = m; } }
   return best ? Math.atan2(best.y - s.y, best.x - s.x) : Math.atan2(s.vy, s.vx);
 }
 
@@ -44,7 +44,7 @@ export function updateBattery(dt) {
     let hit = false;
     if (b && b.state === 'fight' && Math.hypot(sh.x - b.x, sh.y - b.y) < b.hr + 3) { bossShot(sh.dmg); hit = true; }
     else if (shootWall(sh.x, sh.y, sh.dmg)) hit = true;
-    else for (const m of o.mooks) if (Math.hypot(sh.x - m.x, sh.y - m.y) < m.R + 3) { shootMook(m, sh.dmg); hit = true; break; }
+    else for (const m of o.mooks) if (!m.nohit && Math.hypot(sh.x - m.x, sh.y - m.y) < m.R + 3) { shootMook(m, sh.dmg); hit = true; break; }
     if (hit) { sh.life = 0; burst(sh.x, sh.y, 'hsl(' + sh.h + ',100%,70%)', 5, 150); sparks(sh.x, sh.y, '#fff', 4, 260, Math.atan2(-sh.vy, -sh.vx), .9); }
   }
   o.shells = o.shells.filter(sh => sh.life > 0 && sh.x > -40 && sh.x < G.w + 40);

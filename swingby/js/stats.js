@@ -6,7 +6,7 @@ import { W0 } from './util.js';
 import { SHIPS } from './ships.js';
 import { PLANET_DEC, BIOMES, BOSS_MUL } from './data.js';
 import { endlessGrav } from './endless.js';
-import { OPS } from './ops-data.js';
+import { fleetBonus } from './ops-data.js';
 
 const pct = k => G.stats[k] / 100;
 
@@ -19,7 +19,12 @@ export const minOrbit = p => p.R + 20 * fs();
 export const arenaK = () => G.w / W0;
 export const shipR = () => (7 + (G.tier - 1) * 1.6) * fs();                 // 기체 충돌 반경
 
-const baseSpd = () => (235 + Math.min(G.hops * 3, 165)) * fs();
+/** 진행에 따라 오르는 난이도(궤도 속도·붕괴 속도)의 반영 비율.
+ * 일반 항해는 보스 3 격파 뒤로 한 보스마다 18%p 씩 줄어 40% 까지 내려오고, 블랙쉽은 처음부터 훨씬 완만하게 오른다 */
+const relief = () => G.kills < 3 ? 1 : Math.max(.4, 1 - .18 * (G.kills - 2));
+const rampSpd = () => G.ops ? Math.min(G.hops * 1.4, 70) : Math.min(G.hops * 3, 165) * relief();
+const rampDec = () => G.ops ? Math.min(G.hops * .07, 3.5) : Math.min(G.hops * .22, 9) * relief();
+const baseSpd = () => (235 + rampSpd()) * fs();
 export const spd = () => baseSpd() * pct('spd');     // 비행 속도
 export const orbSpd = () => baseSpd();                // 궤도 회전 속도: 속도 능력치의 영향을 받지 않는다
 /** 포획 범위 배율. 인력이 높을수록 효과가 줄어든다: 너무 넓으면 원하는 행성을 고를 수 없어 오히려 답답해진다 */
@@ -32,11 +37,11 @@ export const capOf = p => {
 };
 /** 궤도 반지름의 상한. 포획 범위가 아무리 넓어도 이보다 먼 궤도는 금방 안쪽으로 끌려 들어온다(큰 궤도는 회전이 느려 답답하다) */
 export const maxOrbit = p => Math.min(capOf(p), p.R + (p.cap - p.R) * ORBIT_MAX);
-export const decRate = p => (5 + Math.min(G.hops * .22, 9)) * PLANET_DEC[p.t] / pct('decay') * fs();
+export const decRate = p => (5 + rampDec()) * PLANET_DEC[p.t] / pct('decay') * fs();
 export const o2max = () => 2.6 * pct('o2');
 export const magRange = () => 20 * pct('grav') * fs();
 export const ramMul = () => pct('ram');
 /** 보스전 산소 풀: 스테이지·루프에 따라 늘고 산소 능력치가 절반만큼 반영된다 */
 export const bossO2 = (stage, loop) => (24 + 6 * stage + 2 * loop) * (1 + (G.stats.o2 - 100) / 200);
 /** 점수 배율: 능력치 × 보스 격파 복리 × 바이옴(보스전 중에는 바이옴 무시) */
-export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc) * (G.ops ? 1 + OPS.rescueMul * G.ops.fol.length : 1);   // 블랙쉽: 함께 있는 함선이 많을수록 점수 배율이 오른다   // 보스 격파마다 ×BOSS_MUL 복리
+export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc) * (G.ops ? 1 + fleetBonus(G.ops.fol) : 1);   // 블랙쉽: 함께 있는 함선이 많을수록 점수 배율이 오른다   // 보스 격파마다 ×BOSS_MUL 복리

@@ -10,6 +10,7 @@ import { SHOP, priceOf, owned, equipped, specLv, buy, equip, unequip } from './s
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, emitDecor } from './cos.js';
 import { spawnLand, drawShapeIcon } from './land-fx.js';
 import { DECOR } from './decor.js';
+import { MODE } from './ops.js';
 import { drawTrail2, drawFxLayers2 } from './draw-fx2.js';
 import { drawAura } from './draw-world.js';
 import { drawCharge } from './charge-fx.js';
@@ -265,18 +266,25 @@ const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세
 export function drawTitleMenu() {
   MENU.forEach((m, i) => {
     const r = menuRect(i);
-    rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = 'rgba(255,226,122,.55)'; g.lineWidth = 1.4; g.stroke();
+    const on = m.k === 'ops' && MODE.ops;   // 블랙쉽 버튼은 모드 전환 스위치: 켜져 있으면 테두리가 밝고 ON 표시가 붙는다
+    rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = on ? 'rgba(230,220,192,.2)' : 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = on ? '#e6dcc0' : 'rgba(255,226,122,.55)'; g.lineWidth = on ? 2.4 : 1.4; g.stroke();
     if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
-    txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, 'rgba(255,255,255,.7)', 'center', 700);
+    txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, on ? '#e6dcc0' : 'rgba(255,255,255,.7)', 'center', 700);
+    if (on) { rr(r.x + r.w - 20, r.y - 6, 26, 14, 7); g.fillStyle = '#e6dcc0'; g.fill(); txt('ON', r.x + r.w - 7, r.y + 5, 10, '#14110a', 'center', 900); }
   });
   const w = txt0(String(SHOP.shards), V.OX + 420 - 14, 38, 15); shard(V.OX + 420 - 14 - w - 12, 33, 7);   // 보유 별 조각
 }
 export function titleMenuHit(x, y) { const i = MENU.findIndex((m, j) => inRect(menuRect(j), x, y)); return i < 0 ? null : MENU[i].k; }
 
-const deadBtn = () => ({ x: V.VW / 2 - 70, y: V.VH - 156, w: 140, h: 38 });
+const deadBtn = () => ({ x: V.VW / 2 - 148, y: V.VH - 156, w: 140, h: 38 });
+const modeBtn = () => ({ x: V.VW / 2 + 8, y: V.VH - 156, w: 140, h: 38 });
+/** 사망 화면의 두 버튼: 별 조각 상점 · 모드 전환(다른 모드를 고른 채로 타이틀로) */
 export function drawDeadShopBtn() {
-  const r = deadBtn();
+  const r = deadBtn(), m = modeBtn(), to = MODE.ops ? '일반 모드로' : '블랙쉽 모드로', C = '#e6dcc0';
   rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = 'rgba(255,226,122,.14)'; g.fill(); g.strokeStyle = GOLD; g.lineWidth = 1.5; g.stroke();
   shard(r.x + 24, r.y + r.h / 2, 8); txt('별 조각 상점', r.x + r.w / 2 + 10, r.y + 24, 14, GOLD, 'center', 800);
+  rr(m.x, m.y, m.w, m.h, 12); g.fillStyle = 'rgba(230,220,192,.12)'; g.fill(); g.strokeStyle = C; g.lineWidth = 1.5; g.stroke();
+  txt('모드 전환', m.x + m.w / 2, m.y + 17, 13, C, 'center', 800); txt(to, m.x + m.w / 2, m.y + 31, 10, 'rgba(230,220,192,.7)', 'center', 600);
 }
 export const deadShopHit = (x, y) => inRect(deadBtn(), x, y);
+export const deadModeHit = (x, y) => inRect(modeBtn(), x, y);

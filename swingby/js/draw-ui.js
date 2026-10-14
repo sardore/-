@@ -8,7 +8,7 @@ import { rr, txt, GFX } from './gfx.js';
 import { drawTitle2 } from './draw-title2.js';
 import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
 import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
-import { OPSREC, fmtTime } from './ops.js';
+import { OPSREC, fmtTime, MODE } from './ops.js';
 import { OPS_BOSSES } from './ops-data.js';
 
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
@@ -27,7 +27,7 @@ export function drawHud() {
     const bl = G.nextBoss - G.hops;
     txt(bl > 0 ? '보스까지 ' + bl : '', OX + 14, 66, 12, 'rgba(255,150,130,.75)', 'left', 600);
     if (G.biome !== 'normal') { const bm = BIOMES[G.biome]; g.fillStyle = bm.c; g.beginPath(); g.arc(OX + 18, 82, 4, 0, TAU); g.fill(); txt(bm.n, OX + 28, 86, 12, bm.c, 'left', 700); }
-  } else txt(G.tuto ? '튜토리얼' : G.ops ? '목표 ' + (b.stage + 1) + ' / ' + OPS_BOSSES.length : b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
+  } else txt(G.tuto ? '튜토리얼' : G.ops ? '보스 ' + (b.stage + 1) + ' / ' + OPS_BOSSES.length : b.d.endless ? 'ENDLESS ' + b.d.endless : '보스 ' + (b.stage + 1) + ' / ' + STAGES.length, OX + 14, 48, 12, 'rgba(255,255,255,.6)', 'left', 600);
   if (G.ops) drawOpsHud();
   else if (!G.tuto) {
     txt('최고 ' + G.best, OX + W0 - 14, 30, 14, 'rgba(255,255,255,.75)', 'right', 600);
@@ -108,12 +108,13 @@ export function drawScreens() {
     g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
     if (GFX.v >= 2) drawTitle2();
     else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
+    if (MODE.ops) { g.fillStyle = 'rgba(14,12,8,.34)'; g.fillRect(0, 0, VW, VH); txt('BLACK SHIP MODE', VW / 2, VH - 112, 14, '#e6dcc0', 'center', 800); }   // 모드 전환으로 블랙쉽을 골랐다는 표시
     g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     drawTitleMenu();
     if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);   // 어느 버전을 받았는지 확인용
     if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
-    if (OPSREC.time > 0 || OPSREC.boss > 0) txt('블랙쉽  ' + (OPSREC.time > 0 ? '최단 ' + fmtTime(OPSREC.time) : '보스 ' + OPSREC.boss + '/' + OPS_BOSSES.length), VW / 2, VH - 34, 12, 'rgba(230,220,192,.55)', 'center', 600);
-    if (G.best > 0) txt('최고 기록 ' + G.best + (G.bestBoss > 0 ? '  ·  보스 ' + Math.min(G.bestBoss, STAGES.length) + '/' + STAGES.length + (G.bestBoss >= STAGES.length ? ' 클리어' : '') : ''), VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
+    const rec = MODE.ops ? { best: OPSREC.best, boss: OPSREC.boss, n: OPS_BOSSES.length, extra: OPSREC.time > 0 ? '  ·  최단 ' + fmtTime(OPSREC.time) : '' } : { best: G.best, boss: G.bestBoss, n: STAGES.length, extra: '' };   // 고른 모드의 기록을 같은 표기로
+    if (rec.best > 0) txt('최고 기록 ' + rec.best + (rec.boss > 0 ? '  ·  보스 ' + Math.min(rec.boss, rec.n) + '/' + rec.n + (rec.boss >= rec.n ? ' 클리어' : '') : '') + rec.extra, VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
   }
   if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;

@@ -21,6 +21,10 @@ import { updateBattery } from './ops-battery.js';
 export const OPSREC = { time: +load('swingby_ops_time', 0) || 0, best: +load('swingby_ops_best', 0) || 0, boss: +load('swingby_ops_boss', 0) || 0 };
 export const fmtTime = t => { const m = Math.floor(t / 60), s = t - m * 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); };
 
+/** 시작화면에서 고른 항해 모드: 블랙쉽 버튼은 이 값을 켜고 끄는 '모드 전환'이고, 출발은 그 모드로 시작한다 */
+export const MODE = { ops: load('swingby_mode', '') === 'ops' };
+export function toggleMode() { MODE.ops = !MODE.ops; save('swingby_mode', MODE.ops ? 'ops' : ''); beep(MODE.ops ? 620 : 440, .09); }
+
 const freshOps = () => ({
   t: 0,                 // 작전 시간(초, 플레이 중에만 흐른다)
   bay: true,            // 수송 능력 보유(승계하면 잃는다)
@@ -53,11 +57,11 @@ export function startOpsFromUrl(q) {
   if (!q.has('stage') && !q.has('tier') && !q.has('fleet')) return;
   G.debug = true;
   const stage = Math.min(OPS_BOSSES.length - 1, Math.max(0, +q.get('stage') || 0));
-  const tier = Math.min(4, Math.max(1, +q.get('tier') || (stage >= 3 ? 4 : stage >= 1 ? 3 : stage === 0 && q.has('stage') ? 2 : 1)));
+  const tier = Math.min(4, Math.max(1, +q.get('tier') || (q.has('stage') ? opsTarget(stage) : 1)));
   while (G.tier < tier) { const d = SHIPS[SHIPS[G.shipId].kids[0]]; if (!d) break; evolveTo(d); }
   if (q.has('stage')) { G.kills = stage; G.biome = OPS_ZONES[stage]; G.hops = 12; G.nextBoss = 0; }
   const n = Math.min(OPS.maxFollowers, +q.get('fleet') || 0);
-  if (n) rescue(n, stage, G.ship.x, G.ship.y);
+  if (n) rescue(n, stage, G.ship.x, G.ship.y);   // 가득 차면 가진 함선이 올라간다(디버그 점프용)
   G.banner = null;
 }
 
@@ -78,11 +82,12 @@ export function opsPrepare() {
 /** 보스를 쓰러뜨린 직후. 구출(수송 능력이 있을 때) · 기록 · 다음 구역. 마지막 보스면 클리어하고 true */
 export function opsAfterBoss(b) {
   const o = G.ops, s = G.ship;
-  let got = 0;
   if (b.d.cap) {
-    if (hasBay()) got = rescue(b.d.cap, b.stage, b.x, b.y);
-    if (got) { toast('함선 ' + got + '척 구출 — 뒤를 따라온다', '#e6e0c8'); popText(b.x, b.y - 30, '+' + got + '척 구출', '#fff', 20); flashScreen(.35, '#fff'); }
-    else toast(hasBay() ? '동행이 가득 찼다' : '수송 능력이 없어 갇힌 함선을 두고 간다', '#c8b89a');
+    const bay = hasBay() || (!!o.bay && G.tier + 1 >= OPS.bayTier && G.tier < opsTarget(G.kills) && SHIPS[G.shipId].kids.length > 0);   // 곧 이어질 진화로 Lv3 가 되는 함선도 구출을 마친다
+    const r = bay ? rescue(b.d.cap, b.stage, b.x, b.y) : null;
+    if (r && r.join) { toast('함선 구출 — 뒤를 따라온다', '#e6e0c8'); popText(b.x, b.y - 30, '함선 구출', '#fff', 20); flashScreen(.35, '#fff'); }
+    else if (r && r.up.length) { const u = r.up[0]; toast('구출한 함선이 동행 ' + u.name + '(Lv' + u.to + ')에게 합류해 강화됐다', '#e6e0c8'); popText(b.x, b.y - 30, '동행 강화 Lv' + u.from + ' → Lv' + u.to, '#fff', 18); flashScreen(.3, '#fff'); }
+    else toast(bay ? '동행이 가득 찼다' : '수송 능력이 없어 갇힌 함선을 두고 간다', '#c8b89a');
   }
   if (!G.debug && G.kills > OPSREC.boss) { OPSREC.boss = G.kills; save('swingby_ops_boss', OPSREC.boss); }
   if (G.kills >= OPS_BOSSES.length) { opsClear(); return true; }
@@ -103,8 +108,7 @@ export function opsProgress() {
 /** 오빗 중 매 프레임(progress.js 의 checkProgress): 진화 조건. 처리했으면 true */
 export function opsCheck() {
   const o = G.ops;
-  if (o.pendingEvo && G.st === 'play') { o.pendingEvo = false; if (G.tier < 4 && SHIPS[G.shipId].kids.length) startEvo(); else offer('보급 — 강화 선택'); return true; }
-  if (G.tier === 1 && G.kills === 0 && G.hops >= OPS.evolveHops) { startEvo(); return true; }   // 첫 보스 직전에 Lv2
+  if (o.pendingEvo && G.st === 'play') { o.pendingEvo = false; if (G.tier < opsTarget(G.kills) && SHIPS[G.shipId].kids.length) startEvo(); else offer('보급 — 강화 선택'); return true; }   // 단계가 모자랄 때만 진화, 아니면 카드
   return false;
 }
 

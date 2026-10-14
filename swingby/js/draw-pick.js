@@ -11,8 +11,29 @@ const EVO = { w: 372, h: 104, gap: 8, head: 160 };
 const CARD = { w: 372, h: 84, gap: 8, head: 170 };
 
 /** 현재 선택 화면의 위쪽 y 와 카드 사각형들. 입력 판정과 그리기가 같은 값을 쓴다 */
+/** 진화 카드에 붙는 칩들(능력치 변화·특수 능력) */
+function evoChips(o, after) {
+  const chips = Object.keys(o.delta).map(k => k === 'shield' ? ['추진기 +' + o.delta[k], STAT_INFO[k].c] : [STAT_INFO[k].n + ' ' + after[k] + '%', STAT_INFO[k].c]);
+  if (o.strong) chips.push(['강력한 돌진', '#ffb070']);
+  if (o.bat) chips.push(['돌진 포대', '#ffb070']);   // 강한 돌진은 없지만 돌진하며 포탄을 쏜다
+  if (G.ops && G.ops.bay && o.L.ops && o.t >= 3) chips.push(['수송 능력', '#9fe0c0']);   // 블랙쉽: Lv3 부터 갇힌 함선을 구출할 수 있다
+  return chips;
+}
+const CHIP_X0 = 86, CHIP_W = 372 - 96 - CHIP_X0;
+/** 칩을 줄바꿈해 놓은 줄 수 (카드 높이를 정하는 데 쓴다) */
+function chipRows(chips) {
+  let x = 0, rows = 1;
+  for (const [t] of chips) { const w = chipWidth(t) + 6; if (x + w > CHIP_W && x > 4) { x = 0; rows++; } x += chipWidth(t) + 5; }
+  return rows;
+}
+/** 진화 카드 높이: 칩이 석 줄 이상 필요한 선택지가 있으면 그만큼 키워서 테두리를 넘지 않게 한다 */
+function evoH() {
+  let rows = 2;
+  for (const o of G.evoOpts) rows = Math.max(rows, chipRows(evoChips(o, statsAfter(G.stats, o))));
+  return EVO.h + (rows - 2) * 20;
+}
 export function pickLayout() {
-  const evo = G.pickMode === 'evo', L = evo ? EVO : CARD, n = evo ? G.evoOpts.length : G.cards.length;
+  const evo = G.pickMode === 'evo', L = evo ? Object.assign({}, EVO, { h: evoH() }) : CARD, n = evo ? G.evoOpts.length : G.cards.length;
   const total = L.head + n * L.h + (n - 1) * L.gap, top = Math.max(14, (V.VH - total) / 2);
   const rects = []; for (let i = 0; i < n; i++) rects.push({ x: V.VW / 2 - L.w / 2, y: top + L.head + i * (L.h + L.gap), w: L.w, h: L.h });
   return { top, rects };
@@ -47,10 +68,7 @@ function drawEvo() {
     txt(o.d, r.x + 86, r.y + 45, 11, 'rgba(255,255,255,.65)', 'left', 500);
     // 바뀌는 능력치: 새 퍼센트 값
     const maxX = r.x + r.w - 96; let x = r.x + 86, y = r.y + 68;
-    const chips = Object.keys(o.delta).map(k => k === 'shield' ? ['추진기 +' + o.delta[k], STAT_INFO[k].c] : [STAT_INFO[k].n + ' ' + after[k] + '%', STAT_INFO[k].c]);
-    if (o.strong) chips.push(['강력한 돌진', '#ffb070']);
-    if (o.bat) chips.push(['돌진 포대', '#ffb070']);   // 강한 돌진은 없지만 돌진하며 포탄을 쏜다
-    if (G.ops && G.ops.bay && o.L.ops && o.t >= 3) chips.push(['수송 능력', '#9fe0c0']);   // 블랙쉽: Lv3 부터 갇힌 함선을 구출할 수 있다
+    const chips = evoChips(o, after);
     for (const [t, c] of chips) {
       const w = chipWidth(t) + 6;
       if (x + w > maxX && x > r.x + 90) { x = r.x + 86; y += 20; }

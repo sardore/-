@@ -21,7 +21,7 @@ export function gimmickType() {
 /** 방금 만든 기믹 행성에 기믹 상태를 붙인다 */
 export function giantify(p) {
   if (p.t === 'k') p.gim = { kind: 'hangar', t: rnd(2, 5), warn: 0, hatch: 0, open: 0, ang: [rnd(-.18, .12), PI + rnd(-.12, .18)] };
-  else if (p.t === 'v') p.gim = { kind: 'depot', reward: G.tier < 4 && Math.random() < .55 ? 'evo' : 'thruster', used: false, dock: 1, leave: 0, a: rnd(-.9, -.3) };
+  else if (p.t === 'v') p.gim = { kind: 'depot', reward: G.stats.shield < 1 && Math.random() < .12 ? 'thruster' : 'evo', used: false, dock: 1, leave: 0, a: rnd(-.9, -.3) };
 }
 /** 보스를 쓰러뜨린 뒤 새 구간: 기믹 간격을 새로 잡는다 */
 export function resetGimmicks() { G.ops.gim.due = G.genI + 8; }

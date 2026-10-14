@@ -4,7 +4,7 @@ import { G } from './state.js';
 import { TAU, rnd, pickOf, angDiff } from './util.js';
 import { baseStats } from './data.js';
 import { SHIPS } from './ships.js';
-import { OPS, OPS_ROOT } from './ops-data.js';
+import { OPS, OPS_ROOT, fleetBonus } from './ops-data.js';
 import { fs } from './stats.js';
 import { drawShip } from './ship-art.js';
 import { ringFx, burst, flashScreen, popText, punch, shakeAdd, slowmo } from './fx.js';
@@ -31,25 +31,42 @@ export function powerOf(id) {
 }
 /** 구출되는 함선: 스카우트나 Lv2. 뒤로 갈수록 Lv2 가 많다 */
 export function captiveId(stage) {
-  if (Math.random() > .22 + .07 * stage) return OPS_ROOT;
+  if (Math.random() > .3 + .08 * stage) return OPS_ROOT;
   return pickOf(SHIPS[OPS_ROOT].kids);
 }
 
 /* ---------- 선단 ---------- */
 export const hasBay = () => !!G.ops && G.ops.bay && G.tier >= OPS.bayTier;
-export const fleetMul = () => 1 + OPS.rescueMul * (G.ops ? G.ops.fol.length : 0);
+export const fleetMul = () => 1 + (G.ops ? fleetBonus(G.ops.fol) : 0);
 
-/** 구출: 보스가 있던 자리(x, y)에서 n 척이 풀려나 합류한다. 자리가 없으면 남는 만큼은 합류하지 못한다. 실제로 합류한 수를 돌려준다 */
+/** 구출: 보스가 있던 자리(x, y)에서 n 척이 풀려난다. 동행이 가득 차 있으면 새로 합류하는 대신 가진 함선 하나가 한 단계 오른다
+ * (Lv2 가 있으면 Lv2 → Lv3 가 먼저, 없으면 스카우트 → Lv2. 모두 Lv3 이면 더 올릴 곳이 없다). { join: 합류한 수, up: 올라간 함선 목록 } 을 돌려준다 */
 export function rescue(n, stage, x, y) {
-  const o = G.ops; let got = 0;
-  for (let i = 0; i < n && o.fol.length < OPS.maxFollowers; i++) {
-    const id = captiveId(stage), a = rnd(0, TAU), r = rnd(20, 60);
-    o.fol.push({ id, x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, a: rnd(0, TAU), born: 0 });
-    got++; o.rescued++;
-    ringFx(x + Math.cos(a) * r, y + Math.sin(a) * r, '#fff', 4, 50, .5, 3);
+  const o = G.ops, res = { join: 0, up: [] };
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, TAU), r = rnd(20, 60), cx = x + Math.cos(a) * r, cy = y + Math.sin(a) * r;
+    if (o.fol.length < OPS.maxFollowers) {
+      const id = captiveId(stage);
+      o.fol.push({ id, t: SHIPS[id].t, x: cx, y: cy, a: rnd(0, TAU), born: 0 });
+      res.join++; o.rescued++;
+      ringFx(cx, cy, '#fff', 4, 50, .5, 3);
+    } else {
+      const up = upgradeOne(); if (!up) break;
+      res.up.push(up); o.rescued++;
+    }
   }
-  if (got) { beep(660, .1, 'triangle', .1); setTimeout(() => beep(990, .16, 'triangle', .1), 110); }
-  return got;
+  if (res.join || res.up.length) { beep(660, .1, 'triangle', .1); setTimeout(() => beep(990, .16, 'triangle', .1), 110); }
+  return res;
+}
+/** 가장 높은 단계(Lv3 미만)의 동행 함선 하나를 다음 단계로 올린다. 올릴 함선이 없으면 null */
+function upgradeOne() {
+  const o = G.ops, c = o.fol.filter(f => f.t < 3 && SHIPS[f.id].kids.length);
+  if (!c.length) return null;
+  const top = Math.max(...c.map(f => f.t)), f = pickOf(c.filter(g => g.t === top)), from = SHIPS[f.id], to = SHIPS[pickOf(from.kids)];
+  f.id = to.id; f.t = to.t; f.born = .3;
+  const col = 'hsl(' + to.L.h + ',95%,66%)';
+  burst(f.x, f.y, col, 14, 160); ringFx(f.x, f.y, '#fff', 6, 70, .5, 3); popText(f.x, f.y - 20, 'Lv' + from.t + ' → Lv' + to.t, col, 14);
+  return { from: from.t, to: to.t, name: to.n };
 }
 
 /** 지나온 길을 비우고 지금 자리에서 다시 시작한다(필드 폭이 바뀌거나 되살아나 자리가 크게 바뀔 때) */
