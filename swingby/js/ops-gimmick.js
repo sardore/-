@@ -1,6 +1,6 @@
 /* 거대 행성 기믹. 일반 행성보다 훨씬 큰 행성이 몇 개마다 하나씩 나오고, 둘이 번갈아 나온다. 글자 안내는 없고 모양과 불빛으로만 알린다.
  *   k 출격 갑판(hangar) — 주기적으로 해치가 열리고 경고등이 깜박인 뒤 쾌속정을 내보낸다(경고는 가로 방향의 점선 항로와 해치 불빛)
- *   v 보급 부두(depot) — 수송선이 정박해 있다. 처음 착지하면 수송선의 짐이 보상으로 넘어온다: 짐 표시가 진화 화살표면 진화, 불꽃이면 비상 추진기
+ *   v 보급 부두(depot) — 수송선이 정박해 있다. 처음 착지하면 수송선의 짐이 보상으로 넘어온다: 짐 표시로 보상을 알린다: 불꽃 = 비상 추진기(25%) · 카드 = 강화 카드(25%) · 별 = 근처에 별 무더기(50%)
  * 기믹 행성도 평범하게 포획되고 오래 머물러도 되는 느린 궤도다(OPS_DEC). 보스전에는 나오지 않는다 */
 import { G } from './state.js';
 import { rnd, PI } from './util.js';
@@ -18,10 +18,13 @@ export function gimmickType() {
   m.due = G.genI + 10 + Math.floor(Math.random() * 5); m.n++;
   return m.n % 2 ? 'k' : 'v';
 }
+/** 보급 부두의 보상: 추진기 25% · 강화 카드 25% · 별 무더기 50% */
+const rollReward = () => { const r = Math.random(); return r < .25 ? 'thruster' : r < .5 ? 'card' : 'stars'; };
+const REWARD_COL = { thruster: '#ffb08a', card: '#bfe8ff', stars: '#ffe27a' };
 /** 방금 만든 기믹 행성에 기믹 상태를 붙인다 */
 export function giantify(p) {
   if (p.t === 'k') p.gim = { kind: 'hangar', t: rnd(2, 5), warn: 0, hatch: 0, open: 0, ang: [rnd(-.18, .12), PI + rnd(-.12, .18)] };
-  else if (p.t === 'v') p.gim = { kind: 'depot', reward: G.stats.shield < 1 && Math.random() < .12 ? 'thruster' : 'evo', used: false, dock: 1, leave: 0, a: rnd(-.9, -.3) };
+  else if (p.t === 'v') p.gim = { kind: 'depot', reward: rollReward(), used: false, dock: 1, leave: 0, a: rnd(-.9, -.3) };
 }
 /** 보스를 쓰러뜨린 뒤 새 구간: 기믹 간격을 새로 잡는다 */
 export function resetGimmicks() { G.ops.gim.due = G.genI + 8; }
@@ -49,12 +52,23 @@ function launch(p, gm, k) {
   burst(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, '#ffb48a', 12, 160); ringFx(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, '#ff8a5a', 4, 38, .35, 3); beep(180, .12, 'sawtooth', .08); noise(.25, .1, 2500, 300);
 }
 
+/** 별 6개쯤이 행성 둘레에 흩어진다(바깥쪽 궤도 가까이). 위쪽·옆으로 넉넉히 퍼뜨려 한두 번의 스윙으로 모을 수 있게 한다 */
+function starBurst(p) {
+  const k = fs(), n = 6 + (Math.random() < .5 ? 1 : 0);
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, 2 * PI), r = p.R + rnd(55, 135) * k;
+    G.stars.push({ x: Math.max(14, Math.min(G.w - 14, p.x + Math.cos(a) * r)), y: p.y + Math.sin(a) * r, got: false, ph: rnd(0, 2 * PI), br: 'ops' });
+  }
+}
+
 /** 기믹 행성에 착지했을 때(player.js 의 latch). 보급 부두는 처음 한 번만 보상을 준다 */
 export function onLand(p) {
   const gm = p.gim; if (!gm || gm.kind !== 'depot' || gm.used) return;
   gm.used = true; const o = G.ops, s = G.ship;
-  if (gm.reward === 'thruster') { G.stats.shield++; popText(s.x, s.y - 28, '비상 추진기 +1', '#ffb08a', 17); }
-  else { o.pendingEvo = true; popText(s.x, s.y - 28, '진화 준비', '#bfe8ff', 17); }
-  flashScreen(.3, gm.reward === 'evo' ? '#bfe8ff' : '#ffb08a'); shakeAdd(5); thump(120, 40, .3, .3); beep(880, .12, 'triangle', .1); setTimeout(() => beep(1180, .16, 'triangle', .1), 100);
-  burst(p.x, p.y - p.R, gm.reward === 'evo' ? '#bfe8ff' : '#ffb08a', 24, 240); ringFx(p.x, p.y, '#fff', p.R, p.R + 70, .5, 3);
+  const col = REWARD_COL[gm.reward];
+  if (gm.reward === 'thruster') { G.stats.shield++; popText(s.x, s.y - 28, '비상 추진기 +1', col, 17); }
+  else if (gm.reward === 'card') { o.pendingEvo = true; popText(s.x, s.y - 28, '강화 준비', col, 17); }   // 다음 오빗에서 고른다(단계가 모자라면 진화가 먼저: ops.js opsCheck)
+  else { starBurst(p); popText(s.x, s.y - 28, '별 무더기', col, 17); }
+  flashScreen(.3, col); shakeAdd(5); thump(120, 40, .3, .3); beep(880, .12, 'triangle', .1); setTimeout(() => beep(1180, .16, 'triangle', .1), 100);
+  burst(p.x, p.y - p.R, col, 24, 240); ringFx(p.x, p.y, '#fff', p.R, p.R + 70, .5, 3);
 }

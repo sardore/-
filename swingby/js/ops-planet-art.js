@@ -136,7 +136,7 @@ function hangar(p, x, y, R, h, T) {
 
 /** 보급 부두: 밝은 철제 행성, 옆으로 뻗은 부두 팔과 크레인, 정박한 수송선. 수송선 위에 떠 있는 짐 표시가 보상 */
 function depot(p, x, y, R, h, T) {
-  const gm = p.gim || { reward: 'evo', used: false, leave: 0, a: -.6 };
+  const gm = p.gim || { reward: 'card', used: false, leave: 0, a: -.6 };
   steel(x, y, R, h, 12, 44);
   g.save(); circle(x, y, R); g.clip();
   g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 1; for (let i = -3; i <= 3; i++) { g.beginPath(); g.ellipse(x, y + i * R * .26, R, R * .08, 0, 0, TAU); g.stroke(); }
@@ -158,14 +158,23 @@ function depot(p, x, y, R, h, T) {
     shape(g, mir([[16, 0], [12, 2.6], [12, -2.6]]), PAL.gun, { noShadow: true }); l2(g, 15, 0, .9, '#ffd070');
     g.restore();
   }
-  // 짐 표시: 진화(위를 가리키는 쌍화살표) / 비상 추진기(불꽃). 수송선 위에 떠서 위아래로 천천히 흔들린다
+  // 짐 표시: 강화 카드(카드 + 쌍화살표) / 별 무더기(별 셋) / 비상 추진기(불꽃). 수송선 위에 떠서 위아래로 천천히 흔들린다
   if (!gm.used) {
     const bob = Math.sin(T * 2.4 + p.ph) * 3, ix = sx, iy = sy - R * .62 + bob, r = R * .26;
     g.save(); g.translate(ix, iy);
-    const bg = g.createRadialGradient(0, 0, 0, 0, 0, r * 1.7); bg.addColorStop(0, gm.reward === 'evo' ? 'rgba(160,220,255,.5)' : 'rgba(255,150,90,.5)'); bg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = bg; circle(0, 0, r * 1.7); g.fill();
-    if (gm.reward === 'evo') {
-      g.strokeStyle = '#bfe8ff'; g.lineWidth = Math.max(2, r * .26); g.lineCap = 'round'; g.lineJoin = 'round';
-      for (const k of [0, 1]) { g.globalAlpha = k ? .55 : 1; g.beginPath(); g.moveTo(-r * .8, r * (.15 - k * .85)); g.lineTo(0, -r * (.55 + k * .85) + r * .2); g.lineTo(r * .8, r * (.15 - k * .85)); g.stroke(); }
+    const bg = g.createRadialGradient(0, 0, 0, 0, 0, r * 1.7); bg.addColorStop(0, gm.reward === 'card' ? 'rgba(160,220,255,.5)' : gm.reward === 'stars' ? 'rgba(255,226,120,.5)' : 'rgba(255,150,90,.5)'); bg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = bg; circle(0, 0, r * 1.7); g.fill();
+    if (gm.reward === 'stars') {
+      g.fillStyle = '#ffe27a'; g.shadowColor = '#ffe27a'; g.shadowBlur = 6;
+      for (const [sx2, sy2, sc] of [[0, -.45, 1], [-.7, .35, .75], [.7, .35, .75]]) {
+        g.save(); g.translate(sx2 * r, sy2 * r); g.rotate(T * 1.2 + sx2); g.beginPath();
+        for (let q = 0; q < 10; q++) { const rad = (q % 2 ? .32 : .7) * r * sc, an = q / 10 * TAU - PI / 2; q ? g.lineTo(Math.cos(an) * rad, Math.sin(an) * rad) : g.moveTo(Math.cos(an) * rad, Math.sin(an) * rad); }
+        g.closePath(); g.fill(); g.restore();
+      }
+      g.shadowBlur = 0;
+    } else if (gm.reward === 'card') {
+      g.fillStyle = 'rgba(30,50,80,.9)'; g.strokeStyle = '#bfe8ff'; g.lineWidth = Math.max(1.5, r * .14); g.beginPath(); g.rect(-r * .62, -r * .85, r * 1.24, r * 1.7); g.fill(); g.stroke();
+      g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(1.6, r * .18);
+      for (const k of [0, 1]) { g.globalAlpha = k ? .55 : 1; g.beginPath(); g.moveTo(-r * .32, r * (.2 - k * .38)); g.lineTo(0, -r * (.18 + k * .38)); g.lineTo(r * .32, r * (.2 - k * .38)); g.stroke(); }
       g.globalAlpha = 1;
     } else {
       const f = 1 + .12 * Math.sin(T * 14);
