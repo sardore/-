@@ -13,7 +13,8 @@ import { ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
 import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
-import { cfg, shipHue, emitDecor, landHsl, starHsl } from './cos.js';
+import { cfg, shipHue, emitDecor, starHsl } from './cos.js';
+import { spawnLand } from './land-fx.js';
 import { settleRun } from './shop.js';
 
 export const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 반비례한다(강한 돌진일수록 빨리 찬다)
@@ -72,8 +73,8 @@ export function latch(p, dx, dy, d) {
   const quick = s.swept < TAU * 1.05;
   s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; heatReset();
   p.pulse = 1; p.sq = .55;
-  ringFx(p.x, p.y, 'hsla(' + p.hue + ',90%,75%,.9)', p.R, capOf(p) * .9, .5, 3);
-  if (cfg().land) { ringFx(p.x, p.y, landHsl(72, .95), p.R * .6, capOf(p) * 1.15, .7, 4); ringFx(p.x, p.y, '#fff', p.R, capOf(p) * .7, .35, 2); burst(s.x, s.y, landHsl(70), 10, 160); }   // 상점 착지 링
+  spawnLand(G.fxr, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
+  if (cfg().landshape) burst(s.x, s.y, 'hsl(' + shipHue() + ',90%,70%)', 10, 160);
   thump(170, 60, .16, .2);
   if (G.boss) {
     if (G.boss.state === 'fight') { G.bcombo = s.hitF ? G.bcombo + 1 : 0; s.hitF = false; beep(330, .07); bossTurn(); }

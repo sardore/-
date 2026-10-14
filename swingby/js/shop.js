@@ -2,7 +2,7 @@
  * 그리기는 shop-ui.js, 장착한 이펙트를 실제로 쓰는 쪽은 cos.js. */
 import { G } from './state.js';
 import { load, save } from './util.js';
-import { ITEMS, SPEC_STEP, SPEC_PRICE, SHIELD_PRICE, SHARD_RATE } from './shop-data.js';
+import { ITEMS, SPEC_STEP, SPEC_PRICE, SHIELD_PRICE, SHARD_RATE, LEGACY_REFUND } from './shop-data.js';
 
 const KEY = 'swingby_shop', KEY_SHARDS = 'swingby_shards';
 
@@ -12,7 +12,9 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
 (function restore() {
   SHOP.shards = Math.max(0, Math.floor(+load(KEY_SHARDS, 0) || 0));
   let o; try { o = JSON.parse(load(KEY, '{}')) || {}; } catch (e) { o = {}; }
-  for (const id of o.own || []) if (ITEMS[id]) SHOP.own[id] = 1;
+  let refund = 0;
+  for (const id of o.own || []) { if (ITEMS[id]) SHOP.own[id] = 1; else if (LEGACY_REFUND[id]) refund += LEGACY_REFUND[id]; }
+  if (refund) { SHOP.shards += refund; persist(); }
   for (const slot in o.eq || {}) { const it = ITEMS[o.eq[slot]]; if (it && it.slot === slot && SHOP.own[it.id]) SHOP.eq[slot] = it.id; }
   for (const k in o.spec || {}) SHOP.spec[k] = Math.max(0, Math.min(k === 'shield' ? 1 : SPEC_PRICE.length, o.spec[k] | 0));
 })();

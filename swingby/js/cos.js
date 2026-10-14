@@ -13,7 +13,7 @@ export function cfgFor(eq, shipId) {
   return {
     paint: v('paint'), glow: v('glow') ? v('glow').lv : 0, glowcol: v('glowcol') || (dc && dc.glowcol) || null,
     flame: v('flame') || (dc && dc.flame) || null, trail: v('trail') || (dc && dc.trail) || null,
-    land: v('land'), charge: v('charge'), chargecol: v('chargecol'), heat: v('heat'), starfx: v('starfx'), decor: dc
+    landshape: v('landshape'), charge: v('charge'), chargecol: v('chargecol'), heat: v('heat'), starfx: v('starfx'), decor: dc
   };
 }
 
@@ -63,7 +63,6 @@ export function emitDecor(c, x, y, vx, vy, dt, k, out) {
   c.decor.emit({ x, y, bx: -vx / m, by: -vy / m, dt, k, out });
 }
 
-/* ---------- 열기·착지·별 색 ---------- */
+/* ---------- 열기·별 색 ---------- */
 export const heatHsl = (l, a) => hslOf(cfg().heat, shipHue(), G.T, l, a);
-export const landHsl = (l, a, fallbackH) => hslOf(cfg().land, fallbackH, G.T, l, a);
 export const starHsl = (l, a) => cfg().starfx ? hslOf(cfg().starfx, 46, G.T, l, a) : null;

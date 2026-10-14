@@ -1,6 +1,7 @@
 /* 효과 그리기 v2: 빛이 번지는 꼬리·링·파티클(가산 합성)과 반짝이는 별. 예전 렌더러는 draw-world.js 에 그대로 있다 */
 import { G, g } from './state.js';
 import { TAU, easeOut } from './util.js';
+import { ringPath } from './land-fx.js';
 import { hueOf, satOf } from './cos.js';
 
 /** 기체 꼬리: 넓고 옅은 빛 + 밝은 심지를 겹쳐 그린다 */
@@ -39,7 +40,7 @@ export function drawFxLayers2(fxr = G.fxr, parts = G.parts) {
   g.save(); g.globalCompositeOperation = 'lighter';
   for (const f of fxr) {
     const k = f.t / f.dur, r = f.r0 + (f.r1 - f.r0) * easeOut(k), lw = f.w * (1 - k * .6);
-    g.strokeStyle = f.c; g.beginPath(); g.arc(f.x, f.y, r, 0, TAU);
+    g.strokeStyle = f.c; ringPath(g, f, r);
     g.globalAlpha = (1 - k) * .3; g.lineWidth = lw * 2.8; g.stroke();
     g.globalAlpha = 1 - k; g.lineWidth = lw; g.stroke();
   }

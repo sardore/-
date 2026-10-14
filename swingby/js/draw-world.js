@@ -8,6 +8,7 @@ import { viewTop, viewBot } from './camera.js';
 import { txt, GFX } from './gfx.js';
 import { flameColor } from './heat.js';
 import { cfg, shipDef, shipOpts, glowOf, heatHsl, hslOf } from './cos.js';
+import { ringPath } from './land-fx.js';
 import { drawCharge } from './charge-fx.js';
 import { drawMonster } from './draw-monster.js';
 import { drawPlanet } from './draw-planet.js';
@@ -132,7 +133,7 @@ export function drawFx() {
   else {
     for (const f of G.fxr) {
       const k = f.t / f.dur, r = f.r0 + (f.r1 - f.r0) * easeOut(k);
-      g.globalAlpha = 1 - k; g.strokeStyle = f.c; g.lineWidth = f.w * (1 - k * .6); g.beginPath(); g.arc(f.x, f.y, r, 0, TAU); g.stroke();
+      g.globalAlpha = 1 - k; g.strokeStyle = f.c; g.lineWidth = f.w * (1 - k * .6); ringPath(g, f, r); g.stroke();
     }
     for (const p of G.parts) {
       g.globalAlpha = 1 - p.t / p.l;

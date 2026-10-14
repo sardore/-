@@ -8,6 +8,7 @@ import { rr, txt } from './gfx.js';
 import { TABS, SLOTS, LIST, ITEMS, GLOW_BLUR, SPEC_STATS, SPEC_STEP, SPEC_PRICE } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, emitDecor } from './cos.js';
+import { spawnLand } from './land-fx.js';
 import { DECOR } from './decor.js';
 import { drawTrail2, drawFxLayers2 } from './draw-fx2.js';
 import { drawAura } from './draw-world.js';
@@ -210,7 +211,7 @@ function drawPreview(R) {
   const pg = g.createRadialGradient(cx - 4, cy - 4, 1, cx, cy, 15); pg.addColorStop(0, '#7fb0ff'); pg.addColorStop(1, '#2a3a8a'); g.fillStyle = pg; g.beginPath(); g.arc(cx, cy, 14, 0, TAU); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, rad, 0, TAU); g.stroke();
   // 이벤트: 착지 링(행성), 별 먹기(오른쪽 위)
-  if (T >= P.nextRing) { P.nextRing = T + 2.2; const col = c.land ? hslOf(c.land, 200, T, 72, .95) : 'rgba(150,200,255,.8)'; P.fxr.push({ x: cx, y: cy, c: col, r0: 14, r1: 62, t: 0, dur: .7, w: 4 }); if (c.land) P.fxr.push({ x: cx, y: cy, c: '#fff', r0: 14, r1: 44, t: 0, dur: .4, w: 2 }); }
+  if (T >= P.nextRing) { P.nextRing = T + 2.2; spawnLand(P.fxr, cx, cy, 14, 62, def.L.h, c.landshape); }
   const sx = cx + 104, sy = cy - 36;
   if (T >= P.nextStar) {
     P.nextStar = T + 1.8; P.starOff = T + .5; const col = c.starfx ? hslOf(c.starfx, 46, T, 70) : GOLD;
