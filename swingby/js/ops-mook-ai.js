@@ -14,7 +14,7 @@ const free = () => G.ship.mode === 'free' && G.st === 'play';
 /** 척력 충격파가 닿는 반지름 · 돌진 속도·시간 · 광선 주기·예고·지속·폭 */
 export const REP = { reach: 150, speed: 300, warn: .9, every: 3.6 };
 export const CHG = { range: 290, aim: .85, dash: .5, speed: 580, rest: 1.3, every: 2.6 };
-export const TRK = { every: 4.4, warn: 1.25, lock: .35, beam: .55, half: .07, len: 1200, follow: 95, stay: 5 };   // half: 광선 부채꼴 반각(라디안) · len: 길이
+export const TRK = { every: 5.2, warn: 2.0, lock: .35, beam: .55, half: .07, len: 1200, follow: 95, stay: 5 };   // half: 광선 부채꼴 반각(라디안) · len: 길이
 
 export function stepRepeller(m, dt) {
   const k = fs(), s = G.ship;
