@@ -14,7 +14,7 @@ const free = () => G.ship.mode === 'free' && G.st === 'play';
 /** 척력 충격파가 닿는 반지름 · 돌진 속도·시간 · 광선 주기·예고·지속·폭 */
 export const REP = { reach: 150, speed: 300, warn: .9, every: 3.6 };
 export const CHG = { range: 290, aim: .85, dash: .5, speed: 580, rest: 1.3, every: 2.6 };
-export const TRK = { every: 4.4, warn: 1.25, lock: .35, beam: .45, w: 14, follow: 95, stay: 5 };
+export const TRK = { every: 4.4, warn: 1.25, lock: .35, beam: .55, half: .07, len: 1200, follow: 95, stay: 5 };   // half: 광선 부채꼴 반각(라디안) · len: 길이
 
 export function stepRepeller(m, dt) {
   const k = fs(), s = G.ship;
@@ -48,21 +48,32 @@ export function stepCharger(m, dt) {
   if (m.fire <= 0 && free() && d < CHG.range * k && d > 60 * k) { m.st = 'aim'; m.aim = CHG.aim; m.fire = CHG.every; m.a = Math.atan2(dy, dx); beep(420, .1, 'square', .05); }
 }
 
-/** 추적정: 화면 아래 가장자리에 붙어 기체의 x 를 천천히 따라가고, 주기마다 세로 광선을 쏜다 */
+/** 추적정의 포구(함선 코) 자리: 몸 중심에서 조준 방향으로 코 끝만큼 */
+export const trkNose = m => { const k = fs(); return { x: m.x + Math.cos(m.ba) * 42 * k, y: m.y + Math.sin(m.ba) * 42 * k }; };
+/** 위쪽(화면 안)을 향하는 조준 각도 */
+const upAim = (m, s) => { const o = trkNose(m); return clamp(Math.atan2(s.y - o.y, s.x - o.x), -PI + .3, -.3); };
+
+/** 추적정: 화면 아래 가장자리에 붙어 기체 쪽 x 를 천천히 따라간다. 쏠 때는 보스 광선처럼 멈춰서 기체를 향해 코를 돌리고,
+ * 예고(충전)가 끝나기 직전에 각도를 잠근 뒤 코에서 가는 부채꼴 광선(저격과 같은 그림)을 쏜다 */
 export function stepTracker(m, dt) {
   const k = fs(), s = G.ship;
-  m.y = viewBot() - 4 * k; m.a = -PI / 2;
-  const dx = s.x - m.x, mv = TRK.follow * k * dt; m.x += clamp(dx, -mv, mv);
+  m.y = viewBot() - 4 * k;
+  const firing = m.warn > 0 || m.beam > 0;
+  if (!firing) { const dx = s.x - m.x, mv = TRK.follow * k * dt; m.x += clamp(dx, -mv, mv); m.ba += angDiff(-PI / 2, m.ba) * Math.min(1, dt * 4); }
   if (m.leave) { m.out += dt * .9; if (m.out >= 1) m.dead = true; return; }
-  if (G.hops - m.h0 >= TRK.stay) { m.leave = true; m.beam = 0; m.warn = 0; return; }
+  if (G.hops - m.h0 >= TRK.stay && !firing) { m.leave = true; return; }
   if (m.beam > 0) {
     m.beam -= dt;
-    if (canKnock() && s.y < m.y - 10 * k && Math.abs(s.x - m.lx) < TRK.w * k * .5 + shipR()) knock(Math.sign(s.x - m.lx) || (Math.random() < .5 ? -1 : 1), -.3, 1, '#ff6a8a');
+    const o = trkNose(m), dx = s.x - o.x, dy = s.y - o.y, d = Math.hypot(dx, dy) || 1;
+    if (canKnock() && d < TRK.len * k && Math.abs(angDiff(Math.atan2(dy, dx), m.ba)) < TRK.half + shipR() / d) {
+      const px = -Math.sin(m.ba), py = Math.cos(m.ba), side = Math.sign(dx * px + dy * py) || 1;   // 광선 옆으로, 선에서 멀어지는 쪽
+      knock(px * side, py * side, 1, '#ff6a8a');
+    }
   } else if (m.warn > 0) {
-    m.warn -= dt; if (m.warn > TRK.lock) m.lx = m.x;
-    if (m.warn <= 0) { m.beam = TRK.beam; beep(150, .3, 'sawtooth', .1); noise(.35, .25, 2500, 200); thump(90, 30, .3, .3); burst(m.lx, m.y - 10, '#ff6a8a', 10, 200); }
-  } else { m.fire -= dt; if (m.fire <= 0) { m.warn = TRK.warn; m.lx = m.x; m.fire = TRK.every; beep(240, .12, 'square', .05); } }
+    m.warn -= dt; if (m.warn > TRK.lock) m.ba += angDiff(upAim(m, s), m.ba) * Math.min(1, dt * 7);   // 마지막 .35초는 각도를 잠근다
+    if (m.warn <= 0) { m.beam = TRK.beam; const o = trkNose(m); beep(150, .3, 'sawtooth', .1); noise(.35, .25, 2500, 200); thump(90, 30, .3, .3); burst(o.x, o.y, '#ff6a8a', 10, 200); }
+  } else { m.fire -= dt; if (m.fire <= 0) { m.warn = TRK.warn; m.fire = TRK.every; beep(240, .12, 'square', .05); } }
 }
 
 /** 추적정을 새로 놓는다(ops-mook.js 의 mkMook 이 만든 틀에 상태를 얹는다) */
-export function trackerState() { return { warn: 0, beam: 0, lx: 0, leave: false, out: 0, h0: G.hops, nohit: true, fire: rnd(1.8, 2.8) }; }
+export function trackerState() { return { warn: 0, beam: 0, ba: -PI / 2, leave: false, out: 0, h0: G.hops, nohit: true, fire: rnd(1.8, 2.8) }; }

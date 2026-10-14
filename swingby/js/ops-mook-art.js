@@ -3,7 +3,8 @@ import { G } from './state.js';
 import { TAU, PI } from './util.js';
 import { ART } from './ops-ship-art.js';
 import { fs } from './stats.js';
-import { REP, CHG, TRK } from './ops-mook-ai.js';
+import { REP, CHG, TRK, trkNose } from './ops-mook-ai.js';
+import { drawZone } from './draw-boss.js';
 
 const { PAL, shape, ball, barrel, lamp, mir } = ART;
 const RED = '#ff4a3a';
@@ -87,7 +88,8 @@ function tracker(c, m, T) {
   lamp(c, 0, -2, 2, ROSE, .6 + .4 * Math.sin(T * 6)); lamp(c, -.6, -2.6, .6, '#fff', .8);
 }
 const DRAW = { drone, gunboat, skiff, barrage, repeller, charger, tracker };
-const ROT = { skiff: 1, charger: 1 };   // 이 종류는 진행 방향(m.a)으로 몸을 돌려 그린다
+const ROT = { skiff: 1, charger: 1 };
+const ROT_UP = { tracker: 1 };   // 코가 위(-y)인 종류는 m.a(조준 각도)+90° 로 돌린다   // 이 종류는 진행 방향(m.a)으로 몸을 돌려 그린다
 
 /** 월드 좌표에서 그리는 예고선·충격파·광선 (몸체와 달리 크기를 곱하지 않는다) */
 function extras(c, m, T, top) {
@@ -97,13 +99,9 @@ function extras(c, m, T, top) {
     if (m.ring) { const f = 1 - m.rr / (REP.reach * k); c.save(); c.strokeStyle = VIO; c.globalAlpha = .25 + .75 * f; c.lineWidth = 3 + 4 * f; c.shadowColor = VIO; c.shadowBlur = 12; c.beginPath(); c.arc(m.x, m.y, m.rr, 0, TAU); c.stroke(); c.restore(); }
   } else if (m.kind === 'charger' && m.st === 'aim') {
     const len = CHG.speed * CHG.dash * k, p = 1 - Math.max(0, m.aim) / CHG.aim; c.save(); c.translate(m.x, m.y); c.rotate(m.a); c.strokeStyle = '#ff5a40'; c.globalAlpha = .2 + .5 * p; c.lineWidth = 2 + 3 * p; c.setLineDash([10, 6]); c.beginPath(); c.moveTo(m.R, 0); c.lineTo(len, 0); c.stroke(); c.restore();
-  } else if (m.kind === 'tracker') {
-    if (m.warn > 0) { const p = 1 - m.warn / TRK.warn, lock = m.warn <= TRK.lock; c.save(); c.strokeStyle = ROSE; c.globalAlpha = (lock ? .6 : .18 + .3 * p) * (lock ? .6 + .4 * Math.sin(T * 40) : 1); c.lineWidth = lock ? 3 : 1.6; c.setLineDash(lock ? [] : [10, 8]); c.beginPath(); c.moveTo(m.lx, m.y - 24 * k); c.lineTo(m.lx, top - 40); c.stroke(); c.restore(); }
-    if (m.beam > 0) {
-      const f = m.beam / TRK.beam, w = TRK.w * k * (.5 + .5 * f); c.save();
-      const gr = c.createLinearGradient(m.lx - w, 0, m.lx + w, 0); gr.addColorStop(0, 'rgba(255,60,110,0)'); gr.addColorStop(.35, 'rgba(255,90,130,.85)'); gr.addColorStop(.5, '#fff'); gr.addColorStop(.65, 'rgba(255,90,130,.85)'); gr.addColorStop(1, 'rgba(255,60,110,0)');
-      c.fillStyle = gr; c.shadowColor = ROSE; c.shadowBlur = 18; c.fillRect(m.lx - w, top - 40, w * 2, m.y - top + 20); c.restore();
-    }
+  } else if (m.kind === 'tracker' && (m.warn > 0 || m.beam > 0)) {   // 보스 광선과 같은 존 그림(draw-boss.js 의 drawZone): 충전 → 발사 → 잔광
+    const o = trkNose(m), t = m.warn > 0 ? TRK.warn - m.warn : TRK.warn + (TRK.beam - m.beam);
+    drawZone({ shape: 'w', x: o.x, y: o.y, a: m.ba, half: TRK.half, len: TRK.len * k, delay: 0, fuse: TRK.warn, blast: TRK.beam, fade: .3, col: '#ff6a8a', t });
   }
 }
 
@@ -113,7 +111,7 @@ export function drawMookList(c, top, bot, T) {
     const s = m.R / 10 * (.4 + .6 * m.born) * (1 + m.sq * .12);
     extras(c, m, T, top);
     c.save(); c.translate(m.x, m.y); c.scale(s, s);
-    if (ROT[m.kind]) c.rotate(m.a);
+    if (ROT[m.kind]) c.rotate(m.a); else if (ROT_UP[m.kind]) c.rotate(m.ba + PI / 2);
     if (m.out > 0) c.globalAlpha = Math.max(0, 1 - m.out);   // 떠나는 추적정은 흐려진다
     if (m.flash > 0) c.filter = 'brightness(2.2)';
     DRAW[m.kind](c, m, T);

@@ -182,7 +182,7 @@ function drawCracking(h, f) {
 }
 
 /** 존 한 개: 대기(점선) → 충전(깜빡이며 차오름) → 폭발 → 잔광 */
-function drawZone(h) {
+export function drawZone(h) {
   const t = h.t, t0 = h.delay, t1 = t0 + h.fuse, t2 = t1 + h.blast, col = h.col;
   if (t < t0) { // 아직 차례가 아니다
     g.fillStyle = hexA(col, .1); zonePath(h, 1); g.fill();
