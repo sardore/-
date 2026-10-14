@@ -132,6 +132,7 @@ export function drawFx() {
   if (GFX.v >= 2) drawFxLayers2();
   else {
     for (const f of G.fxr) {
+      if (f.t < 0) continue;
       const k = f.t / f.dur, r = f.r0 + (f.r1 - f.r0) * easeOut(k);
       g.globalAlpha = 1 - k; g.strokeStyle = f.c; g.lineWidth = f.w * (1 - k * .6); ringPath(g, f, r); g.stroke();
     }

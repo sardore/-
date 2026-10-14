@@ -37,10 +37,12 @@ export function drawCoin(p, a) {
 
 /** 링·파티클(글자는 제외). 상점 미리보기는 자기 목록을 넘긴다 */
 export function drawFxLayers2(fxr = G.fxr, parts = G.parts) {
-  g.save(); g.globalCompositeOperation = 'lighter';
+  g.save(); g.globalCompositeOperation = 'lighter'; g.lineJoin = 'round';
   for (const f of fxr) {
+    if (f.t < 0) continue;   // 지연 중인 링
     const k = f.t / f.dur, r = f.r0 + (f.r1 - f.r0) * easeOut(k), lw = f.w * (1 - k * .6);
     g.strokeStyle = f.c; ringPath(g, f, r);
+    if (f.fill) { g.globalAlpha = (1 - k) * f.fill; g.fillStyle = f.c; g.fill(); }
     g.globalAlpha = (1 - k) * .3; g.lineWidth = lw * 2.8; g.stroke();
     g.globalAlpha = 1 - k; g.lineWidth = lw; g.stroke();
   }

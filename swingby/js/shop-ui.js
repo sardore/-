@@ -8,7 +8,7 @@ import { rr, txt } from './gfx.js';
 import { TABS, SLOTS, LIST, ITEMS, GLOW_BLUR, SPEC_STATS, SPEC_STEP, SPEC_PRICE } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, emitDecor } from './cos.js';
-import { spawnLand } from './land-fx.js';
+import { spawnLand, drawShapeIcon } from './land-fx.js';
 import { DECOR } from './decor.js';
 import { drawTrail2, drawFxLayers2 } from './draw-fx2.js';
 import { drawAura } from './draw-world.js';
@@ -177,6 +177,7 @@ function swatch(it, x, y) {
   g.save();
   if (it.slot === 'glow') { g.shadowColor = '#9fd8ff'; g.shadowBlur = GLOW_BLUR[v.lv][1] * .8; g.fillStyle = '#e6f6ff'; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }
   else if (it.slot === 'charge') { g.translate(x, y); g.scale(.36, .36); drawCharge(0, 0, { charge: v, chargecol: null }, 200, .75, G.T); }
+  else if (it.slot === 'landshape') drawShapeIcon(g, x, y, v.style, 200);
   else if (it.ship) { g.translate(x, y); g.rotate(-.6); drawShip(g, SHIPS[it.ship], .8, G.T, .5, { art: DECOR[it.ship].art }); }
   else if (v.style) { g.strokeStyle = '#d8ecff'; g.lineWidth = 1.2; for (const [dx, dy] of v.style === 'dust' ? [[-7, 4], [1, -5], [8, 3]] : [[-8, 0], [-2, 0], [4, 0]]) { g.globalAlpha = v.style === 'ghost' ? .4 + (dx + 8) / 24 : 1; g.beginPath(); g.moveTo(x + dx - 3, y + dy); g.lineTo(x + dx + 3, y + dy); g.moveTo(x + dx, y + dy - 3); g.lineTo(x + dx, y + dy + 3); g.stroke(); } }
   else if (v.rb) { const gr = g.createLinearGradient(x - 11, y - 11, x + 11, y + 11); ['#ff6a6a', '#ffd24a', '#6aff9a', '#6ac8ff', '#c08aff'].forEach((c, i) => gr.addColorStop(i / 4, c)); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); }
@@ -211,7 +212,7 @@ function drawPreview(R) {
   const pg = g.createRadialGradient(cx - 4, cy - 4, 1, cx, cy, 15); pg.addColorStop(0, '#7fb0ff'); pg.addColorStop(1, '#2a3a8a'); g.fillStyle = pg; g.beginPath(); g.arc(cx, cy, 14, 0, TAU); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, rad, 0, TAU); g.stroke();
   // 이벤트: 착지 링(행성), 별 먹기(오른쪽 위)
-  if (T >= P.nextRing) { P.nextRing = T + 2.2; spawnLand(P.fxr, cx, cy, 14, 62, def.L.h, c.landshape); }
+  if (T >= P.nextRing) { P.nextRing = T + 2.2; spawnLand(P.fxr, P.parts, cx, cy, 14, 62, def.L.h, c.landshape); }
   const sx = cx + 104, sy = cy - 36;
   if (T >= P.nextStar) {
     P.nextStar = T + 1.8; P.starOff = T + .5; const col = c.starfx ? hslOf(c.starfx, 46, T, 70) : GOLD;

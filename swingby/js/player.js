@@ -73,7 +73,7 @@ export function latch(p, dx, dy, d) {
   const quick = s.swept < TAU * 1.05;
   s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; heatReset();
   p.pulse = 1; p.sq = .55;
-  spawnLand(G.fxr, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
+  spawnLand(G.fxr, G.parts, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
   if (cfg().landshape) burst(s.x, s.y, 'hsl(' + shipHue() + ',90%,70%)', 10, 160);
   thump(170, 60, .16, .2);
   if (G.boss) {
