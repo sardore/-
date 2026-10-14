@@ -16,6 +16,6 @@ export function makeSunBoss() {
   return {
     n: '태양', e: 'THE SUN', R: 50, hue: 42, kind: 'sun', col: ['#fffbe0', '#ffc23a', '#c8480a'], line: '우리의 별', tuto: true,
     hp: Math.round((60 + 100 * Math.log(1 + n / 3)) / 10) * 10, atk: 4 + n,
-    pat: PATS.slice(0, kinds), q: n < 3 ? 1 : n < 8 ? 2 : 3
+    pat: PATS.slice(0, kinds), q: Math.min(6, 1 + Math.floor(n / 2))   // 동시 예고: 2번 깰 때마다 +1 (체력바 위 칩이 6개까지 들어가므로 6에서 멈춘다)
   };
 }
