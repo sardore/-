@@ -1,6 +1,6 @@
 /* 월드 요소 그리기: 행성(종류별)·블랙홀·별·갈림길 안내·기체와 차지 연출 */
 import { G, g } from './state.js';
-import { PI, TAU, clamp, easeOut } from './util.js';
+import { TAU, clamp, easeOut } from './util.js';
 import { BIOMES, BOSSES } from './data.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
 import { maxOrbit, o2max, fs } from './stats.js';
@@ -16,7 +16,7 @@ import { drawPlanet2 } from './draw-planet2.js';
 import { drawTrail2, drawFxLayers2, drawStar2, drawCoin } from './draw-fx2.js';
 
 
-export function drawHole(h) {
+function drawHole(h) {
   const T = G.T, hg = g.createRadialGradient(h.x, h.y, h.r * .6, h.x, h.y, h.r * 2.6);
   hg.addColorStop(0, 'rgba(170,90,255,.55)'); hg.addColorStop(1, 'rgba(170,90,255,0)');
   g.fillStyle = hg; g.beginPath(); g.arc(h.x, h.y, h.r * 2.6, 0, TAU); g.fill();
@@ -25,7 +25,7 @@ export function drawHole(h) {
   g.fillStyle = '#000'; g.beginPath(); g.arc(h.x, h.y, h.r, 0, TAU); g.fill();
 }
 /** 별(수집품) v1 */
-export function drawStar(t) {
+function drawStar(t) {
   const r = 5 + 1.5 * Math.sin(G.T * 5 + t.ph);
   g.fillStyle = '#ffe27a'; g.beginPath();
   g.moveTo(t.x, t.y - r); g.lineTo(t.x + r * .35, t.y - r * .35); g.lineTo(t.x + r, t.y); g.lineTo(t.x + r * .35, t.y + r * .35);

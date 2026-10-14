@@ -1,6 +1,6 @@
-/* 무한 모드: TON 618 을 쓰러뜨린 뒤의 항해. 별 조각은 계속 모이고, 대신 궤도 붕괴가 진행도에 비례해 점점 빨라진다.
+/* 무한 모드: TON 618 을 쓰러뜨린 뒤의 항해. 별 조각은 계속 모이고, 대신 행성의 인력(포획 범위)이 진행도에 비례해 점점 줄어든다.
  * 보스는 별 카탈로그 번호(HD 209458 …)를 이름으로 갖는 무작위 보스다: 전용 패턴 5개 중 둘 + 공용 패턴 몇 개를 들고 나오고, 스킬 이름은 알려주지 않는다.
- * 공격력·체력은 보스를 잡을 때마다 지수로 오른다 — 궤도 붕괴(선형)보다 가팔라서 언젠가는 반드시 게임오버가 된다. */
+ * 공격력·체력은 보스를 잡을 때마다 지수로 오른다 — 인력 감소(선형)보다 가팔라서 언젠가는 반드시 게임오버가 된다. */
 import { G } from './state.js';
 import { rint, shuffle, rnd, clamp } from './util.js';
 import { STAGES } from './data.js';
@@ -16,7 +16,7 @@ export const ENDLESS = {
   gap: 12,                   // 다음 보스까지의 행성 수
   r0: 56, r1: 90, rk: 7, rv: 10, rmax: 100   // 보스 반지름: 중심값이 r0 에서 r1 로 (1-e^(-n/rk)) 만큼 커지고 ±rv 만큼 흔들린다. 최소 46, 최대 rmax
 };
-export const EXCLUSIVE = ['rain', 'ripple', 'grid', 'sweep', 'snare'];
+const EXCLUSIVE = ['rain', 'ripple', 'grid', 'sweep', 'snare'];
 const COMMON = ['meteor', 'comet', 'beam', 'jet', 'flare', 'hole', 'collapse', 'wind'];
 /** 카탈로그 약어와 실제 목록의 번호 범위(가중치) */
 const CATALOGS = [['HD', 359083, 3], ['HIP', 118322, 3], ['HR', 9110, 1], ['GJ', 1291, 1], ['SAO', 258997, 1]];

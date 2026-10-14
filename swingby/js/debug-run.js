@@ -8,7 +8,7 @@ import { BOSSES, STAGES, BIOMES, baseStats } from './data.js';
 import { SHIPS, statsAfter } from './ships.js';
 
 const q = new URLSearchParams(location.search);
-export const DEBUG = q.has('debug');
+const DEBUG = q.has('debug');
 const zone = q.get('zone');
 const TON = BOSSES.findIndex(b => b.kind === 'quasar');
 const target = q.has('boss') ? Math.min(BOSSES.length - 1, Math.max(0, +q.get('boss') || 0)) : TON;

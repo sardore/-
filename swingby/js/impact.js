@@ -5,7 +5,7 @@ import { ramMul, shipR, spd, curDef } from './stats.js';
 export const DASH_MIN = 1.15;                       // 이 배율을 넘으면 "돌격 중"
 export const isDashing = () => G.ship.boost > DASH_MIN;
 /** 돌격이 셀수록 충돌이 아프다 */
-export const dashMul = () => isDashing() ? 1 + curDef().pow * (G.ship.boost - 1) : 1;   // 돌진형 기체는 계수가 더 크다
+const dashMul = () => isDashing() ? 1 + curDef().pow * (G.ship.boost - 1) : 1;   // 돌진형 기체는 계수가 더 크다
 
 /** 충돌 한 번의 피해: 기본 26 × 충돌 능력치 × 돌격 보너스 × 호출한 쪽의 추가 배율(콤보·열기 등), ±10% 흔들림 */
 export const impactDamage = (extra = 1) => Math.round(26 * ramMul() * dashMul() * extra * (.9 + Math.random() * .2));

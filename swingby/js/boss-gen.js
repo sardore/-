@@ -1,7 +1,7 @@
 /* 무한 모드 보스의 외형: 기존 보스 그림을 재활용하지 않고, 부품(몸 윤곽·표면 무늬·핵·코로나·고리·위성·제트·껍질 조각)을 무작위로 조합해 그린다.
  * genLook() 이 외형 명세(JSON 으로 표현 가능한 값들)를 만들고, drawGen() 이 매 프레임 그린다. 표정·눈 같은 괴물 요소는 쓰지 않는다. */
 import { G, g } from './state.js';
-import { PI, TAU, rnd, rint, pickOf, shuffle } from './util.js';
+import { PI, TAU, rnd, rint, pickOf } from './util.js';
 
 const hsl = (h, s, l, a = 1) => 'hsla(' + (((h % 360) + 360) % 360).toFixed(0) + ',' + s + '%,' + l + '%,' + a + ')';
 const chance = p => Math.random() < p;

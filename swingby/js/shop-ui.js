@@ -278,4 +278,3 @@ export function drawDeadShopBtn() {
   shard(r.x + 24, r.y + r.h / 2, 8); txt('별 조각 상점', r.x + r.w / 2 + 10, r.y + 24, 14, GOLD, 'center', 800);
 }
 export const deadShopHit = (x, y) => inRect(deadBtn(), x, y);
-export const shopScroll = () => ({ y: P.scroll, v: P.vel });   // 테스트용

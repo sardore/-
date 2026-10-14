@@ -4,7 +4,7 @@ import { load, save } from './util.js';
 
 export const TUTO_SHARDS = 20;
 const KEY = 'swingby_tuto';
-export const tutoClears = () => Math.max(0, Math.floor(+load(KEY, 0) || 0));
+const tutoClears = () => Math.max(0, Math.floor(+load(KEY, 0) || 0));
 export const addTutoClear = () => { const n = tutoClears() + 1; save(KEY, n); return n; };
 
 /** 깰 때마다 늘어나는 패턴 순서 (2번 깰 때마다 한 종류). 뒤쪽은 무한 모드 랜덤 보스의 전용 패턴이다 */

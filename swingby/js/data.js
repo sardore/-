@@ -10,7 +10,7 @@ export const STATS = [ // 레이더 차트 축 순서
   { k: 'o2',    n: '산소',   c: '#b8a8ff' },
   { k: 'mult',  n: '점수',   c: '#ff8fd0' }
 ];
-export const SHIELD = { k: 'shield', n: '추진기', c: '#ff9d7a' };
+const SHIELD = { k: 'shield', n: '추진기', c: '#ff9d7a' };
 export const STAT_INFO = Object.fromEntries(STATS.concat([SHIELD]).map(s => [s.k, s]));
 export const baseStats = () => ({ spd: 100, ram: 100, grav: 100, decay: 100, o2: 100, mult: 100, shield: 0 });
 
@@ -25,7 +25,7 @@ export const CARDS = [
   { k: 'shield', n: '비상 추진기', d: '사망 1회 방지',      step: 1,  cap: 9 }
 ];
 
-/** 보스를 쓰러뜨릴 때마다 점수 배율이 20%씩 복리로 오른다 (화면에는 표시하지 않는다) */
+/** 보스를 쓰러뜨릴 때마다 점수 배율이 30%씩 복리로 오른다 (화면에는 표시하지 않는다) */
 export const BOSS_MUL = 1.3;
 
 /* ---------- 보스 ----------

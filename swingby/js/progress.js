@@ -18,13 +18,13 @@ export function offer(title) {
   G.st = 'pick'; G.pickMode = 'card'; G.pickTitle = title || '강화 선택'; G.pickT = 0;
   beep(660, .12); setTimeout(() => beep(880, .14), 90);
 }
-export function pickCard(c) {
+function pickCard(c) {
   G.stats[c.k] = Math.min(c.cap, G.stats[c.k] + c.step); G.st = 'play'; beep(780, .1);
   const info = STAT_INFO[c.k]; popText(G.ship.x, G.ship.y - 24, c.n, info.c, 16); ringFx(G.ship.x, G.ship.y, info.c, 6, 70, .5, 3);
 }
 
 /* ---------- 기체 진화 ---------- */
-export function startEvo() {
+function startEvo() {
   G.evoOpts = SHIPS[G.shipId].kids.map(k => SHIPS[k]);
   if (!G.evoOpts.length) { offer(); return; }
   G.st = 'pick'; G.pickMode = 'evo'; G.pickT = 0;

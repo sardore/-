@@ -2,7 +2,7 @@
  * look: 외형 파라미터(ship-art.js), dash: 차지 돌진 세기. 모든 기체가 누르고 있으면 차지, 떼면 돌진한다.
  * 돌진 전용으로 짜인 기체(dash 를 따로 준 기체: strong)는 속도 배율과 충돌 피해 계수(pow)가 크고, 나머지는 약한 돌진(WEAK_DASH)이다 */
 export const SHIPS = {};
-export const WEAK_DASH = .4, WEAK_POW = .6, STRONG_POW = 1;
+const WEAK_DASH = .4, WEAK_POW = .6, STRONG_POW = 1;
 
 function defShip(id, tier, name, desc, hue, look, delta, kids, dash) {
   SHIPS[id] = { id, t: tier, n: name, d: desc, L: Object.assign({ h: hue }, look), delta: delta || {}, kids: kids || [], dash: dash || WEAK_DASH, strong: !!dash, pow: dash ? STRONG_POW : WEAK_POW };

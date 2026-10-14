@@ -12,7 +12,7 @@ import { maybeMonster } from './monsters.js';
  * 진행할수록 필드가 점점 넓어지고(카메라는 줌아웃) 행성·간격도 같이 커진다. 보스 아레나는 항상 기본 폭. */
 const FIELD_MAX = 220;     // 기본 폭에서 최대로 더 넓어지는 양
 /** 행성 하나 지날 때마다 조금씩 넓어진다 */
-export const fieldTarget = () => W0 + Math.min(FIELD_MAX, G.hops * 2.2);
+const fieldTarget = () => W0 + Math.min(FIELD_MAX, G.hops * 2.2);
 export function growField(dt) {
   if (G.boss || (G.fork && G.fork.state === 'hub')) return;   // 보스전·갈림길 선택 중에는 고정
   const w0 = G.w;

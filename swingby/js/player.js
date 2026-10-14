@@ -1,13 +1,14 @@
 /* 플레이어 기체: 입력 동작(발사·차지), 포획, 사망, 매 프레임의 이동·충돌 */
 import { G } from './state.js';
-import { PI, TAU, rnd, save, clamp } from './util.js';
-import { BIOMES, BOSSES } from './data.js';
-import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit, fs, arenaK } from './stats.js';
-import { viewTop, viewBot } from './camera.js';
+import { PI, TAU, rnd } from './util.js';
+import { spd, orbSpd, capOf, decRate, o2max, magRange, shipR, curDef, minOrbit, maxOrbit, fs } from './stats.js';
+import { viewBot } from './camera.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
-import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, slowmo, toast, popText, addScore } from './fx.js';
+import { burst, sparks, ringFx, hitstop, punch, shakeAdd, flashScreen, toast, addScore } from './fx.js';
 import { shatter } from './planets.js';
-import { enterFork, commitRoute } from './fork.js';
+import { forkArrive } from './fork.js';
+import { die } from './death.js';
+import { netAssist, rescueAssist } from './assist.js';
 import { bossTurn } from './boss-attacks.js';
 import { ram } from './boss.js';
 import { hitMonsters } from './monsters.js';
@@ -15,9 +16,8 @@ import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 import { cfg, shipHue, emitDecor, starHsl } from './cos.js';
 import { spawnLand } from './land-fx.js';
-import { settleRun } from './shop.js';
 
-export const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 반비례한다(강한 돌진일수록 빨리 찬다)
+const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 반비례한다(강한 돌진일수록 빨리 찬다)
 const chargeTime = () => CHARGE_T / curDef().dash;
 const DASH_TAU = .55;            // 돌격 속도가 원래 속도로 돌아오는 시간 상수
 
@@ -40,7 +40,7 @@ export function pressEnd() {
 }
 
 /** 궤도를 벗어나 접선 방향으로 날아간다. charge(0~1)가 크면 돌격 속도 */
-export function release(charge) {
+function release(charge) {
   const s = G.ship; if (s.mode !== 'orb') return;
   if (G.boss && G.boss.state !== 'fight') return;
   const boost = 1 + curDef().dash * Math.max(0, (charge - .1) / .9), v = spd() * boost, from = s.p;
@@ -67,7 +67,7 @@ export function release(charge) {
 }
 
 /* ---------- 포획 ---------- */
-export function latch(p, dx, dy, d) {
+function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
@@ -89,42 +89,6 @@ export function latch(p, dx, dy, d) {
     if (combo >= 5 && combo % 5 === 0) { flashScreen(.18, '#7dd3ff'); punch(.03); toast('x' + combo + ' 콤보!', '#7dd3ff'); }
   } else beep(300, .06);
   forkArrive(p);
-}
-
-/** 갈림길 도착 처리: 허브면 시야가 넓어지고, 항로의 첫 행성이면 길이 정해진다.
- * 포획과 비상 추진기 복귀처럼 "그 행성에 자리 잡는" 모든 경로에서 부른다 */
-function forkArrive(p) {
-  const F = G.fork;
-  if (F && p === F.hub) enterFork();
-  else if (F && F.state === 'hub' && p.branch) {
-    const br = commitRoute(p), bm = BIOMES[br.biome];
-    G.banner = { t: 0, dur: 2.6, a: '항로 결정', b: bm.n, c: bm.c, sub: '다음 보스  ' + (br.bi < 0 ? '???' : BOSSES[br.bi].n) };
-    flashScreen(.25, bm.c); punch(.03); thump(110, 40, .4, .25);
-  }
-}
-
-/* ---------- 사망 ---------- */
-export function die(why) {
-  const s = G.ship, st = G.stats;
-  if (st.shield > 0) { // 비상 추진기: 가장 가까운 행성 궤도로 되돌린다
-    st.shield--; let bp = null;
-    for (const p of G.planets) { if (p.dead || p.ghost) continue; if (p.y < viewBot() - (G.boss ? 130 : 70) / G.vz && p.y > viewTop() + 50 / G.vz && (!bp || Math.hypot(p.x - s.x, p.y - s.y) < Math.hypot(bp.x - s.x, bp.y - s.y))) bp = p; }
-    bp = bp || s.p;
-    let a = Math.atan2(s.y - bp.y, s.x - bp.x); if (!isFinite(a)) a = 0;
-    s.mode = 'orb'; s.p = bp; s.r = maxOrbit(bp) - 4; s.a = a; s.swept = 0; s.air = 0; s.last = null; s.trail.length = 0; s.inv = 1.5; s.boost = 1; s.gd = 0; s.charging = false; s.heat = 0;
-    s.x = bp.x + Math.cos(a) * s.r; s.y = bp.y + Math.sin(a) * s.r;
-    if (!G.boss && !bp.seen) { bp.seen = true; G.hops++; }
-    if (!G.boss) forkArrive(bp);
-    if (G.boss) G.bo2 = Math.max(G.bo2, 6);
-    G.combo = 0; popText(s.x, s.y - 20, '비상 추진!', '#ff9d7a', 17); burst(s.x, s.y, '#ff9d7a', 22, 220); ringFx(s.x, s.y, '#ff9d7a', 6, 90, .5, 4);
-    beep(220, .25, 'sawtooth'); noise(.4, .2, 3000, 200); G.shake = 10; hitstop(.1); flashScreen(.3, '#ff9d7a');
-    return;
-  }
-  G.st = 'dead'; G.deadT = 0; G.deadWhy = why; G.shake = 18; hitstop(.14); flashScreen(.5, '#fff'); slowmo(.35, .9);
-  burst(s.x, s.y, '#fff', 34, 280); burst(s.x, s.y, '#ff6a6a', 24, 200); ringFx(s.x, s.y, '#fff', 6, 140, .6, 4); ringFx(s.x, s.y, '#ff6a6a', 6, 100, .5, 3);
-  beep(110, .5, 'sawtooth', .14); thump(120, 30, .6, .4); noise(.7, .3, 4000, 100); vibe([60, 40, 120]);
-  if (G.score > G.best && !G.debug && !G.tuto) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
-  settleRun();
 }
 
 /* ---------- 프레임 이동 ---------- */
@@ -186,45 +150,6 @@ export function stepShip(dt) {
   collectStars();
   s.trail.push(s.x, s.y); if (s.trail.length > 48) s.trail.splice(0, 2);
   return true;
-}
-
-/** 보스에 부딪혀 튕긴 비행에만 붙는 눈에 안 보이는 안전망: 아래로 내려가 화면 밑이 가까워질수록 비행 방향을 가장 가까운 행성 쪽으로 슬쩍 꺾는다.
- * 속도는 그대로고 방향만 돌리며, 바닥에서 멀 때는 거의 손대지 않는다. 행성에 붙거나 다시 발사하면 꺼진다(s.net) */
-function netAssist(dt) {
-  const s = G.ship, K = arenaK(), u = clamp((s.y - (G.arenaBot - 340 * K)) / (300 * K), 0, 1);
-  if (u <= 0 && s.vy <= 0) return;
-  let best = null, bd = 1e9;
-  for (const p of G.planets) {
-    if (p.dead || p.ghost || p.y > G.arenaBot - 30 * K) continue;
-    const d = Math.hypot(p.x - s.x, p.y - s.y) - capOf(p);
-    if (d < bd) { bd = d; best = p; }
-  }
-  if (!best) return;
-  const want = Math.atan2(best.y - s.y, best.x - s.x), cur = Math.atan2(s.vy, s.vx);
-  let diff = want - cur; while (diff > PI) diff -= TAU; while (diff < -PI) diff += TAU;
-  const turn = clamp(diff, -(.35 + 4.2 * u * u) * dt, (.35 + 4.2 * u * u) * dt), v = Math.hypot(s.vx, s.vy), a = cur + turn;
-  s.vx = Math.cos(a) * v; s.vy = Math.sin(a) * v;
-}
-
-/** 보스를 쓰러뜨린 직후 튕겨 나간 비행에 붙는 눈에 안 보이는 구조: 행성이 없는 줄을 좌우 벽만 오가다 산소가 다 닳지 않도록,
- * 지금 항로가 어느 행성의 포획 범위도 지나지 않으면 비행 방향을 가까운 행성 쪽으로 슬쩍 꺾는다. 속도는 그대로고, 시간이 갈수록 조금씩 더 꺾는다.
- * 행성에 붙거나 다시 발사하면 꺼진다(s.net) */
-function rescueAssist(dt) {
-  const s = G.ship, v = Math.hypot(s.vx, s.vy); if (v < 1) return;
-  const hx = s.vx / v, hy = s.vy / v, cur = Math.atan2(s.vy, s.vx), look = 420 * fs();
-  let best = null, bc = 1e9;
-  for (const p of G.planets) {
-    if (p.dead || p.ghost || p === s.last) continue;
-    const dx = p.x - s.x, dy = p.y - s.y, along = dx * hx + dy * hy, cap = capOf(p);
-    if (along > 0 && along < look && Math.abs(dx * hy - dy * hx) < cap * .8) return;   // 이미 붙을 항로다
-    let diff = Math.atan2(dy, dx) - cur; while (diff > PI) diff -= TAU; while (diff < -PI) diff += TAU;
-    const c = Math.hypot(dx, dy) - cap + 180 * Math.abs(diff) * fs();   // 가깝고 진행 방향에 가까운 행성을 고른다
-    if (c < bc) { bc = c; best = p; }
-  }
-  if (!best) return;
-  let diff = Math.atan2(best.y - s.y, best.x - s.x) - cur; while (diff > PI) diff -= TAU; while (diff < -PI) diff += TAU;
-  const rate = (.6 + .5 * clamp(s.air + 2.5, 0, 6)) * dt, a = cur + clamp(diff, -rate, rate);
-  s.vx = Math.cos(a) * v; s.vy = Math.sin(a) * v;
 }
 
 /** 옆 벽에 튕김. 보스전에서는 열기가 쌓인다 */

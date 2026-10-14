@@ -16,3 +16,5 @@ export const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba
 /** localStorage 는 막혀 있을 수 있으니 항상 try/catch 로 감싼다 */
 export function load(key, def) { try { const v = localStorage.getItem(key); return v == null ? def : v; } catch (e) { return def; } }
 export function save(key, val) { try { localStorage.setItem(key, String(val)); } catch (e) { /* 저장 불가 환경 */ } }
+/** 각도 차이(to - from)를 -π ~ π 로 접는다 */
+export const angDiff = (to, from) => { let d = to - from; while (d > PI) d -= TAU; while (d < -PI) d += TAU; return d; };

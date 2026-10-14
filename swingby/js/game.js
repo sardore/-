@@ -13,7 +13,7 @@ import { orbSpd } from './stats.js';
 import { updateTutorial } from './tutorial.js';
 
 /** 플레이 중 한 틱 */
-export function update(dt) {
+function update(dt) {
   if (G.tuto) updateTutorial(dt);
   if (G.boss) updateBoss(dt);
   if (!stepShip(dt)) return;

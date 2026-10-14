@@ -67,7 +67,7 @@ export const LEGACY_REFUND = {};
   .forEach(([id, n, h, price]) => add({ id: 'paint_' + id, tab: 'ship', slot: 'paint', n: n + ' 도색', d: '', price, v: { h } }));
 
 /* 기체별 전용 장식: 그 기체로 날 때만 보인다 (4단 기체). 그림·입자는 decor.js */
-export const DECOR_LIST = [
+const DECOR_LIST = [
   ['gol', '황금 동전 추진체', '엔진에서 황금 동전이 쏟아진다', 2500],
   ['dre', '용암 포신', '포구가 달아오르고 불씨가 흩날린다', 2000],
   ['jug', '용암 균열 장갑', '갈라진 장갑 틈으로 용암이 비친다', 1800],

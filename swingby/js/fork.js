@@ -2,11 +2,13 @@
  * 도착하면 시야가 넓어져 왼쪽/오른쪽 항로가 보인다. 항로마다 다음 보스(2개 스테이지)와 바이옴이 다르다. */
 import { G } from './state.js';
 import { W0, rnd, shuffle } from './util.js';
-import { BIOMES, STAGES, MONSTER_ZONE } from './data.js';
+import { BIOMES, BOSSES, STAGES, MONSTER_ZONE } from './data.js';
 import { fs } from './stats.js';
 import { mkPlanet } from './planets.js';
 import { addStars } from './scatter.js';
 import { endlessNext } from './endless.js';
+import { flashScreen, punch } from './fx.js';
+import { thump } from './audio.js';
 
 export function scheduleFork() {
   G.fork = { state: 'queued', at: G.genI + 3, active: false, hub: null, branches: null };
@@ -42,14 +44,14 @@ export function buildFork(prev) {
 }
 
 /** 허브에 도착: 시야를 넓힌다 */
-export function enterFork() {
+function enterFork() {
   const F = G.fork; if (!F || F.state !== 'hub') return;
   F.active = true;
   G.banner = { t: 0, dur: 1.8, a: 'FORK', b: '갈림길', c: '#ffd9a8' };
 }
 
 /** 항로의 첫 행성에 닿았다: 반대편을 치우고 바이옴·다음 보스를 확정한다 */
-export function commitRoute(p) {
+function commitRoute(p) {
   const F = G.fork, side = p.branch, br = F.branches[side], other = side === 'L' ? 'R' : 'L';
   G.planets = G.planets.filter(q => q.branch !== other);
   G.stars = G.stars.filter(t => t.br !== other);
@@ -57,4 +59,16 @@ export function commitRoute(p) {
   G.genY = Math.min(...br.planets.map(q => q.y));
   G.fork = null;
   return br;
+}
+
+/** 갈림길 도착 처리: 허브면 시야가 넓어지고, 항로의 첫 행성이면 길이 정해진다.
+ * 포획과 비상 추진기 복귀처럼 "그 행성에 자리 잡는" 모든 경로에서 부른다 */
+export function forkArrive(p) {
+  const F = G.fork;
+  if (F && p === F.hub) enterFork();
+  else if (F && F.state === 'hub' && p.branch) {
+    const br = commitRoute(p), bm = BIOMES[br.biome];
+    G.banner = { t: 0, dur: 2.6, a: '항로 결정', b: bm.n, c: bm.c, sub: '다음 보스  ' + (br.bi < 0 ? '???' : BOSSES[br.bi].n) };
+    flashScreen(.25, bm.c); punch(.03); thump(110, 40, .4, .25);
+  }
 }

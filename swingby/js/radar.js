@@ -4,7 +4,7 @@ import { STATS } from './data.js';
 import { PI, TAU, clamp } from './util.js';
 import { txt } from './gfx.js';
 
-export const RADAR_MAX = 240;    // 바깥 고리가 나타내는 퍼센트
+const RADAR_MAX = 240;    // 바깥 고리가 나타내는 퍼센트
 const RADAR_MIN = 40;            // 중심이 나타내는 퍼센트(100% 근처 차이가 잘 보이도록 중심을 띄운다)
 
 /**

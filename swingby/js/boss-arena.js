@@ -1,7 +1,7 @@
 /* 보스 아레나: 서 있던 행성을 기준으로 전투장을 만들고(행성 배치·보스 등장), 부서진 행성을 되살린다 */
 import { G, V } from './state.js';
 import { W0, TAU, rnd, clamp } from './util.js';
-import { BOSSES, STAGES, BIOMES } from './data.js';
+import { BIOMES, BOSSES, STAGES } from './data.js';
 import { capOf, bossO2, fs, arenaK } from './stats.js';
 import { arenaH } from './camera.js';
 import { beep, thump, noise, vibe } from './audio.js';
@@ -17,18 +17,18 @@ export const aliveP = () => G.planets.filter(p => !p.dead && !p.ghost);
 /* ---------- 스크롤 ----------
  * 보스전의 맵은 계속 뒤로(화면 아래로) 밀려난다. 보스는 화면 위에 붙어 있고 새 행성은 보스 아래쪽에서 나타난다.
  * 화면 아래로 밀려나면 일반 지형과 똑같이 심우주로 표류해 죽는다. 속도는 화면 기준 px/초이고 필드 폭(arenaK)에 비례해 늘린다. */
-export const SCROLL = { base: 12, max: 1.4, ton: 1.8, accel: .8, gap: [58, 86] };
+const SCROLL = { base: 12, max: 1.4, ton: 1.8, accel: .8, gap: [58, 86] };
 /** 새 행성은 보스 바로 아래에서 유령(투명·포획 불가)으로 나타나, 등장선에서 ACT.ghost 만큼 더 내려와야 실체가 된다(ACT.ramp 동안 서서히 짙어진다) */
 const ACT = { ghost: 40, ramp: 24, alpha: .1 };
 /** 이동 템포 배율: 첫 보스 1.0 → 후반 보스 1.4(스테이지에 따라 일정하게), TON 618 은 예외로 1.8 */
-export const scrollTempo = b => b.d.kind === 'quasar' ? SCROLL.ton : 1 + (SCROLL.max - 1) * Math.min(b.stage, STAGES.length - 2) / (STAGES.length - 2);
-export const HORIZON_SCROLL = 2;   // TON 618 의 사건의 지평선: 맵이 밀려나는 속도 배율
+const scrollTempo = b => b.d.kind === 'quasar' ? SCROLL.ton : 1 + (SCROLL.max - 1) * Math.min(b.stage, STAGES.length - 2) / (STAGES.length - 2);
+const HORIZON_SCROLL = 2;   // TON 618 의 사건의 지평선: 맵이 밀려나는 속도 배율
 const scrollSpeed = b => SCROLL.base * scrollTempo(b) * arenaK() * (b.horizon ? HORIZON_SCROLL : 1);   // 행성 간격은 거리 기준이라 빨라지면 행성이 나오는 빈도(시간당)도 같은 비율로 늘어난다
 
 /* ---------- 시작: 아레나 ---------- */
 /** 후반 보스일수록 맵이 크다: 첫 보스 ×1.0 → 마지막 보스 ×(1+ARENA_GROW). 기체·행성·보스는 √ 로만 커지므로 화면에서는 상대적으로 작아지고 거리는 멀어진다 */
-export const ARENA_GROW = .3;
-export const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length - 1) / (STAGES.length - 1);
+const ARENA_GROW = .3;
+const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length - 1) / (STAGES.length - 1);
 
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {

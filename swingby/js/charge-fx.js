@@ -69,4 +69,3 @@ export function drawCharge(x, y, c, hue, ch, T) {
   if (ch >= 1) { g.globalAlpha = .5 + .5 * Math.sin(T * 24); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 24 + 3 * Math.sin(T * 24), 0, TAU); g.stroke(); }
   g.restore();
 }
-export const CHARGE_STYLES = Object.keys(DESIGNS).filter(k => k !== 'base');

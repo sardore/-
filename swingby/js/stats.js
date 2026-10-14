@@ -23,7 +23,7 @@ export const spd = () => baseSpd() * pct('spd');     // 비행 속도
 export const orbSpd = () => baseSpd();                // 궤도 회전 속도: 속도 능력치의 영향을 받지 않는다
 /** 포획 범위 배율. 인력이 높을수록 효과가 줄어든다: 너무 넓으면 원하는 행성을 고를 수 없어 오히려 답답해진다 */
 const RING_KNEE = 1.5, RING_SLOPE = .4, ORBIT_MAX = 1.45;
-export const ringMul = () => { const g = pct('grav'); return g <= RING_KNEE ? g : RING_KNEE + (g - RING_KNEE) * RING_SLOPE; };
+const ringMul = () => { const g = pct('grav'); return g <= RING_KNEE ? g : RING_KNEE + (g - RING_KNEE) * RING_SLOPE; };
 /** 행성의 포획 범위. TON 618 을 잡은 뒤(무한 모드)에는 진행도에 비례해 인력이 줄지만, 궤도로 돌 최소한의 폭(minOrbit 근처)은 남는다 */
 export const capOf = p => {
   const full = (p.cap - p.R) * ringMul(), gv = endlessGrav();
@@ -38,4 +38,4 @@ export const ramMul = () => pct('ram');
 /** 보스전 산소 풀: 스테이지·루프에 따라 늘고 산소 능력치가 절반만큼 반영된다 */
 export const bossO2 = (stage, loop) => (24 + 6 * stage + 2 * loop) * (1 + (G.stats.o2 - 100) / 200);
 /** 점수 배율: 능력치 × 보스 격파 복리 × 바이옴(보스전 중에는 바이옴 무시) */
-export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc);   // 보스 격파마다 ×1.2 복리
+export const scoreMul = () => pct('mult') * Math.pow(BOSS_MUL, G.kills) * (G.boss ? 1 : BIOMES[G.biome].sc);   // 보스 격파마다 ×BOSS_MUL 복리

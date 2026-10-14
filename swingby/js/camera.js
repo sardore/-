@@ -2,7 +2,7 @@
 import { G, V } from './state.js';
 import { W0 } from './util.js';
 
-export const FORK_ZOOM = .72;      // 갈림길에서의 줌 배율(작을수록 넓게 보인다)
+const FORK_ZOOM = .72;      // 갈림길에서의 줌 배율(작을수록 넓게 보인다)
 const HUB_FRAME = .3;              // 줌 상태에서 허브 행성이 화면 아래쪽 어디에 오는지
 
 /** 보스 아레나의 세로 길이(월드 단위): 필드가 넓을수록 줌아웃되어 같은 화면에 더 긴 구간이 보인다 */

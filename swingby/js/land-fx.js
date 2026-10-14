@@ -3,7 +3,7 @@
 import { TAU } from './util.js';
 
 /** 모양 정의: poly 정다각형 · star 안쪽 꼭짓점이 있는 별 · lobe 둘레가 물결치는 꽃 */
-export const SHAPES = {
+const SHAPES = {
   hex:     { t: 'poly', n: 6 },
   diamond: { t: 'poly', n: 4 },
   tri:     { t: 'poly', n: 3 },
