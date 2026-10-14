@@ -51,8 +51,8 @@ export const BOSSES = [
 export const STAGES = [[0], [1, 2], [7, 8], [11], [3, 4], [9], [5, 10], [6]];
 /** 독 행성 지대: 이 스테이지(STAGES 인덱스)의 보스 앞에 반드시 나온다. len 은 지대를 지나는 행성 수 */
 export const MONSTER_ZONE = { stage: 3, len: 12 };
-/** 기체 진화에 필요한 누적 보스 격파 수 (현재 단계 → 격파 수). 후반 진화는 보스가 늘어난 만큼 늦다 */
-export const EVOLVE_AT = { 2: 2, 3: 5 };
+/** 기체 진화에 필요한 누적 보스 격파 수 (현재 단계 → 격파 수). 2단→3단은 보스 2, 3단→4단은 보스 4 격파 때 */
+export const EVOLVE_AT = { 2: 2, 3: 4 };
 export const LAST_STAGE = STAGES.length - 1;
 
 /* 공격 패턴: n 짧은 이름, c 색, cast 시전 문구, pow 피해 배율(보스 atk 에 곱한다), keep 발동 뒤 유지되는 턴 수(예고 지연 없이 바로 작동하는 지속형만) */
