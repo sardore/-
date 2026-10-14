@@ -1,6 +1,6 @@
 /* 보스의 공격: 예고(텔레그래프) 만들기·턴 진행, 발동, 존·블랙홀·항성풍 판정, 기체 피격 */
 import { G } from './state.js';
-import { PI, TAU, rnd, clamp, pickOf } from './util.js';
+import { PI, TAU, rnd, clamp, pickOf, shuffle } from './util.js';
 import { ATK } from './data.js';
 import { spd, shipR, fs, arenaK } from './stats.js';
 import { beep, thump, sweep, noise, vibe } from './audio.js';
@@ -78,9 +78,9 @@ function uniqueZones(k, b, al, fk, K, ymin, ymax) {
     }
     case 'nova': // 초신성: 보스 주위 거대한 폭발 — 아래쪽 멀리가 안전하다
       zs.push({ shape: 'c', rel: true, x: 0, y: 0, r: 310 * K, fuse: 2.2, blast: .55, fade: 1 }); break;
-    case 'rain': { // 별똥비 (무한 모드 전용): 세로 기둥이 한쪽 끝에서 반대쪽으로 차례로 내리꽂힌다
-      const n = Math.max(5, Math.round(G.w / 70)), sg = Math.random() < .5 ? -1 : 1;
-      for (let i = 0; i < n; i++) zs.push({ shape: 'b', vert: true, x: ((sg > 0 ? i : n - 1 - i) + .5) / n * G.w + rnd(-10, 10) * fk, w: 16 * fk, delay: i * .2, fuse: .8, blast: .35 });
+    case 'rain': { // 별똥비 (무한 모드 전용): 세로 기둥이 두세 묶음으로 나뉘어, 묶음마다 1.5초 간격으로 한꺼번에 내리꽂힌다(묶음끼리는 교대로 섞여 사이사이가 안전하다)
+      const n = Math.max(5, Math.round(G.w / 70)), groups = n >= 8 ? 3 : 2, order = shuffle([...Array(groups).keys()]);
+      for (let i = 0; i < n; i++) zs.push({ shape: 'b', vert: true, x: (i + .5) / n * G.w + rnd(-8, 8) * fk, w: 16 * fk, delay: order[i % groups] * 1.5, fuse: .8, blast: .35 });
       break;
     }
     case 'ripple': // 공명파 (전용): 보스에서 퍼지는 세 겹의 고리가 차례로 터진다

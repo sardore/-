@@ -9,7 +9,7 @@ import { genLook } from './boss-gen.js';
 /** 체력·공격력에 곱하는 무작위 편차 (1 ± var) */
 const dev = () => 1 + rnd(-ENDLESS.var, ENDLESS.var);
 export const ENDLESS = {
-  dec: .03,                  // 클리어 뒤 행성 하나를 지날 때마다 궤도 붕괴 속도가 +3%p (선형)
+  grav: .012,                // 클리어 뒤 행성 하나를 지날 때마다 행성의 포획 범위(인력)가 처음의 1.2%p 씩 줄어든다 (선형)
   hp0: 800, hpG: 1.22,       // 첫 무한 보스 체력, 보스마다 곱해지는 비율
   var: .3,                   // 체력·공격력의 무작위 편차(±). 체력은 100 단위, 공격력은 정수로 맞춘다
   atk0: 9, atkG: 1.09,       // 첫 무한 보스 공격력(맞을 때 깎이는 산소 초), 보스마다 곱해지는 비율
@@ -23,7 +23,7 @@ const CATALOGS = [['HD', 359083, 3], ['HIP', 118322, 3], ['HR', 9110, 1], ['GJ',
 /** 지금 판이 무한 모드(TON 618 격파 이후의 보스)인지 */
 export const endlessNext = () => G.kills >= STAGES.length;
 /** 클리어 뒤에 지난 행성 수에 비례하는 궤도 붕괴 배율 (클리어 전에는 1) */
-export const endlessDec = () => G.endHop == null ? 1 : 1 + ENDLESS.dec * Math.max(0, G.hops - G.endHop);
+export const endlessGrav = () => G.endHop == null ? 1 : Math.max(0, 1 - ENDLESS.grav * Math.max(0, G.hops - G.endHop));
 
 function catalogName() {
   const tot = CATALOGS.reduce((a, c) => a + c[2], 0); let r = Math.random() * tot;

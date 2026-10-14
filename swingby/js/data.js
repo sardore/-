@@ -26,7 +26,7 @@ export const CARDS = [
 ];
 
 /** 보스를 쓰러뜨릴 때마다 점수 배율이 20%씩 복리로 오른다 (화면에는 표시하지 않는다) */
-export const BOSS_MUL = 1.2;
+export const BOSS_MUL = 1.3;
 
 /* ---------- 보스 ----------
  * kind: 그리는 방식, pat: 쓰는 패턴, q: 동시에 예고해 두는 공격 수, atk: 한 번 맞을 때 깎이는 산소(초) */
