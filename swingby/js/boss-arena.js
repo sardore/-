@@ -61,7 +61,7 @@ export function startBoss() {
     off: by - G.arenaTop, spawnOff: by - G.arenaTop + d.R + (50 + sway) * fk,   // 화면 윗변에서 보스·새 행성 등장선까지의 거리 (실체가 되는 선은 ACT.ghost 아래)
     sv: 0, lastY: Math.min(...list.map(q => q.y)), gap: rnd(...SCROLL.gap) * K, made: 0     // 현재 스크롤 속도 · 마지막 행성 높이 · 다음 행성까지의 간격
   };
-  G.bo2max = G.bo2 = endless ? bossO2(STAGES.length - 1, n) : bossO2(stage, loop) + (tuto ? 8 : 0);
+  G.bo2max = G.bo2 = endless ? bossO2(STAGES.length - 1, 0) : bossO2(stage, loop) + (tuto ? 8 : 0);   // 보스 순서에 따른 산소 보정은 기존 8보스(마지막 보스까지)에서 끝난다: 무한 모드는 보스를 깨도 더 늘지 않는다
   if (tuto) G.stats.shield = 1;   // 튜토리얼 앞부분에서는 몇 번을 떨어져도 되살려 줬지만 보스전에는 한 번만 G.bcombo = 0; s.hitF = false; s.charging = false; G.haz = [];
   G.banner = { t: 0, dur: 3, a: tuto ? 'TUTORIAL' : ops ? 'TARGET ' + (stage + 1) + ' / ' + OPS_BOSSES.length : endless ? 'ENDLESS ' + d.endless : 'BOSS ' + (stage + 1) + ' / ' + STAGES.length + (loop ? '  ·  ' + (loop + 1) + '회차' : ''), b: d.n, c: 'hsl(' + d.hue + ',100%,70%)', sub: d.line };
   if (ops) opsPrepare();
