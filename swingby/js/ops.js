@@ -31,7 +31,6 @@ const freshOps = () => ({
   fol: [], hist: [],    // 따라다니는 함선 · 본체가 지나온 길
   bonus: {},            // 강화 카드로 올린 능력치(후계자에게 이어진다)
   rescued: 0, succ: 0,  // 구출한 함선 수(누적) · 승계 횟수
-  camTop: null,         // 카메라 목표가 가장 높이 올라간 위치(camera.js 의 fallSlack 기준)
   card: null,           // 구출·강화 안내 화면에 띄울 함선 { kind:'join'|'up', id, from }
   walls: [], mooks: [], shots: [], gim: { due: 9, n: 0 },
   bat: null, shells: [],   // 돌진 포대: 남은 발사 · 날아가는 포탄

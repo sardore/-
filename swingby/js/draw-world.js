@@ -12,6 +12,7 @@ import { ringPath } from './land-fx.js';
 import { drawCharge } from './charge-fx.js';
 import { drawMonster } from './draw-monster.js';
 import { drawPlanet } from './draw-planet.js';
+import { drawSpecialGuide } from './draw-special.js';
 import { drawPlanet2 } from './draw-planet2.js';
 import { drawTrail2, drawFxLayers2, drawStar2, drawCoin } from './draw-fx2.js';
 
@@ -35,6 +36,7 @@ function drawStar(t) {
 /** 화면에 보이는 월드 요소 전부 */
 export function drawWorld() {
   const top = viewTop(), bot = viewBot(), v2 = GFX.v >= 2, dp = v2 ? drawPlanet2 : drawPlanet, ds = v2 ? drawStar2 : drawStar;
+  for (const p of G.planets) if (p.sp && p.y > top - 260 && p.y < bot + 260) drawSpecialGuide(p);
   for (const p of G.planets) { if (p.y < top - 140 || p.y > bot + 140) continue; if (p.fa < 1) g.globalAlpha = p.fa; dp(p); g.globalAlpha = 1; }
   drawForkGuides();
   for (const m of G.mons) { if (m.y < top - 100 || m.y > bot + 100) continue; drawMonster(m); }

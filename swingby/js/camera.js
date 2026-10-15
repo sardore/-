@@ -2,6 +2,7 @@
 import { G, V } from './state.js';
 import { W0 } from './util.js';
 import { OPS } from './ops-data.js';
+import { SPECIAL } from './special.js';
 
 const FORK_ZOOM = .72;      // 갈림길에서의 줌 배율(작을수록 넓게 보인다)
 const ORBIT_PAD = 30;               // 궤도를 돌 때 궤도 맨 아래에서 화면 아래 끝까지 최소로 남길 여유(낙사선은 그 아래 40)
@@ -25,10 +26,10 @@ export function updateCamera(dt) {
   else {
     const want = (s.mode === 'orb' ? s.p.y : s.y) - V.VH / 2 - .14 * V.VH / G.vz;
     ty = Math.min(G.camY, want);
-    if (G.ops) {   // 블랙쉽: 소형함·벽·넉백에 밀려 조금 내려가는 것은 허용한다. 지금까지 가장 높이 올라간 카메라보다 최대 fallSlack 만큼은 내려가서 아래 맵(이미 지나온 행성)이 남아 있다
-      const o = G.ops, slack = OPS.fallSlack * Math.sqrt(G.w / W0);
-      o.camTop = o.camTop == null ? want : Math.min(o.camTop, want);
-      ty = Math.max(ty, Math.min(want, o.camTop + slack));
+    if (G.ops || G.kills >= SPECIAL.from) {   // 소형함·벽·넉백(블랙쉽), 승강기·위성에 실려 뒤로 가는 움직임(일반, 보스 1 격파 뒤)에 밀려 조금 내려가는 것은 허용한다. 지금까지 가장 높이 올라간 카메라보다 최대 fallSlack 만큼은 내려가서 아래 맵(이미 지나온 행성)이 남아 있다
+      const slack = OPS.fallSlack * Math.sqrt(G.w / W0);
+      G.camTop = G.camTop == null ? want : Math.min(G.camTop, want);
+      ty = Math.max(ty, Math.min(want, G.camTop + slack));
     }
     // 화면 아래로 지나간 행성(넉백으로 밀려 내려와 이미 올라간 카메라 밑에 있는 행성)에 붙었다면 그 궤도가 통째로 보이게 카메라를 내린다. 안 그러면 궤도 아래쪽이 낙사선 밖이라 놓는 순간 '심우주로 표류'로 죽는다
     if (s.mode === 'orb') {

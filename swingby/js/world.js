@@ -4,6 +4,7 @@ import { W0, rnd, clamp, TAU } from './util.js';
 import { viewTop } from './camera.js';
 import { fs } from './stats.js';
 import { mkPlanet } from './planets.js';
+import { pickSpecial, applySpecial } from './special.js';
 import { addStars, maybeHole } from './scatter.js';
 import { buildFork } from './fork.js';
 import { maybeMonster } from './monsters.js';
@@ -82,11 +83,14 @@ export function gen() {
     const { x, dy, mod } = place(prev);
     G.genY -= dy;
     const gt = G.ops && opsGen.type();   // 블랙쉽: 거대 행성 기믹이 나올 차례인가
-    const p = mkPlanet(G.genI++, x, G.genY, G.biome, gt || (mod === 'giant' && G.biome !== 'belt' ? 'g' : undefined));
+    const kind = !gt && mod !== 'giant' && mod !== 'drift' && pickSpecial(prev);   // 후반의 특수 이동 행성(special.js)
+    const p = mkPlanet(G.genI++, x, G.genY, G.biome, kind ? 'n' : gt || (mod === 'giant' && G.biome !== 'belt' ? 'g' : undefined));
     if (gt) opsGen.giantify(p);
     if (mod === 'giant' && p.t === 'g') { const ring = p.cap - p.R; p.R *= 1.5; p.cap = p.R + ring * 1.35; p.giant = true; }
     if (mod === 'drift' && p.t !== 'm') p.drift = { x0: x, amp: Math.min(70 * fs(), x - 40, G.w - 40 - x), sp: rnd(.5, .8), t: rnd(0, TAU) };
+    if (kind) { const { post, moon } = applySpecial(kind, p, mkPlanet); if (moon) G.planets.push(moon); G.genY = p.y - post; }
     G.planets.push(p);
+    if (kind || prev.sp) continue;   // 특수 행성 앞뒤로는 별·블랙홀·독 행성·벽·소형함을 두지 않는다(움직이는 행성과 겹치지 않게)
     addStars(prev, p);
     maybeHole(prev, p, dy);
     if (G.biome === 'monster') maybeMonster(prev, p, dy);

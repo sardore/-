@@ -37,7 +37,7 @@ export const capOf = p => {
 };
 /** 궤도 반지름의 상한. 포획 범위가 아무리 넓어도 이보다 먼 궤도는 금방 안쪽으로 끌려 들어온다(큰 궤도는 회전이 느려 답답하다) */
 export const maxOrbit = p => Math.min(capOf(p), p.R + (p.cap - p.R) * ORBIT_MAX);
-export const decRate = p => (5 + rampDec()) * PLANET_DEC[p.t] / pct('decay') * fs();
+export const decRate = p => (5 + rampDec()) * PLANET_DEC[p.t] * (p.sp ? p.sp.dec : 1) / pct('decay') * fs();   // 승강기·위성은 이것만 거쳐 가는 배치가 많아 붕괴가 느리다(special.js)
 export const o2max = () => 2.6 * pct('o2');
 export const magRange = () => 20 * pct('grav') * fs();
 export const ramMul = () => pct('ram');

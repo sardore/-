@@ -3,6 +3,7 @@ import { G } from './state.js';
 import { rnd, TAU } from './util.js';
 import { BIOMES } from './data.js';
 import { fs } from './stats.js';
+import { animateSpecial } from './special.js';
 
 /** 종류별 비율표에서 하나 뽑는다 */
 function pickMix(mix) {
@@ -59,6 +60,7 @@ export function animatePlanets(dt) {
     if (p.pulse > 0) p.pulse = Math.max(0, p.pulse - dt * 2.5);
     if (p.sq > 0) p.sq = Math.max(0, p.sq - dt * 4);
     if (p.born < 1) p.born = Math.min(1, p.born + dt * 2);
+    if (p.sp) animateSpecial(p, dt);
     if (p.drift) { p.drift.t += dt * p.drift.sp; p.x = p.drift.x0 + Math.sin(p.drift.t) * p.drift.amp; }
   }
 }
