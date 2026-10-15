@@ -85,7 +85,7 @@ export function skillExec(a, b, c, pow) {
     case 'crate': a.cs.forEach(q => G.haz.push({ k: 'o_crate', x: q.x, y: q.y, turns: 3, col: c, pow, t: 0, born: 0 })); break;
     case 'arc': G.haz.push({ k: 'o_arc', pts: [[b.x, b.y + b.hr * .6], ...a.ps.map(p => [p.x, p.y])], fuse: .9, step: .3, w: 15 * fk, col: c, pow, t: 0 }); break;
     case 'homing': for (let i = 0; i < a.n; i++) { const an = PI / 2 + (i - (a.n - 1) / 2) * .95 + rnd(-.1, .1); G.haz.push({ k: 'o_missile', x: b.x, y: b.y + b.hr * .5, vx: Math.cos(an) * 120 * fk, vy: Math.sin(an) * 120 * fk, ang: an, life: 5.0, col: c, pow, t: 0 }); } break;
-    case 'ricochet': G.haz.push({ k: 'o_rico', anchor: true, delay: 0, fuse: 1.15, blast: .55, wall: a.wall, ty: a.ty, nb: a.nb, w: 20 * fk, col: c, pow, t: 0 }); break;
+    case 'ricochet': G.haz.push({ k: 'o_rico', anchor: true, delay: 0, fuse: 1.15, blast: .55, wall: a.wall, ty: a.ty, nb: a.nb, pts: ricoPts(b, a.wall, a.ty, a.nb), w: 20 * fk, col: c, pow, t: 0 }); break;   // pts 는 만들자마자 있어야 한다: 발동한 틱에 그려지면 갱신 전이라 비어 있었고, 그 한 프레임의 예외가 메인 루프를 통째로 멈췄다
     case 'quake': G.haz.push({ k: 'o_quake', ps: a.ps.filter(p => !p.dead), n: 0, col: c, pow, t: 0 }); thump(70, 30, .5, .3, 'sawtooth'); break;
   }
 }

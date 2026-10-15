@@ -11,18 +11,18 @@ export const OPS_SHIPS = [
   ['oh', 2, '호송정', '느긋하고 튼튼한 짐배', 32, { ops: 1, hull: 'box', main: 'brown', trim: 'tan', engines: 2, crates: 1 }, { o2: 30, decay: 25, shield: 1 }, ['oh1', 'oh2']],
 
   /* Lv3 — 수송 능력 */
-  ['os1', 3, '그림자', '기척 없이 지나가는 스텔스선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 172 }, { spd: 14, grav: 15, ram: 10 }, ['os1a', 'os1b'], .6],
-  ['os2', 3, '해방선', '갇힌 이들을 낚아채는 돌격선', 205, { ops: 1, main: 'white', trim: 'black', acc: 46 }, { ram: 35, decay: 10, shield: 1 }, ['os2a', 'os2b'], .5],
-  ['oh1', 3, '구호선', '많이 싣고 오래 버티는 구조선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 6 }, { o2: 50, mult: 15, shield: 1 }, ['oh1a', 'oh1b']],
-  ['oh2', 3, '중수송함', '두꺼운 장갑의 화물선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 34 }, { decay: 40, o2: 30, ram: 20 }, ['oh2a', 'oh2b']],
+  ['os1', 3, '그림자', '기척 없이 지나가는 스텔스선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 172 }, { spd: 10, grav: 10, ram: 8 }, ['os1a', 'os1b'], .6],
+  ['os2', 3, '해방선', '갇힌 이들을 낚아채는 돌격선', 205, { ops: 1, main: 'white', trim: 'black', acc: 46 }, { ram: 25, decay: 8, shield: 1 }, ['os2a', 'os2b'], .5],
+  ['oh1', 3, '구호선', '많이 싣고 오래 버티는 구조선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 6 }, { o2: 40, mult: 10, shield: 1 }, ['oh1a', 'oh1b']],
+  ['oh2', 3, '중수송함', '두꺼운 장갑의 화물선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 34 }, { decay: 30, o2: 25, ram: 15 }, ['oh2a', 'oh2b']],
 
   /* Lv4 */
-  ['os1a', 4, '유령선', '보이지 않는 가장 빠른 배', 200, { ops: 1, main: 'white', trim: 'black', acc: 190 }, { spd: 14, grav: 20, mult: 20 }, [], 1],
-  ['os1b', 4, '암살선', '한 번에 꿰뚫는 칼날', 205, { ops: 1, main: 'black', trim: 'brown', acc: 8 }, { ram: 50, spd: 8 }, [], .9],
-  ['os2a', 4, '해방자', '쇠사슬을 끊는 금빛 돌격선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 48 }, { ram: 30, shield: 1, grav: 25 }, [], .7],
-  ['os2b', 4, '습격선', '무장한 쾌속 돌격선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 18 }, { spd: 12, ram: 40 }, [], .9],
-  ['oh1a', 4, '피난선', '모두를 태우는 하얀 방주', 200, { ops: 1, main: 'white', trim: 'tan', acc: 140 }, { o2: 60, shield: 1 }],
-  ['oh1b', 4, '보급함', '산더미 같은 짐을 실은 배', 32, { ops: 1, main: 'tan', trim: 'white', acc: 44 }, { mult: 40, o2: 30, grav: 20 }],
-  ['oh2a', 4, '철갑 수송함', '포탑까지 단 장갑 수송선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 24 }, { decay: 40, ram: 30, shield: 1 }, [], 0, { n: 4, dmg: 9 }],
-  ['oh2b', 4, '이동 요새', '움직이는 항구', 32, { ops: 1, main: 'brown', trim: 'tan', acc: 200 }, { shield: 2, o2: 40, decay: 15 }, [], 0, { n: 6, dmg: 10 }]
+  ['os1a', 4, '유령선', '보이지 않는 가장 빠른 배', 200, { ops: 1, main: 'white', trim: 'black', acc: 190 }, { spd: 10, grav: 15, mult: 15 }, [], 1],
+  ['os1b', 4, '암살선', '한 번에 꿰뚫는 칼날', 205, { ops: 1, main: 'black', trim: 'brown', acc: 8 }, { ram: 35, spd: 6 }, [], .9],
+  ['os2a', 4, '해방자', '쇠사슬을 끊는 금빛 돌격선', 200, { ops: 1, main: 'white', trim: 'tan', acc: 48 }, { ram: 22, shield: 1, grav: 18 }, [], .7],
+  ['os2b', 4, '습격선', '무장한 쾌속 돌격선', 32, { ops: 1, main: 'brown', trim: 'black', acc: 18 }, { spd: 9, ram: 28 }, [], .9],
+  ['oh1a', 4, '피난선', '모두를 태우는 하얀 방주', 200, { ops: 1, main: 'white', trim: 'tan', acc: 140 }, { o2: 45, shield: 1 }],
+  ['oh1b', 4, '보급함', '산더미 같은 짐을 실은 배', 32, { ops: 1, main: 'tan', trim: 'white', acc: 44 }, { mult: 30, o2: 22, grav: 15 }],
+  ['oh2a', 4, '철갑 수송함', '포탑까지 단 장갑 수송선', 205, { ops: 1, main: 'black', trim: 'brown', acc: 24 }, { decay: 30, ram: 22, shield: 1 }, [], 0, { n: 4, dmg: 9 }],
+  ['oh2b', 4, '이동 요새', '움직이는 항구', 32, { ops: 1, main: 'brown', trim: 'tan', acc: 200 }, { shield: 2, o2: 30, decay: 12 }, [], 0, { n: 6, dmg: 10 }]
 ];
