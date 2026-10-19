@@ -13,7 +13,7 @@ const HEAT_RAM = .12;               // 한 단계마다 늘어나는 충돌 피�
 export const heatMul = () => 1 + HEAT_SPEED * G.ship.heat;
 export const heatRam = () => 1 + HEAT_RAM * G.ship.heat;
 /** 열기 불꽃색: 기체 색(도색 반영), 상점에서 열기 불꽃을 장착했으면 그 색. light 는 밝기(%) */
-export const flameColor = (light = 62) => heatHsl(light);
+export const flameColor = (light = 62, u) => heatHsl(light, undefined, u);   // u: 다색일 때의 위치(없으면 무작위)
 
 /** 벽에 튕겼다: 한 단계 뜨거워지고, 그만큼 즉시 빨라진다. (x, y)는 부딪힌 지점, dir 은 튕겨 나가는 각도 */
 export function heatUp(x, y, dir) {

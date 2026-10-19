@@ -7,10 +7,10 @@ export const SHIP_SC=[0,1,1.35,1.75,2.2];
 const HALF={dart:[[11,0],[4,1.8],[-3,3],[-7.5,2],[-7.5,0]],hull:[[10.5,0],[7,3.2],[1,5.2],[-8,5.2],[-9,0]],scout:[[10,0],[3.5,2.3],[-5,2.6],[-7,1.6],[-7,0]]};
 /** o(선택): 상점 꾸밈 {fh,fs: 엔진 불꽃 색상·채도, art: 기체 전용 장식을 덧그리는 함수} */
 export function drawShip(c,d,flame,tm,scMul,o){
-  const L=d.L,sc=SHIP_SC[d.t]*(scMul||1),h=L.h,fh=o&&o.fh!=null?o.fh:h+10,fsa=o&&o.fs!=null?o.fs:100;
+  const L=d.L,sc=SHIP_SC[d.t]*(scMul||1),h=L.h,hs=L.hs==null?1:L.hs,fh=o&&o.fh!=null?o.fh:h+10,fsa=o&&o.fs!=null?o.fs:100;
   if(L.ops){drawOpsShip(c,d,flame,tm,sc,o);return}   // 블랙쉽 기체는 따로 그린다
   c.save();c.scale(sc,sc);c.lineJoin='round';
-  const lite='hsl('+h+',35%,95%)',mid='hsl('+h+',45%,72%)',dark='hsl('+h+',50%,36%)',acc='hsl('+h+',95%,66%)';
+  const lite='hsl('+h+','+35*hs+'%,95%)',mid='hsl('+h+','+45*hs+'%,72%)',dark='hsl('+h+','+50*hs+'%,36%)',acc='hsl('+h+','+95*hs+'%,66%)';
   const fl=(x,y,len,w)=>{const gr=c.createLinearGradient(x,0,x-len,0);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(.35,'hsla('+fh+','+fsa+'%,70%,.8)');gr.addColorStop(1,'hsla('+fh+','+fsa+'%,60%,0)');c.fillStyle=gr;c.beginPath();c.moveTo(x,y-w);c.lineTo(x-len,y);c.lineTo(x,y+w);c.closePath();c.fill()};
   const fk=.25+.75*(flame||0);
   if(L.arrow){

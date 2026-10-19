@@ -1,36 +1,28 @@
 /* 별 조각 상점의 상품 목록. 값(가격·효과)은 전부 여기서 정한다.
  * 상품 {id, tab, slot, n, d, price, v}: tab 은 화면 탭(fx 이펙트 · ship 기체 · spec 초기 스펙), slot 은 같은 칸에는 하나만 장착, v 는 효과 값.
- * 색 값 v = {h 색상, s 채도(%)} 또는 {rb:1}(무지갯빛). 가격은 후반 유저용으로 비싸게, 저질 장식(색 한 가지)만 싸게 잡았다. */
+ * 색은 전부 '페인트' 탭의 색 상품(slot 'pt')이다: 한 번 사면 기체·글로우·불꽃·꼬리·충전 링·열기·별빛 어디에든 칠할 수 있다(칠한 곳은 SHOP.eq 의 PAINT_TARGETS 칸).
+ * 색 값 v = {h 색상, s 채도(%)} · {rb:1}(무지갯빛) · {duo:[[h,s],[h,s]]}(두 색이 비중을 바꾸며 함께 있는 그라데이션). */
 import { SHIPS } from './ships.js';
 
-export const TABS = [{ k: 'fx', n: '이펙트' }, { k: 'ship', n: '기체 색' }, { k: 'spec', n: '초기 스펙' }];
+export const TABS = [{ k: 'fx', n: '이펙트' }, { k: 'paint', n: '페인트' }, { k: 'ship', n: '기체 장식' }, { k: 'spec', n: '초기 스펙' }];
+
+/** 페인트를 칠할 수 있는 부위. k 는 SHOP.eq 의 칸 이름 */
+export const PAINT_TARGETS = [{ k: 'hull', n: '기체' }, { k: 'glowcol', n: '글로우' }, { k: 'flame', n: '불꽃' }, { k: 'trailcol', n: '꼬리' }, { k: 'chargecol', n: '충전' }, { k: 'heat', n: '열기' }, { k: 'starfx', n: '별빛' }];
+export const TARGET_NAMES = Object.fromEntries(PAINT_TARGETS.map(t => [t.k, t.n]));
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */
 export const SLOTS = [
-  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '기체가 내는 빛의 세기' },
-  { k: 'glowcol', tab: 'fx',   n: '글로우 색',     note: '글로우의 색. 기본은 기체 색' },
-  { k: 'flame',   tab: 'fx',   n: '엔진 불꽃',     note: '엔진이 뿜는 불꽃의 색' },
-  { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리' },
+  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '기체가 내는 빛의 세기. 색은 페인트 탭에서' },
+  { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리의 모양. 색은 페인트 탭에서' },
   { k: 'landshape', tab: 'fx', n: '착지 링 모양',  note: '행성에 붙을 때 번지는 링의 모양. 색은 기체 색' },
-  { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '돌진을 충전할 때 기체 둘레에 그려지는 링의 모양' },
-  { k: 'chargecol', tab: 'fx', n: '충전 링 색',    note: '충전 링의 색. 기본은 기체 색' },
-  { k: 'heat',    tab: 'fx',   n: '열기 불꽃',     note: '보스전에서 벽에 튕겨 쌓이는 불꽃' },
-  { k: 'starfx',  tab: 'fx',   n: '별 파티클',     note: '별을 먹을 때 터지는 빛' },
-  { k: 'paint',   tab: 'ship', n: '도색 (모든 기체)', note: '기체·꼬리·글로우의 기본 색을 바꾼다' }
+  { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '돌진을 충전할 때 기체 둘레에 그려지는 링의 모양. 색은 페인트 탭에서' },
 ];
 
-const PAL = [ // 팔레트: [id, 이름, 색]
-  ['white', '순백', { h: 0, s: 0 }], ['gold', '황금', { h: 46, s: 100 }], ['rose', '장미', { h: 340, s: 95 }], ['cyan', '청록', { h: 185, s: 100 }],
-  ['lime', '라임', { h: 100, s: 95 }], ['violet', '보라', { h: 275, s: 95 }], ['ember', '불씨', { h: 16, s: 100 }], ['prism', '프리즘', { rb: 1 }]
-];
-/** 칸별 가격표 (팔레트 순서) */
-const PRICES = {
-  glowcol: [40, 50, 60, 60, 60, 60, 60, 1200],
-  chargecol: [40, 50, 60, 60, 60, 60, 60, 900],
-  starfx:  [50, 70, 70, 70, 70, 70, 70, 1000],
-  flame:   [350, 400, 250, 250, 250, 300, 200, 1000],
-  trail:   [300, 400, 250, 250, 250, 300, 250, 1200],
-  heat:    [400, 500, 350, 350, 350, 400, 300, 1500]
+/* 예전의 부품별 색 상품(글로우·불꽃·꼬리·충전 링·열기·별빛 × 8색)은 없어졌다. 가진 만큼 별 조각으로 돌려준다 (shop.js 가 불러올 때 처리) */
+const OLD_PAL = ['white', 'gold', 'rose', 'cyan', 'lime', 'violet', 'ember', 'prism'];
+const OLD_PRICES = {
+  glowcol: [40, 50, 60, 60, 60, 60, 60, 1200], chargecol: [40, 50, 60, 60, 60, 60, 60, 900], starfx: [50, 70, 70, 70, 70, 70, 70, 1000],
+  flame: [350, 400, 250, 250, 250, 300, 200, 1000], trail: [300, 400, 250, 250, 250, 300, 250, 1200], heat: [400, 500, 350, 350, 350, 400, 300, 1500]
 };
 
 export const ITEMS = {};
@@ -42,10 +34,6 @@ export const GLOW_BLUR = [[4, 6], [12, 20], [19, 32], [29, 48]];   // [평소, �
 [['약', 400, '은은한 빛'], ['중', 900, '한층 더 환한 빛'], ['강', 1500, '맥동하는 후광까지']].forEach(([n, price, d], i) =>
   add({ id: 'glow' + (i + 1), tab: 'fx', slot: 'glow', n: '글로우 ' + n, d, price, v: { lv: i + 1 } }));
 
-for (const slot of ['glowcol', 'flame', 'trail', 'chargecol', 'heat', 'starfx']) {
-  const names = { glowcol: '글로우', flame: '불꽃', trail: '꼬리', chargecol: '충전 링', heat: '열기', starfx: '별빛' }[slot];
-  PAL.forEach(([id, n, v], i) => add({ id: slot + '_' + id, tab: 'fx', slot, n: n + ' ' + names, d: v.rb ? '시간에 따라 색이 변한다' : '', price: PRICES[slot][i], v }));
-}
 add({ id: 'trail_dust', tab: 'fx', slot: 'trail', n: '별가루 꼬리', d: '반짝이는 별가루가 흩날린다', price: 1000, v: { style: 'dust' } });
 add({ id: 'trail_ghost', tab: 'fx', slot: 'trail', n: '잔상 분신', d: '비행 중 기체의 잔상이 겹겹이 남는다', price: 1500, v: { style: 'ghost' } });
 
@@ -58,13 +46,36 @@ add({ id: 'trail_ghost', tab: 'fx', slot: 'trail', n: '잔상 분신', d: '비�
 [['hex', '육각', '육각형으로 번진다', 600], ['diamond', '마름모', '마름모로 번진다', 600], ['tri', '삼각', '삼각형으로 번진다', 700], ['cross', '십자 섬광', '네 갈래 십자로 번진다', 800],
   ['star', '오각별', '오각별로 번진다', 900], ['gear', '톱니', '톱니바퀴 모양으로 번진다', 1000], ['flower', '꽃잎', '여덟 꽃잎으로 번진다', 1200]]
   .forEach(([id, n, d, price]) => add({ id: 'landshape_' + id, tab: 'fx', slot: 'landshape', n: '착지 링: ' + n, d, price, v: { style: id } }));
-/** 예전의 '착지 링 색' 상품: 없어졌으니 가진 만큼 별 조각으로 돌려준다 (shop.js 가 불러올 때 처리) */
+/** 없어진 상품 → 돌려줄 별 조각. 예전 '착지 링 색'(land_*)과 부품별 색 상품 전부 */
 export const LEGACY_REFUND = {};
-['white', 'gold', 'rose', 'cyan', 'lime', 'violet', 'ember', 'prism'].forEach((id, i) => { LEGACY_REFUND['land_' + id] = [40, 50, 60, 60, 60, 60, 60, 900][i]; });
+OLD_PAL.forEach((id, i) => {
+  LEGACY_REFUND['land_' + id] = [40, 50, 60, 60, 60, 60, 60, 900][i];
+  for (const slot in OLD_PRICES) LEGACY_REFUND[slot + '_' + id] = OLD_PRICES[slot][i];
+});
+/** 예전 기체 도색 → 같은 색의 페인트 (돌려주지 않고 그대로 바꿔 준다) */
+export const LEGACY_PAINT = { paint_crimson: 'pt_crimson', paint_amber: 'pt_amber', paint_emerald: 'pt_emerald', paint_amethyst: 'pt_violet', paint_pink: 'pt_rose', paint_gold: 'pt_gold' };
 
-/* 도색: 기체 색 한 가지 변경 (모든 기체 공용) */
-[['crimson', '진홍', 6, 40], ['amber', '호박', 30, 50], ['emerald', '에메랄드', 140, 60], ['amethyst', '자수정', 275, 60], ['pink', '분홍', 330, 50], ['gold', '황금빛', 46, 500]]
-  .forEach(([id, n, h, price]) => add({ id: 'paint_' + id, tab: 'ship', slot: 'paint', n: n + ' 도색', d: '', price, v: { h } }));
+/* ---------- 페인트 ----------
+ * 색 하나가 상품 하나. 한 번 사면 모든 부위(PAINT_TARGETS)에 칠할 수 있다. 부위마다 다른 색을 칠해도 된다.
+ * 다색(duo): 두 색이 한 부위에 함께 있고, 두 색의 비중(cos.js 의 duoW)이 시간에 따라 천천히 오르내린다 — 한 색으로 바뀌어 버리지 않는다 */
+const SOLID = [ // [id, 이름, 색상, 채도, 가격]
+  ['white', '순백', 0, 0, 150], ['crimson', '진홍', 6, 100, 100], ['amber', '호박', 30, 100, 100], ['gold', '황금', 46, 100, 150], ['lime', '라임', 100, 95, 120],
+  ['emerald', '에메랄드', 140, 100, 120], ['cyan', '청록', 185, 100, 120], ['sky', '하늘', 205, 100, 120], ['violet', '보라', 275, 95, 120], ['rose', '장미', 340, 95, 120]
+];
+const DUO = [ // [id, 이름, 설명, 색 A [색상, 채도], 색 B, 가격]
+  ['ocean', '오션', '노랑과 하늘색이 함께 일렁인다', [50, 100], [195, 100], 800],
+  ['sunset', '노을', '주황과 보라가 번갈아 짙어진다', [18, 100], [292, 85], 800],
+  ['aurora', '오로라', '초록과 보랏빛이 겹쳐 흐른다', [150, 100], [268, 95], 900],
+  ['fireice', '빙염', '붉은 불과 푸른 얼음이 맞선다', [8, 100], [195, 100], 900],
+  ['neon', '네온', '핑크와 시안이 번쩍인다', [320, 100], [180, 100], 900],
+  ['forest', '숲', '라임과 청록이 우거진다', [98, 95], [172, 95], 700],
+  ['galaxy', '은하', '남색과 자홍이 소용돌이친다', [238, 95], [305, 95], 800],
+  ['champagne', '샴페인', '황금빛과 순백이 어우러진다', [46, 100], [0, 0], 1000]
+];
+SOLID.forEach(([id, n, h, sat, price]) => add({ id: 'pt_' + id, tab: 'paint', slot: 'pt', grp: '단색', n, d: '', price, v: { h, s: sat } }));
+add({ id: 'pt_prism', tab: 'paint', slot: 'pt', grp: '다색', n: '프리즘', d: '무지갯빛으로 계속 변한다', price: 1500, v: { rb: 1 } });
+DUO.forEach(([id, n, d, A, B, price]) => add({ id: 'pt_' + id, tab: 'paint', slot: 'pt', grp: '다색', n, d, price, v: { duo: [A, B] } }));
+export const PAINT_GROUPS = [{ k: '단색', n: '단색 페인트', note: '한 번 사면 어느 부위에든 칠할 수 있다' }, { k: '다색', n: '다색 페인트', note: '두 색이 함께 있으면서 비중이 천천히 바뀐다' }];
 
 /* 기체별 전용 장식: 그 기체로 날 때만 보인다 (4단 기체). 그림·입자는 decor.js */
 const DECOR_LIST = [

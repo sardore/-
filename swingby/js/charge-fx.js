@@ -1,9 +1,10 @@
 /* 돌진 충전 링: 기체 둘레에 그려지는 충전 연출. 기본 디자인과 상점 디자인(shop-data.js 의 'charge' 칸)을 한곳에서 그린다.
  * c 는 cos.js 의 꾸밈 설정({charge: 디자인 값, chargecol: 색 값}), hue 는 색을 정하지 않았을 때 쓸 기본 색상(기체 색). */
-import { g } from './state.js';
+import { g as gMain } from './state.js';
 import { PI, TAU } from './util.js';
-import { hslOf } from './cos.js';
+import { hslOf, isDuo, pass, drawDuo } from './cos.js';
 
+let g = gMain;   // 그림을 그릴 판: 다색일 때 잠깐 따로 만든 판으로 바뀐다
 const poly = (x, y, n, r, a0) => { g.beginPath(); for (let i = 0; i < n; i++) { const a = a0 + i / n * TAU; i ? g.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r) : g.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } g.closePath(); };
 
 /** 디자인별 그리기. ch 는 충전량(0~1), col(l,a) 는 색 문자열 */
@@ -62,10 +63,13 @@ const DESIGNS = {
 
 /** (x, y) 둘레에 충전 연출을 그린다. 가득 차면(ch>=1) 맥동 링이 더해진다 */
 export function drawCharge(x, y, c, hue, ch, T) {
-  const sp = c.chargecol, st = c.charge && c.charge.style;
-  const col = (l, a) => hslOf(sp, hue, T, l, a);
+  const sp = c.chargecol, st = c.charge && c.charge.style, design = DESIGNS[st] || DESIGNS.base;
   g.save(); g.lineCap = 'round';
-  (DESIGNS[st] || DESIGNS.base)(x, y, ch, col, T);
+  if (isDuo(sp)) { // 다색: 색 B 링 위에 색 A 링을 부드러운 경계로 겹친다 (경계는 비중에 따라 오가고 천천히 흔들린다)
+    g.save(); g.translate(x, y);
+    drawDuo(gMain, 40, T, (ctx, i) => { const p = pass(sp, i); g = ctx; g.lineCap = 'round'; design(0, 0, ch, (l, a) => hslOf(p, hue, T, l, a), T); g = gMain; });
+    g.restore();
+  } else design(x, y, ch, (l, a) => hslOf(sp, hue, T, l, a), T);
   if (ch >= 1) { g.globalAlpha = .5 + .5 * Math.sin(T * 24); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 24 + 3 * Math.sin(T * 24), 0, TAU); g.stroke(); }
   g.restore();
 }

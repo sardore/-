@@ -78,7 +78,7 @@ export function installDebug() {
     atk: (k, t) => forceTele(k, t), turn: () => bossTurn(), knock: (nx, ny, mul) => knock(nx, ny, mul),
     down: () => pressStart(), up: () => pressEnd(), tapDown: () => pointerDown(0, 0, true), tapUp: () => pointerUp(),
     /** 상점 테스트: give(n) 별 조각 지급 · own(id) 공짜로 보유+장착 · open() 상점 열기 · settle() 정산 */
-    shop: { SHOP, give: n => { SHOP.shards += n; }, own: id => { SHOP.own[id] = 1; equip(ITEMS[id]); }, buy: id => buy(ITEMS[id]), open: openShop, preview: previewItem, settle: settleRun },
+    shop: { SHOP, give: n => { SHOP.shards += n; }, own: (id, t) => { SHOP.own[id] = 1; equip(ITEMS[id], t); }, buy: (id, t) => buy(ITEMS[id], t), open: openShop, preview: previewItem, settle: settleRun },
     bot: botAct, BOSSES
   };
 }

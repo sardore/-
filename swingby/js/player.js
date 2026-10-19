@@ -202,8 +202,8 @@ function collectStars() {
     if (Math.hypot(s.x - t.x, s.y - t.y) < mr) {
       t.got = true; G.starChain++;
       G.starScore += addScore(5 + G.starChain - 1, t.x, t.y, '#ffe27a');
-      const sc = starHsl(70) || '#ffe27a';   // 상점 별 파티클 색
-      beep(990 * Math.pow(1.07, Math.min(G.starChain - 1, 8)), .06, 'sine'); burst(t.x, t.y, sc, 8, 110); ringFx(t.x, t.y, sc, 3, 22, .3, 2);
+      const sc = () => starHsl(70) || '#ffe27a';   // 상점 별 파티클 색 (다색이면 부를 때마다 두 색 중 하나라 한 번 터질 때 두 색이 섞인다)
+      beep(990 * Math.pow(1.07, Math.min(G.starChain - 1, 8)), .06, 'sine'); burst(t.x, t.y, sc(), 4, 110); burst(t.x, t.y, sc(), 4, 110); ringFx(t.x, t.y, sc(), 3, 22, .3, 2);
     }
   }
 }

@@ -5,9 +5,9 @@ import { TAU, rnd, clamp } from './util.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
 import { rr, txt } from './gfx.js';
-import { TABS, SLOTS, LIST, ITEMS, GLOW_BLUR, SPEC_STATS, SPEC_STEP, SPEC_PRICE } from './shop-data.js';
-import { SHOP, priceOf, owned, equipped, specLv, buy, equip, unequip } from './shop.js';
-import { cfgFor, paintDef, shipOpts, glowOf, hslOf, emitDecor } from './cos.js';
+import { TABS, SLOTS, LIST, ITEMS, GLOW_BLUR, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
+import { SHOP, priceOf, owned, equipped, paintedOn, specLv, buy, equip, unequip } from './shop.js';
+import { cfgFor, paintDef, shipOpts, glowOf, hslOf, colorAt, isDuo, emitDecor, drawShipCos } from './cos.js';
 import { spawnLand, drawShapeIcon } from './land-fx.js';
 import { DECOR } from './decor.js';
 import { MODE } from './ops.js';
@@ -18,24 +18,24 @@ import { stepParts } from './fx.js';
 import { startRun } from './progress.js';
 import { beep } from './audio.js';
 
-const PW = 372, ROW = 52, ROW_SPEC = 58, HEAD = 40, GOLD = '#ffe27a';
+const PW = 372, CHIP_H = 28, ROW = 52, ROW_SPEC = 58, HEAD = 40, GOLD = '#ffe27a';
 
 /** 화면 상태: 탭 · 스크롤 · 고른 상품 · 안내 문구 · 드래그 중인 손가락 · 미리보기용 입자 */
-const P = { tab: 'fx', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', msgT: 0, d: null, parts: [], fxr: [], last: 0, nextRing: 0, nextStar: 0, starOff: 0 };
+const P = { tab: 'fx', target: 'hull', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', msgT: 0, d: null, parts: [], fxr: [], last: 0, nextRing: 0, nextStar: 0, starOff: 0 };
 
 /* ---------- 열기·닫기 ---------- */
-export function openShop() { Object.assign(P, { tab: 'fx', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
+export function openShop() { Object.assign(P, { tab: 'fx', target: 'hull', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
 /** 디버그/테스트: 상점을 열고 그 상품을 골라 미리보기 한다 */
-export function previewItem(id) { const it = ITEMS[id]; if (!it) return; openShop(); P.tab = it.tab; P.sel = id; }
+export function previewItem(id, target) { const it = ITEMS[id]; if (!it) return; openShop(); P.tab = it.tab; P.sel = id; if (target) P.target = target; }
 /** 닫으면 시작화면으로: 새 판을 만들어 구매한 초기 스펙을 반영한다 */
 export function closeShop() { startRun(); G.st = 'title'; beep(380, .08); }
 
 /* ---------- 배치 ---------- */
 function layout() {
-  const x = V.VW / 2 - PW / 2, listTop = 238, listBot = V.VH - 112;
+  const x = V.VW / 2 - PW / 2, listTop = 238, listBot = V.VH - 112, chip = P.tab === 'paint' ? CHIP_H + 6 : 0;   // 페인트 탭은 목록 위에 부위 칩 줄이 있다
   return {
-    x, back: { x, y: 12, w: 84, h: 30 }, prev: { x, y: 50, w: PW, h: 140 }, tabY: 198, tabW: PW / TABS.length,
-    list: { x, y: listTop, w: PW, h: Math.max(60, listBot - listTop) }, bar: { x, y: V.VH - 106, w: PW, h: 46 }
+    x, back: { x, y: 12, w: 84, h: 30 }, prev: { x, y: 50, w: PW, h: 140 }, tabY: 198, tabW: PW / TABS.length, chipY: listTop,
+    list: { x, y: listTop + chip, w: PW, h: Math.max(60, listBot - listTop - chip) }, bar: { x, y: V.VH - 106, w: PW, h: 46 }
   };
 }
 const inRect = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -47,6 +47,8 @@ function rows() {
   if (P.tab === 'spec') {
     push({ head: '시작 능력치 (영구)', note: '단계당 +' + SPEC_STEP + '%p, 최대 +' + SPEC_STEP * SPEC_PRICE.length + '%p' }, HEAD);
     LIST.filter(it => it.tab === 'spec').forEach(it => push({ it }, ROW_SPEC));
+  } else if (P.tab === 'paint') {
+    for (const gr of PAINT_GROUPS) { push({ head: gr.n, note: gr.note }, HEAD); LIST.filter(it => it.slot === 'pt' && it.grp === gr.k).forEach(it => push({ it }, ROW)); }
   } else for (const sl of SLOTS) {
     if (sl.tab !== P.tab) continue;
     push({ head: sl.n, note: sl.note }, HEAD);
@@ -87,6 +89,7 @@ export function shopUp(x, y) {
   const L = layout();
   if (inRect(L.back, x, y)) { closeShop(); return; }
   if (y >= L.tabY && y <= L.tabY + 30 && x >= L.x && x <= L.x + PW) { const t = TABS[Math.min(TABS.length - 1, Math.floor((x - L.x) / L.tabW))]; if (t.k !== P.tab) { P.tab = t.k; P.scroll = 0; P.vel = 0; P.sel = null; beep(480, .05); } return; }
+  if (P.tab === 'paint' && y >= L.chipY && y <= L.chipY + CHIP_H && x >= L.x && x <= L.x + PW) { const t = PAINT_TARGETS[Math.min(PAINT_TARGETS.length - 1, Math.floor((x - L.x) / (PW / PAINT_TARGETS.length)))]; if (t.k !== P.target) { P.target = t.k; beep(560, .05); } return; }
   if (inRect(barBtn(L), x, y)) { act(); return; }
   if (inRect(L.list, x, y)) {
     const ly = y - L.list.y + P.scroll, r = rows().out.find(q => q.it && ly >= q.y && ly < q.y + q.h);
@@ -101,14 +104,14 @@ function barState(it) {
   const p = priceOf(it);
   if (it.spec) return p == null ? { label: '최대', ok: false } : { label: '강화 ◆ ' + p, ok: SHOP.shards >= p };
   if (!owned(it)) return { label: '구매 ◆ ' + p, ok: SHOP.shards >= p };
-  return equipped(it) ? { label: '해제', ok: true } : { label: '장착', ok: true };
+  return equipped(it, P.target) ? { label: '해제', ok: true } : { label: it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠하기' : '장착', ok: true };
 }
 function act() {
   const it = ITEMS[P.sel]; if (!it) return;
   const st = barState(it), say = s => { P.msg = s; P.msgT = 1.6; };
   if (!st || !st.ok && (it.spec || !owned(it))) return;   // 조각이 모자라거나 최대면 버튼은 눌리지 않는다(문구·소리 없음)
-  if (it.spec || !owned(it)) { if (buy(it) === 'ok') { say('구매 완료'); beep(880, .1); beep(1180, .12); } return; }
-  if (equipped(it)) { unequip(it); say('해제했어'); } else { equip(it); say('장착됨'); }
+  if (it.spec || !owned(it)) { if (buy(it, P.target) === 'ok') { say(it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠했어' : '구매 완료'); beep(880, .1); beep(1180, .12); } return; }
+  if (equipped(it, P.target)) { unequip(it, P.target); say('해제했어'); } else { equip(it, P.target); say(it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠했어' : '장착됨'); }
   beep(700, .06);
 }
 
@@ -132,8 +135,23 @@ export function drawShop() {
     rr(x + 2, L.tabY, L.tabW - 4, 30, 9); g.fillStyle = on ? 'rgba(255,226,122,.16)' : 'rgba(255,255,255,.05)'; g.fill(); g.strokeStyle = on ? GOLD : 'rgba(255,255,255,.18)'; g.lineWidth = on ? 1.6 : 1; g.stroke();
     txt(t.n, x + L.tabW / 2, L.tabY + 20, 13, on ? GOLD : 'rgba(255,255,255,.7)', 'center', 800);
   });
+  if (P.tab === 'paint') drawChips(L);
   drawList(L);
   drawBar(L);
+}
+/** 페인트 탭: 어느 부위에 칠할지 고르는 칩 줄. 그 부위에 지금 칠해진 색이 작은 점으로 보인다 */
+function drawChips(L) {
+  const w = PW / PAINT_TARGETS.length;
+  PAINT_TARGETS.forEach((t, i) => {
+    const x = L.x + i * w, on = t.k === P.target, it = ITEMS[SHOP.eq[t.k]];
+    rr(x + 2, L.chipY, w - 4, CHIP_H, 8); g.fillStyle = on ? 'rgba(255,226,122,.16)' : 'rgba(255,255,255,.05)'; g.fill(); g.strokeStyle = on ? GOLD : 'rgba(255,255,255,.18)'; g.lineWidth = on ? 1.6 : 1; g.stroke();
+    txt(t.n, x + w / 2, L.chipY + 15, 11, on ? GOLD : 'rgba(255,255,255,.72)', 'center', 800);
+    if (it) { // 칠해진 색 점
+      const v = it.v, gr = g.createLinearGradient(x + w / 2 - 6, 0, x + w / 2 + 6, 0);
+      for (let k = 0; k <= 4; k++) { const c = colorAt(v, 0, G.T, k / 4); gr.addColorStop(k / 4, 'hsl(' + c.h + ',' + c.s + '%,' + (c.s === 0 ? 90 : 60) + '%)'); }
+      g.fillStyle = gr; rr(x + w / 2 - 7, L.chipY + 20, 14, 4, 2); g.fill();
+    }
+  });
 }
 /** 오른쪽 정렬 글자를 그리고 그 너비를 돌려준다 */
 function txt0(s, x, y, size) { g.font = '900 ' + size + 'px system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif'; const w = g.measureText(s).width; txt(s, x, y, size, GOLD, 'right', 900); return w; }
@@ -155,12 +173,13 @@ function drawList(L) {
 }
 
 function drawRow(r) {
-  const it = r.it, on = P.sel === it.id, own = owned(it), eqp = !it.spec && equipped(it), h = r.h - 4;
+  const it = r.it, on = P.sel === it.id, own = owned(it), eqp = !it.spec && equipped(it, P.target), h = r.h - 4, used = it.slot === 'pt' ? paintedOn(it) : null;
   rr(0, r.y, PW, h, 11); g.fillStyle = on ? 'rgba(255,226,122,.12)' : 'rgba(255,255,255,.05)'; g.fill();
   g.strokeStyle = on ? GOLD : eqp ? 'rgba(125,255,170,.55)' : 'rgba(255,255,255,.12)'; g.lineWidth = on ? 1.8 : 1; g.stroke();
   swatch(it, 26, r.y + h / 2);
-  txt(it.n, 52, r.y + (it.d ? 22 : 29), 14, own && !it.spec ? '#fff' : 'rgba(255,255,255,.92)', 'left', 800);
-  if (it.d) txt(it.d, 52, r.y + 38, 10.5, 'rgba(255,255,255,.55)', 'left', 500);
+  txt(it.n, 52, r.y + (it.d || (used && used.length) ? 22 : 29), 14, own && !it.spec ? '#fff' : 'rgba(255,255,255,.92)', 'left', 800);
+  if (used && used.length) txt('칠한 곳 · ' + used.map(k => TARGET_NAMES[k]).join(' ·'), 52, r.y + 38, 10.5, 'rgba(125,255,170,.8)', 'left', 600);
+  else if (it.d) txt(it.d, 52, r.y + 38, 10.5, 'rgba(255,255,255,.55)', 'left', 500);
   if (it.spec) { // 단계 점과 다음 가격
     const mx = it.spec === 'shield' ? 1 : SPEC_PRICE.length, lv = specLv(it.spec);
     for (let i = 0; i < mx; i++) { g.fillStyle = i < lv ? it.c : 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(PW - 100 + i * 12 + (mx === 1 ? 24 : 0), r.y + 20, 4, 0, TAU); g.fill(); }
@@ -181,8 +200,12 @@ function swatch(it, x, y) {
   else if (it.slot === 'landshape') drawShapeIcon(g, x, y, v.style, 200);
   else if (it.ship) { g.translate(x, y); g.rotate(-.6); drawShip(g, SHIPS[it.ship], .8, G.T, .5, { art: DECOR[it.ship].art }); }
   else if (v.style) { g.strokeStyle = '#d8ecff'; g.lineWidth = 1.2; for (const [dx, dy] of v.style === 'dust' ? [[-7, 4], [1, -5], [8, 3]] : [[-8, 0], [-2, 0], [4, 0]]) { g.globalAlpha = v.style === 'ghost' ? .4 + (dx + 8) / 24 : 1; g.beginPath(); g.moveTo(x + dx - 3, y + dy); g.lineTo(x + dx + 3, y + dy); g.moveTo(x + dx, y + dy - 3); g.lineTo(x + dx, y + dy + 3); g.stroke(); } }
+  else if (it.slot === 'pt' && v.duo) { // 다색: 두 색이 함께 있고 경계가 오간다
+    const gr = g.createLinearGradient(x - 11, y, x + 11, y); for (let i = 0; i <= 6; i++) { const c = colorAt(v, 0, G.T, i / 6); gr.addColorStop(i / 6, 'hsl(' + c.h + ',' + c.s + '%,60%)'); }
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 1; g.stroke();
+  }
   else if (v.rb) { const gr = g.createLinearGradient(x - 11, y - 11, x + 11, y + 11); ['#ff6a6a', '#ffd24a', '#6aff9a', '#6ac8ff', '#c08aff'].forEach((c, i) => gr.addColorStop(i / 4, c)); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); }
-  else if (v.h != null) { g.fillStyle = hslOf(v, 0, 0, 62); g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 1; g.stroke(); }
+  else if (v.h != null) { g.fillStyle = hslOf(v, 0, 0, v.s === 0 ? 92 : 62); g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 1; g.stroke(); }
   else if (it.spec) { g.fillStyle = it.c; g.beginPath(); g.arc(x, y, 9, 0, TAU); g.fill(); }
   g.restore();
 }
@@ -205,8 +228,9 @@ function drawPreview(R) {
   rr(R.x, R.y, R.w, R.h, 14); g.fillStyle = 'rgba(12,14,34,.95)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.stroke();
   const sel = ITEMS[P.sel];
   if (P.tab === 'spec') { drawSpecSummary(R); return; }
-  const eq = Object.assign({}, SHOP.eq); if (sel && !sel.spec) eq[sel.slot] = sel.id;
-  const id = sel && sel.ship ? sel.ship : 'gal', c = cfgFor(eq, id), def = paintDef(SHIPS[id], c), T = G.T;
+  const eq = Object.assign({}, SHOP.eq); if (sel && !sel.spec) eq[sel.slot === 'pt' ? P.target : sel.slot] = sel.id;   // 페인트는 고른 부위에 칠한 모습
+  const id = sel && sel.ship ? sel.ship : 'gal', c = cfgFor(eq, id), def = paintDef(SHIPS[id], c), T = G.T, pt = sel && sel.slot === 'pt' ? P.target : null;
+  if (pt === 'glowcol') c.glow = Math.max(c.glow, 2);   // 글로우 색을 보려면 글로우가 보여야 한다
   const dt = clamp(T - P.last, 0, .05); P.last = T;
   const cx = R.x + R.w / 2, cy = R.y + R.h / 2 + 2, rad = 42, a = T * 2.4, x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad, vx = -Math.sin(a) * 100, vy = Math.cos(a) * 100, ps = 1.9 / SHIP_SC[def.t];   // ps: 어느 기체든 길이가 비슷하게 보이는 크기
   g.save(); g.beginPath(); g.rect(R.x, R.y, R.w, R.h); g.clip();
@@ -216,27 +240,27 @@ function drawPreview(R) {
   if (T >= P.nextRing) { P.nextRing = T + 2.2; spawnLand(P.fxr, P.parts, cx, cy, 14, 62, def.L.h, c.landshape); }
   const sx = cx + 104, sy = cy - 36;
   if (T >= P.nextStar) {
-    P.nextStar = T + 1.8; P.starOff = T + .5; const col = c.starfx ? hslOf(c.starfx, 46, T, 70) : GOLD;
-    for (let i = 0; i < 9; i++) { const an = rnd(0, TAU), v = rnd(40, 110); P.parts.push({ x: sx, y: sy, vx: Math.cos(an) * v, vy: Math.sin(an) * v, t: 0, l: rnd(.3, .7), c: col, s: 3 }); }
-    P.fxr.push({ x: sx, y: sy, c: col, r0: 3, r1: 24, t: 0, dur: .35, w: 2 });
+    P.nextStar = T + 1.8; P.starOff = T + .5; const sc = () => c.starfx ? hslOf(c.starfx, 46, T, 70) : GOLD;
+    for (let i = 0; i < 9; i++) { const an = rnd(0, TAU), v = rnd(40, 110); P.parts.push({ x: sx, y: sy, vx: Math.cos(an) * v, vy: Math.sin(an) * v, t: 0, l: rnd(.3, .7), c: sc(), s: 3 }); }
+    P.fxr.push({ x: sx, y: sy, c: sc(), r0: 3, r1: 24, t: 0, dur: .35, w: 2 });
   }
   if (T > P.starOff) { g.fillStyle = GOLD; g.beginPath(); g.arc(sx, sy, 4 + Math.sin(T * 5), 0, TAU); g.fill(); }
   // 꼬리
   const tr = []; for (let i = 16; i >= 0; i--) { const aa = a - i * .07; tr.push(cx + Math.cos(aa) * rad, cy + Math.sin(aa) * rad); }
   drawTrail2({ trail: tr, mode: 'free', boost: 1, heat: 0 }, def, c.trail);
-  const heading = a + Math.PI / 2, o = shipOpts(c, def, T), gl = glowOf(c, def, true, T);
+  const heading = a + Math.PI / 2, o = shipOpts(c, def, T), gl = glowOf(c, def, true, T);   // 잔상 분신은 첫 번째 칠로
   if (c.trail && c.trail.style === 'ghost') for (let i = 4; i >= 1; i--) { const aa = a - i * .2; g.save(); g.translate(cx + Math.cos(aa) * rad, cy + Math.sin(aa) * rad); g.rotate(aa + Math.PI / 2); g.globalAlpha = .45 - i * .09; g.shadowColor = gl.col; g.shadowBlur = 8; drawShip(g, def, 1, T, ps, o); g.restore(); }
   emitDecor(c, x, y, vx, vy, dt, 1.2, P.parts);
   if (c.heat && Math.random() < dt * 80) P.parts.push({ x: x - Math.cos(heading) * 8, y: y - Math.sin(heading) * 8, vx: -vx * .2 + rnd(-30, 30), vy: -vy * .2 + rnd(-30, 30), t: 0, l: rnd(.3, .5), c: hslOf(c.heat, def.L.h, T, rnd(55, 78)), s: rnd(3, 5) });
   stepParts(P.parts, dt); for (let i = P.fxr.length - 1; i >= 0; i--) { P.fxr[i].t += dt; if (P.fxr[i].t > P.fxr[i].dur) P.fxr.splice(i, 1); }
   g.save(); g.translate(x, y); g.rotate(heading);
-  if (gl.aura) drawAura(gl.col, T, 30);
-  g.shadowColor = gl.col; g.shadowBlur = gl.blur; drawShip(g, def, 1, T, ps, o); g.restore();
+  drawShipCos(g, SHIPS[id], c, T, { flame: 1, sc: ps, flying: true, aura: col => drawAura(col, T, 30) }); g.restore();
   drawFxLayers2(P.fxr, P.parts);
-  if (sel && (sel.slot === 'charge' || sel.slot === 'chargecol')) drawCharge(x, y, c, def.L.h, Math.min(1, ((T * .8) % 1.5) / .8), T);   // 충전 링 상품: 충전이 반복해서 차오른다
+  if (sel && (sel.slot === 'charge' || pt === 'chargecol')) drawCharge(x, y, c, def.L.h, Math.min(1, ((T * .8) % 1.5) / .8), T);   // 충전 링 상품: 충전이 반복해서 차오른다
   g.restore();
   txt('미리보기 · ' + SHIPS[id].n, R.x + 12, R.y + 20, 11, 'rgba(255,255,255,.5)', 'left', 600);
-  if (sel && !sel.spec) txt(owned(sel) ? (equipped(sel) ? '장착중' : '보유') : '◆ ' + sel.price, R.x + R.w - 12, R.y + 20, 12, equipped(sel) ? '#7dffaa' : GOLD, 'right', 800);
+  if (sel && !sel.spec) txt(owned(sel) ? (equipped(sel, P.target) ? '장착중' : '보유') : '◆ ' + sel.price, R.x + R.w - 12, R.y + 20, 12, equipped(sel, P.target) ? '#7dffaa' : GOLD, 'right', 800);
+  if (pt) txt(TARGET_NAMES[pt] + '에 칠하는 중', R.x + 12, R.y + R.h - 10, 11, GOLD, 'left', 700);
 }
 
 /** 초기 스펙 탭: 지금 단계의 요약 */

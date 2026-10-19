@@ -7,7 +7,8 @@ import { maxOrbit, o2max, fs } from './stats.js';
 import { viewTop, viewBot } from './camera.js';
 import { txt, GFX } from './gfx.js';
 import { flameColor } from './heat.js';
-import { cfg, shipDef, shipOpts, glowOf, heatHsl, hslOf } from './cos.js';
+import { SHIPS } from './ships.js';
+import { cfg, shipDef, shipOpts, hslOf, heatHsl, drawShipCos } from './cos.js';
 import { ringPath } from './land-fx.js';
 import { drawCharge } from './charge-fx.js';
 import { drawMonster } from './draw-monster.js';
@@ -75,7 +76,7 @@ export function drawPlayer() {
   const tr = s.trail;
   if (GFX.v >= 2) drawTrail2(s, def, c.trail);
   else for (let i = 2; i < tr.length; i += 2) {
-    g.strokeStyle = hslOf(c.trail, def.L.h, T, 72, i / tr.length * .7); g.lineWidth = 1 + i / tr.length * (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
+    g.strokeStyle = hslOf(c.trail, def.L.h, T, 72, i / tr.length * .7, 1 - i / tr.length); g.lineWidth = 1 + i / tr.length * (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
   }
   // 돌격 잔상
@@ -88,10 +89,9 @@ export function drawPlayer() {
   if (!(s.inv > 0 && Math.floor(T * 20) % 2)) {
     const em = (1 + .9 * s.evoT * s.evoT) * fs(), jit = s.charging ? s.charge * 1.6 : 0;
     g.save(); g.translate(s.x + (jit ? (Math.random() - .5) * jit * 2 : 0), s.y + (jit ? (Math.random() - .5) * jit * 2 : 0)); g.rotate(Math.atan2(hy, hx));
-    const gl = glowOf(c, def, s.mode === 'free', T);   // 기본 글로우는 약하고, 상점 상품으로 강해진다
-    if (gl.aura) drawAura(gl.col, T, (14 + 12 * SHIP_SC[G.tier]) * fs());
-    g.shadowColor = gl.col; g.shadowBlur = gl.blur + s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6;
-    drawShip(g, def, s.mode === 'free' ? 1 : s.charging ? .3 + .7 * s.charge : .3, T, em, opts); g.restore();
+    drawShipCos(g, SHIPS[G.shipId], c, T, { flame: s.mode === 'free' ? 1 : s.charging ? .3 + .7 * s.charge : .3, sc: em, flying: s.mode === 'free',   // 기본 글로우는 약하고, 상점 상품으로 강해진다
+      blur: s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6, aura: col => drawAura(col, T, (14 + 12 * SHIP_SC[G.tier]) * fs()) });
+    g.restore();
   }
   if (s.charging) drawChargeRing(s, def);
   if (G.stats.shield > 0) { g.strokeStyle = 'rgba(255,157,122,.8)'; g.lineWidth = 1.5; g.beginPath(); g.arc(s.x, s.y, (8 + 8 * SHIP_SC[G.tier]) * fs(), 0, TAU); g.stroke(); }
@@ -117,11 +117,12 @@ function drawFlames(s, hx, hy) {
   for (let i = 0; i < n; i++) {
     const f = n === 1 ? 0 : i / (n - 1) - .5, fl = .75 + .25 * Math.sin(T * 26 + i * 2.1), L = (16 + h * 11) * fl * (1 - Math.abs(f) * .7), wd = 4 + h * .9 - Math.abs(f) * 3;
     const gr = g.createLinearGradient(4, 0, 4 + L, f * 14);
-    gr.addColorStop(0, '#fff'); gr.addColorStop(.25, flameColor(72)); gr.addColorStop(.7, flameColor(52)); gr.addColorStop(1, heatHsl(45, 0));
+    const u = (i + .5) / n;   // 다색 열기: 혀마다 위치가 달라 두 색이 함께 보인다
+    gr.addColorStop(0, '#fff'); gr.addColorStop(.25, flameColor(72, u)); gr.addColorStop(.7, flameColor(52, u)); gr.addColorStop(1, heatHsl(45, 0, u));
     g.fillStyle = gr; g.beginPath(); g.moveTo(3, -wd); g.quadraticCurveTo(4 + L * .5, f * 12 - wd * .6, 4 + L, f * 16); g.quadraticCurveTo(4 + L * .5, f * 12 + wd * .6, 3, wd); g.closePath(); g.fill();
   }
   const ag = g.createRadialGradient(0, 0, 2, 0, 0, 22 + h * 5);
-  ag.addColorStop(0, heatHsl(65, .25 + h * .07)); ag.addColorStop(1, heatHsl(55, 0));
+  ag.addColorStop(0, heatHsl(65, .25 + h * .07, .5)); ag.addColorStop(1, heatHsl(55, 0, .5));
   g.fillStyle = ag; g.beginPath(); g.arc(0, 0, 22 + h * 5, 0, TAU); g.fill();
   g.restore();
 }
@@ -131,7 +132,7 @@ function drawFlames(s, hx, hy) {
  * (부품마다 반투명으로 겹쳐 그리면 겹친 곳이 거의 불투명해져 부자연스럽다 — 부품이 많은 고단계 기체일수록 심했다) */
 const ghostCache = new Map(), GR = 80;
 function ghostSprite(def, opts, k) {
-  const key = def.id + '|' + k.toFixed(2) + '|' + def.L.h + '|' + (opts.fh == null ? '' : opts.fh) + (opts.nobay ? 'n' : '') + (opts.art || '');
+  const key = def.id + '|' + k.toFixed(2) + '|' + def.L.h + '|' + (def.L.hs == null ? '' : def.L.hs) + '|' + (opts.fh == null ? '' : opts.fh + ',' + opts.fs) + (opts.nobay ? 'n' : '') + (opts.art || '');
   let sp = ghostCache.get(key); if (sp) return sp;
   const cv = document.createElement('canvas'); cv.width = cv.height = GR * 4;
   const c = cv.getContext('2d'); c.scale(2, 2); c.translate(GR, GR);

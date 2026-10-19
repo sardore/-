@@ -2,25 +2,25 @@
 import { G, g } from './state.js';
 import { TAU, easeOut } from './util.js';
 import { ringPath } from './land-fx.js';
-import { hueOf, satOf } from './cos.js';
+import { colorAt, isDuo } from './cos.js';
 
 /** 기체 꼬리: 넓고 옅은 빛 + 밝은 심지를 겹쳐 그린다 */
 export function drawTrail2(s, def, sp) {
   const tr = s.trail, n = tr.length; if (n < 4) return;
-  const h = hueOf(sp, def.L.h, G.T), sat = satOf(sp), wm = (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
+  const duo = isDuo(sp), c0 = duo ? null : colorAt(sp, def.L.h, G.T), wm = (s.mode === 'free' ? 5 : 3) * (1 + (s.boost - 1) * .8 + s.heat * .15);
   g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
   for (let i = 2; i < n; i += 2) {
-    const k = i / n;
-    g.strokeStyle = 'hsla(' + h + ',' + sat * .9 + '%,58%,' + k * .2 + ')'; g.lineWidth = 2 + k * wm * 2.6;
+    const k = i / n, c = duo ? colorAt(sp, 0, G.T, 1 - k) : c0;   // 다색: 머리 쪽이 색 A, 꼬리 끝이 색 B (경계가 오간다)
+    g.strokeStyle = 'hsla(' + c.h + ',' + c.s * .9 + '%,58%,' + k * .2 + ')'; g.lineWidth = 2 + k * wm * 2.6;
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
-    g.strokeStyle = 'hsla(' + h + ',' + sat * .9 + '%,78%,' + k * .75 + ')'; g.lineWidth = 1 + k * wm;
+    g.strokeStyle = 'hsla(' + c.h + ',' + c.s * .9 + '%,78%,' + k * .75 + ')'; g.lineWidth = 1 + k * wm;
     g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke();
   }
   if (sp && sp.style === 'dust') { // 별가루: 꼬리를 따라 반짝이는 십자
     g.lineWidth = 1;
     for (let i = 2; i < n; i += 2) {
-      const k = i / n, tw = .5 + .5 * Math.sin(G.T * 9 + i * 1.9), L = (1.5 + 3.5 * tw) * (.4 + k);
-      g.strokeStyle = 'hsla(' + (h + i * 3) % 360 + ',100%,85%,' + k * tw + ')';
+      const k = i / n, tw = .5 + .5 * Math.sin(G.T * 9 + i * 1.9), L = (1.5 + 3.5 * tw) * (.4 + k), c = duo ? colorAt(sp, 0, G.T, 1 - k) : c0;
+      g.strokeStyle = 'hsla(' + (c.h + i * 3) % 360 + ',100%,85%,' + k * tw + ')';
       g.beginPath(); g.moveTo(tr[i] - L + Math.sin(i * 7) * 4, tr[i + 1] + Math.cos(i * 5) * 4); g.lineTo(tr[i] + L + Math.sin(i * 7) * 4, tr[i + 1] + Math.cos(i * 5) * 4);
       g.moveTo(tr[i] + Math.sin(i * 7) * 4, tr[i + 1] - L + Math.cos(i * 5) * 4); g.lineTo(tr[i] + Math.sin(i * 7) * 4, tr[i + 1] + L + Math.cos(i * 5) * 4); g.stroke();
     }
