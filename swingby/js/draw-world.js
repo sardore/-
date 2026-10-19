@@ -90,7 +90,7 @@ export function drawPlayer() {
     const em = (1 + .9 * s.evoT * s.evoT) * fs(), jit = s.charging ? s.charge * 1.6 : 0;
     g.save(); g.translate(s.x + (jit ? (Math.random() - .5) * jit * 2 : 0), s.y + (jit ? (Math.random() - .5) * jit * 2 : 0)); g.rotate(Math.atan2(hy, hx));
     drawShipCos(g, SHIPS[G.shipId], c, T, { flame: s.mode === 'free' ? 1 : s.charging ? .3 + .7 * s.charge : .3, sc: em, flying: s.mode === 'free',   // 기본 글로우는 약하고, 상점 상품으로 강해진다
-      blur: s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6, aura: col => drawAura(col, T, (14 + 12 * SHIP_SC[G.tier]) * fs()) });
+      blur: s.evoT * 30 + (s.charging ? 24 * s.charge : 0) + (s.boost > 1.2 ? 14 : 0) + s.heat * 6, aura: (col, k) => drawAura(col, T, (14 + 12 * SHIP_SC[G.tier]) * fs(), k) });
     g.restore();
   }
   if (s.charging) drawChargeRing(s, def);
@@ -102,10 +102,10 @@ export function drawPlayer() {
   }
 }
 
-/** 글로우 '강': 기체를 감싸는 맥동 후광 (기체 좌표계 안에서 그린다) */
-export function drawAura(col, T, size) {
-  const r = size * (1 + .08 * Math.sin(T * 3.4)), gr = g.createRadialGradient(0, 0, 2, 0, 0, r);
-  gr.addColorStop(0, col.replace('hsl(', 'hsla(').replace(')', ',.35)')); gr.addColorStop(1, col.replace('hsl(', 'hsla(').replace(')', ',0)'));
+/** 글로우 강화 8단계부터: 기체를 감싸는 맥동 후광 (기체 좌표계 안에서 그린다). k 는 세기(1 = 예전 '글로우 강') — 진하기와 크기가 같이 커진다 */
+export function drawAura(col, T, size, k = 1) {
+  const r = size * (.85 + .15 * k) * (1 + .08 * Math.sin(T * 3.4)), gr = g.createRadialGradient(0, 0, 2, 0, 0, r);
+  gr.addColorStop(0, col.replace('hsl(', 'hsla(').replace(')', ',' + .35 * k + ')')); gr.addColorStop(1, col.replace('hsl(', 'hsla(').replace(')', ',0)'));
   g.save(); g.shadowBlur = 0; g.globalCompositeOperation = 'lighter'; g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fill(); g.restore();
 }
 

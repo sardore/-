@@ -4,8 +4,8 @@ import { G, V, g } from './state.js';
 import { TAU, rnd, clamp } from './util.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { rr, txt } from './gfx.js';
-import { TABS, SLOTS, LIST, ITEMS, GLOW_BLUR, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
+import { rr, txt, shardIcon } from './gfx.js';
+import { TABS, SLOTS, LIST, ITEMS, GLOW_LEVELS, UPGRADES, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, paintedOn, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, colorAt, isDuo, emitDecor, drawShipCos } from './cos.js';
 import { spawnLand, drawShapeIcon } from './land-fx.js';
@@ -14,6 +14,7 @@ import { MODE } from './ops.js';
 import { drawTrail2, drawFxLayers2 } from './draw-fx2.js';
 import { drawAura } from './draw-world.js';
 import { drawCharge } from './charge-fx.js';
+import { openUpgrade, closeUpgrade, upgradeOpen, upgradeTap, drawUpgrade } from './shop-upgrade-ui.js';
 import { stepParts } from './fx.js';
 import { startRun } from './progress.js';
 import { beep } from './audio.js';
@@ -24,11 +25,11 @@ const PW = 372, CHIP_H = 28, ROW = 52, ROW_SPEC = 58, HEAD = 40, GOLD = '#ffe27a
 const P = { tab: 'fx', target: 'hull', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', msgT: 0, d: null, parts: [], fxr: [], last: 0, nextRing: 0, nextStar: 0, starOff: 0 };
 
 /* ---------- 열기·닫기 ---------- */
-export function openShop() { Object.assign(P, { tab: 'fx', target: 'hull', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
+export function openShop() { closeUpgrade(); Object.assign(P, { tab: 'fx', target: 'hull', scroll: 0, vel: 0, tick: 0, sel: null, msg: '', d: null, parts: [], fxr: [], last: G.T, nextRing: 0, nextStar: 0 }); G.st = 'shop'; beep(520, .08); }
 /** 디버그/테스트: 상점을 열고 그 상품을 골라 미리보기 한다 */
-export function previewItem(id, target) { const it = ITEMS[id]; if (!it) return; openShop(); P.tab = it.tab; P.sel = id; if (target) P.target = target; }
+export function previewItem(id, target) { const it = ITEMS[id]; if (!it) return; openShop(); P.tab = it.tab; P.sel = id; if (target) P.target = target; if (it.up) openUpgrade(it.up); }
 /** 닫으면 시작화면으로: 새 판을 만들어 구매한 초기 스펙을 반영한다 */
-export function closeShop() { startRun(); G.st = 'title'; beep(380, .08); }
+export function closeShop() { closeUpgrade(); startRun(); G.st = 'title'; beep(380, .08); }
 
 /* ---------- 배치 ---------- */
 function layout() {
@@ -63,7 +64,7 @@ const maxScroll = () => Math.max(0, rows().total - layout().list.h);
 const FRICTION = 2.3, FLING_MAX = 6500, FLING_GAIN = 1.5;   // 마찰이 작을수록 오래 미끄러진다
 export function shopDown(x, y) { P.vel = 0; P.d = { x, y, s0: P.scroll, moved: false, ly: y, lt: performance.now(), v: 0 }; }
 export function shopMove(y) {
-  const d = P.d; if (!d) return;
+  const d = P.d; if (!d || upgradeOpen()) return;
   if (Math.abs(y - d.y) > 8) d.moved = true;
   if (d.moved && inRect(layout().list, d.x, d.y)) {
     P.scroll = clamp(d.s0 - (y - d.y), 0, maxScroll());
@@ -86,6 +87,7 @@ export function shopUp(x, y) {
   const d = P.d; P.d = null;
   if (d && d.moved && x != null && performance.now() - d.lt < 120) P.vel = clamp(d.v * FLING_GAIN, -FLING_MAX, FLING_MAX);   // 멈칫하지 않고 뗐으면 속도가 남는다
   if (!d || x == null || d.moved) return;
+  if (upgradeOpen()) { upgradeTap(x, y); return; }   // 강화 창이 열려 있으면 탭은 전부 창으로
   const L = layout();
   if (inRect(L.back, x, y)) { closeShop(); return; }
   if (y >= L.tabY && y <= L.tabY + 30 && x >= L.x && x <= L.x + PW) { const t = TABS[Math.min(TABS.length - 1, Math.floor((x - L.x) / L.tabW))]; if (t.k !== P.tab) { P.tab = t.k; P.scroll = 0; P.vel = 0; P.sel = null; beep(480, .05); } return; }
@@ -93,7 +95,7 @@ export function shopUp(x, y) {
   if (inRect(barBtn(L), x, y)) { act(); return; }
   if (inRect(L.list, x, y)) {
     const ly = y - L.list.y + P.scroll, r = rows().out.find(q => q.it && ly >= q.y && ly < q.y + q.h);
-    if (r) { P.sel = r.it.id; beep(640, .04); }
+    if (r) { P.sel = r.it.id; beep(640, .04); if (r.it.up) openUpgrade(r.it.up); }   // 강화 행은 누르면 바로 강화 창
   }
 }
 const barBtn = L => ({ x: L.bar.x + L.bar.w - 118, y: L.bar.y + 6, w: 110, h: 34 });
@@ -102,6 +104,7 @@ const barBtn = L => ({ x: L.bar.x + L.bar.w - 118, y: L.bar.y + 6, w: 110, h: 34
 function barState(it) {
   if (!it) return null;
   const p = priceOf(it);
+  if (it.up) return { label: '강화', ok: true };
   if (it.spec) return p == null ? { label: '최대', ok: false } : { label: '강화 ◆ ' + p, ok: SHOP.shards >= p };
   if (!owned(it)) return { label: '구매 ◆ ' + p, ok: SHOP.shards >= p };
   return equipped(it, P.target) ? { label: '해제', ok: true } : { label: it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠하기' : '장착', ok: true };
@@ -109,6 +112,7 @@ function barState(it) {
 function act() {
   const it = ITEMS[P.sel]; if (!it) return;
   const st = barState(it), say = s => { P.msg = s; P.msgT = 1.6; };
+  if (it.up) { openUpgrade(it.up); return; }
   if (!st || !st.ok && (it.spec || !owned(it))) return;   // 조각이 모자라거나 최대면 버튼은 눌리지 않는다(문구·소리 없음)
   if (it.spec || !owned(it)) { if (buy(it, P.target) === 'ok') { say(it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠했어' : '구매 완료'); beep(880, .1); beep(1180, .12); } return; }
   if (equipped(it, P.target)) { unequip(it, P.target); say('해제했어'); } else { equip(it, P.target); say(it.slot === 'pt' ? TARGET_NAMES[P.target] + '에 칠했어' : '장착됨'); }
@@ -116,10 +120,7 @@ function act() {
 }
 
 /* ---------- 그리기 ---------- */
-const shard = (x, y, r) => { // 별 조각 아이콘
-  g.fillStyle = GOLD; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .72, y - r * .15); g.lineTo(x + r * .4, y + r); g.lineTo(x - r * .4, y + r); g.lineTo(x - r * .72, y - r * .15); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .72, y - r * .15); g.lineTo(x, y + r * .1); g.closePath(); g.fill();
-};
+const shard = shardIcon;   // 별 조각 아이콘
 export function drawShop() {
   stepScroll();
   const { VW, VH } = V, L = layout();
@@ -138,6 +139,7 @@ export function drawShop() {
   if (P.tab === 'paint') drawChips(L);
   drawList(L);
   drawBar(L);
+  if (upgradeOpen()) drawUpgrade();
 }
 /** 페인트 탭: 어느 부위에 칠할지 고르는 칩 줄. 그 부위에 지금 칠해진 색이 작은 점으로 보인다 */
 function drawChips(L) {
@@ -177,6 +179,7 @@ function drawRow(r) {
   rr(0, r.y, PW, h, 11); g.fillStyle = on ? 'rgba(255,226,122,.12)' : 'rgba(255,255,255,.05)'; g.fill();
   g.strokeStyle = on ? GOLD : eqp ? 'rgba(125,255,170,.55)' : 'rgba(255,255,255,.12)'; g.lineWidth = on ? 1.8 : 1; g.stroke();
   swatch(it, 26, r.y + h / 2);
+  if (it.up) { drawUpRow(it, r, h); return; }
   txt(it.n, 52, r.y + (it.d || (used && used.length) ? 22 : 29), 14, own && !it.spec ? '#fff' : 'rgba(255,255,255,.92)', 'left', 800);
   if (used && used.length) txt('칠한 곳 · ' + used.map(k => TARGET_NAMES[k]).join(' ·'), 52, r.y + 38, 10.5, 'rgba(125,255,170,.8)', 'left', 600);
   else if (it.d) txt(it.d, 52, r.y + 38, 10.5, 'rgba(255,255,255,.55)', 'left', 500);
@@ -191,11 +194,21 @@ function drawRow(r) {
   else txt('◆ ' + it.price, PW - 12, r.y + h / 2 + 5, 13, SHOP.shards >= it.price ? GOLD : '#ff9a8a', 'right', 800);
 }
 
+/** 강화 행: 단계 점(도달한 단계는 금색, 적용 단계까지 진하게)과 오른쪽 '강화' 알약 */
+function drawUpRow(it, r, h) {
+  const s = SHOP.up[it.up], top = UPGRADES[it.up].levels.length - 1, y = r.y + h / 2;
+  txt(it.n, 52, r.y + 22, 14, '#fff', 'left', 800);
+  for (let i = 1; i <= top; i++) { rr(52 + (i - 1) * 11, r.y + 31, 8, 6, 3); g.fillStyle = i <= s.use ? GOLD : i <= s.max ? 'rgba(255,226,122,.38)' : 'rgba(255,255,255,.13)'; g.fill(); }
+  txt('Lv ' + s.use + (s.use < s.max ? ' · 최고 ' + s.max : '') + ' / ' + top, 52 + top * 11 + 6, r.y + 38, 10.5, 'rgba(255,255,255,.6)', 'left', 700);
+  rr(PW - 76, y - 14, 64, 28, 14); g.fillStyle = 'rgba(255,226,122,.14)'; g.fill(); g.strokeStyle = GOLD; g.lineWidth = 1.4; g.stroke();
+  txt('강화 ›', PW - 44, y + 5, 13, GOLD, 'center', 900);
+}
+
 /** 상품 아이콘: 색은 색 방울, 글로우는 번지는 빛, 장식은 작은 기체 */
 function swatch(it, x, y) {
   const v = it.v || {};
   g.save();
-  if (it.slot === 'glow') { g.shadowColor = '#9fd8ff'; g.shadowBlur = GLOW_BLUR[v.lv][1] * .8; g.fillStyle = '#e6f6ff'; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }
+  if (it.up === 'glow') { g.shadowColor = '#9fd8ff'; g.shadowBlur = GLOW_LEVELS[Math.max(1, SHOP.up.glow.use)].blur[1] * .8; g.fillStyle = '#e6f6ff'; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }
   else if (it.slot === 'charge') { g.translate(x, y); g.scale(.36, .36); drawCharge(0, 0, { charge: v, chargecol: null }, 200, .75, G.T); }
   else if (it.slot === 'landshape') drawShapeIcon(g, x, y, v.style, 200);
   else if (it.ship) { g.translate(x, y); g.rotate(-.6); drawShip(g, SHIPS[it.ship], .8, G.T, .5, { art: DECOR[it.ship].art }); }
@@ -230,7 +243,7 @@ function drawPreview(R) {
   if (P.tab === 'spec') { drawSpecSummary(R); return; }
   const eq = Object.assign({}, SHOP.eq); if (sel && !sel.spec) eq[sel.slot === 'pt' ? P.target : sel.slot] = sel.id;   // 페인트는 고른 부위에 칠한 모습
   const id = sel && sel.ship ? sel.ship : 'gal', c = cfgFor(eq, id), def = paintDef(SHIPS[id], c), T = G.T, pt = sel && sel.slot === 'pt' ? P.target : null;
-  if (pt === 'glowcol') c.glow = Math.max(c.glow, 2);   // 글로우 색을 보려면 글로우가 보여야 한다
+  if (pt === 'glowcol') c.glow = Math.max(c.glow, 5);   // 글로우 색을 보려면 글로우가 보여야 한다
   const dt = clamp(T - P.last, 0, .05); P.last = T;
   const cx = R.x + R.w / 2, cy = R.y + R.h / 2 + 2, rad = 42, a = T * 2.4, x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad, vx = -Math.sin(a) * 100, vy = Math.cos(a) * 100, ps = 1.9 / SHIP_SC[def.t];   // ps: 어느 기체든 길이가 비슷하게 보이는 크기
   g.save(); g.beginPath(); g.rect(R.x, R.y, R.w, R.h); g.clip();
@@ -254,12 +267,13 @@ function drawPreview(R) {
   if (c.heat && Math.random() < dt * 80) P.parts.push({ x: x - Math.cos(heading) * 8, y: y - Math.sin(heading) * 8, vx: -vx * .2 + rnd(-30, 30), vy: -vy * .2 + rnd(-30, 30), t: 0, l: rnd(.3, .5), c: hslOf(c.heat, def.L.h, T, rnd(55, 78)), s: rnd(3, 5) });
   stepParts(P.parts, dt); for (let i = P.fxr.length - 1; i >= 0; i--) { P.fxr[i].t += dt; if (P.fxr[i].t > P.fxr[i].dur) P.fxr.splice(i, 1); }
   g.save(); g.translate(x, y); g.rotate(heading);
-  drawShipCos(g, SHIPS[id], c, T, { flame: 1, sc: ps, flying: true, aura: col => drawAura(col, T, 30) }); g.restore();
+  drawShipCos(g, SHIPS[id], c, T, { flame: 1, sc: ps, flying: true, aura: (col, k) => drawAura(col, T, 30, k) }); g.restore();
   drawFxLayers2(P.fxr, P.parts);
   if (sel && (sel.slot === 'charge' || pt === 'chargecol')) drawCharge(x, y, c, def.L.h, Math.min(1, ((T * .8) % 1.5) / .8), T);   // 충전 링 상품: 충전이 반복해서 차오른다
   g.restore();
   txt('미리보기 · ' + SHIPS[id].n, R.x + 12, R.y + 20, 11, 'rgba(255,255,255,.5)', 'left', 600);
-  if (sel && !sel.spec) txt(owned(sel) ? (equipped(sel, P.target) ? '장착중' : '보유') : '◆ ' + sel.price, R.x + R.w - 12, R.y + 20, 12, equipped(sel, P.target) ? '#7dffaa' : GOLD, 'right', 800);
+  if (sel && sel.up) txt('Lv ' + SHOP.up[sel.up].use + ' 적용 중', R.x + R.w - 12, R.y + 20, 12, GOLD, 'right', 800);
+  else if (sel && !sel.spec) txt(owned(sel) ? (equipped(sel, P.target) ? '장착중' : '보유') : '◆ ' + sel.price, R.x + R.w - 12, R.y + 20, 12, equipped(sel, P.target) ? '#7dffaa' : GOLD, 'right', 800);
   if (pt) txt(TARGET_NAMES[pt] + '에 칠하는 중', R.x + 12, R.y + R.h - 10, 11, GOLD, 'left', 700);
 }
 

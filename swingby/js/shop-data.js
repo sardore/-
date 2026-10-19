@@ -12,7 +12,7 @@ export const TARGET_NAMES = Object.fromEntries(PAINT_TARGETS.map(t => [t.k, t.n]
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */
 export const SLOTS = [
-  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '기체가 내는 빛의 세기. 색은 페인트 탭에서' },
+  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '강화할수록 빛이 강해진다. 색은 페인트 탭에서' },
   { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리의 모양. 색은 페인트 탭에서' },
   { k: 'landshape', tab: 'fx', n: '착지 링 모양',  note: '행성에 붙을 때 번지는 링의 모양. 색은 기체 색' },
   { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '돌진을 충전할 때 기체 둘레에 그려지는 링의 모양. 색은 페인트 탭에서' },
@@ -29,10 +29,29 @@ export const ITEMS = {};
 export const LIST = [];   // 화면 순서
 function add(it) { ITEMS[it.id] = it; LIST.push(it); }
 
-/* 글로우 강도: lv 1 = 예전 기본 글로우(비행 20 · 평소 12). 기본(0)은 훨씬 약하다 */
-export const GLOW_BLUR = [[4, 6], [12, 20], [19, 32], [29, 48]];   // [평소, 비행]
-[['약', 400, '은은한 빛'], ['중', 900, '한층 더 환한 빛'], ['강', 1500, '맥동하는 후광까지']].forEach(([n, price, d], i) =>
-  add({ id: 'glow' + (i + 1), tab: 'fx', slot: 'glow', n: '글로우 ' + n, d, price, v: { lv: i + 1 } }));
+/* ---------- 강화 ----------
+ * 사는 상품이 아니라 단계를 올리는 트랙. 단계가 오를수록 비용(cost)이 오르고 성공 확률(p)이 내려간다. 실패하면 별 조각만 사라지고 단계는 그대로다.
+ * 상태(도달한 최고 단계 · 적용 중인 단계)와 규칙은 shop.js(upNext/upTry/upUse), 강화 창은 shop-upgrade-ui.js.
+ * 글로우: blur [평소, 비행] 번짐 · aura 맥동 후광 세기(0 = 없음) · n 단계 이름. 0 단계가 기본(약함).
+ * 예전 상품 글로우 약/중/강은 3/6/9 단계와 같은 값이다(LEGACY_GLOW 로 옮겨 준다) */
+export const GLOW_LEVELS = [
+  { n: '기본',        blur: [4, 6],   aura: 0 },
+  { n: '희미한 빛',   blur: [6, 9],   aura: 0,    cost: 60,   p: 1 },
+  { n: '은은한 빛',   blur: [9, 14],  aura: 0,    cost: 100,  p: .95 },
+  { n: '맑은 빛',     blur: [12, 20], aura: 0,    cost: 160,  p: .9 },
+  { n: '환한 빛',     blur: [14, 24], aura: 0,    cost: 240,  p: .8 },
+  { n: '선명한 빛',   blur: [17, 28], aura: 0,    cost: 340,  p: .7 },
+  { n: '짙은 빛',     blur: [19, 32], aura: 0,    cost: 480,  p: .6 },
+  { n: '눈부신 빛',   blur: [22, 37], aura: 0,    cost: 660,  p: .5 },
+  { n: '후광',        blur: [25, 42], aura: .6,   cost: 900,  p: .4 },
+  { n: '찬란한 후광', blur: [29, 48], aura: 1,    cost: 1200, p: .32 },
+  { n: '태양',        blur: [33, 55], aura: 1.35, cost: 1600, p: .25 }
+];
+/** 강화 트랙 목록. 상점 목록에는 up 이 붙은 행 하나로 보인다 */
+export const UPGRADES = { glow: { k: 'glow', n: '글로우', levels: GLOW_LEVELS } };
+add({ id: 'up_glow', tab: 'fx', slot: 'glow', up: 'glow', n: '기체 글로우', d: '강화할수록 빛이 강해진다' });
+/** 예전 글로우 상품 → 그 값과 같은 강화 단계 */
+export const LEGACY_GLOW = { glow1: 3, glow2: 6, glow3: 9 };
 
 add({ id: 'trail_dust', tab: 'fx', slot: 'trail', n: '별가루 꼬리', d: '반짝이는 별가루가 흩날린다', price: 1000, v: { style: 'dust' } });
 add({ id: 'trail_ghost', tab: 'fx', slot: 'trail', n: '잔상 분신', d: '비행 중 기체의 잔상이 겹겹이 남는다', price: 1500, v: { style: 'ghost' } });

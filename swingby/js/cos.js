@@ -2,18 +2,18 @@
  * 게임 로직은 건드리지 않는다. 장착 정보는 shop.js 의 SHOP.eq, 상품 정의는 shop-data.js, 기체별 장식은 decor.js. */
 import { G } from './state.js';
 import { SHIPS } from './ships.js';
-import { ITEMS, GLOW_BLUR } from './shop-data.js';
+import { ITEMS, GLOW_LEVELS } from './shop-data.js';
 import { SHOP } from './shop.js';
 import { DECOR } from './decor.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
 
-/** 장착 맵(eq)과 기체로 꾸밈 설정을 만든다. 상점 미리보기는 장착 맵에 고른 상품을 얹어 부른다 */
-export function cfgFor(eq, shipId) {
+/** 장착 맵(eq)과 기체로 꾸밈 설정을 만든다. 상점 미리보기는 장착 맵에 고른 상품을 얹어 부른다. glowLv: 글로우 강화 단계(없으면 지금 적용 중인 단계) */
+export function cfgFor(eq, shipId, glowLv = SHOP.up.glow.use) {
   const v = slot => { const it = ITEMS[eq[slot]]; return it ? it.v : null; };
   const dc = DECOR[shipId] && eq['decor_' + shipId] ? DECOR[shipId] : null;   // 장착한 전용 장식이 있을 때만
   const tStyle = v('trail') || (dc && dc.trail) || null, tCol = v('flame');   // 꼬리: 모양(별가루·분신)과 색(불꽃 부위의 페인트, 엔진 불꽃과 공유)을 한 값으로 합친다
   return {
-    paint: v('hull'), glow: v('glow') ? v('glow').lv : 0, glowcol: v('glowcol') || (dc && dc.glowcol) || null,
+    paint: v('hull'), glow: glowLv, glowcol: v('glowcol') || (dc && dc.glowcol) || null,
     flame: v('flame') || (dc && dc.flame) || null, trail: tStyle || tCol ? Object.assign({}, tCol, tStyle) : null,
     landshape: v('landshape'), charge: v('charge'), chargecol: v('chargecol'), heat: v('heat'), starfx: v('starfx'), decor: dc
   };
@@ -76,10 +76,10 @@ export function shipOpts(c, def, T, i = 0) {
   return o;
 }
 
-/** 기체 글로우: 평소/비행 번짐 크기와 색. 4단계(0 = 기본, 약함) */
+/** 기체 글로우: 평소/비행 번짐 크기 · 색 · 맥동 후광 세기(0 = 없음). 단계는 상점의 글로우 강화(0 = 기본, 약함) */
 export function glowOf(c, def, flying, T, i = 0) {
-  const lv = c.glow;
-  return { blur: GLOW_BLUR[lv][flying ? 1 : 0], col: hslOf(pass(c.glowcol, i), def.L.h, T, 75), aura: lv >= 3 };
+  const L = GLOW_LEVELS[c.glow] || GLOW_LEVELS[0];
+  return { blur: L.blur[flying ? 1 : 0], col: hslOf(pass(c.glowcol, i), def.L.h, T, 75), aura: L.aura };
 }
 
 /** 다색의 '부드러운 경계': drawFn(ctx) 이 그리는 것을 (0,0) 둘레의 따로 만든 판에 그린 뒤, 경계가 번지는 그라데이션 마스크로 깎아서 얹는다.
@@ -105,7 +105,7 @@ function drawSoft(g, ext, T, drawFn) {
 export function drawDuo(g, ext, T, drawFn) { drawFn(g, 1); drawSoft(g, ext, T, ctx => drawFn(ctx, 0)); }
 
 /** 기체를 그린다 (이미 기체 위치로 옮기고 회전한 좌표계에서). 기체·글로우·불꽃 중 다색이 있으면 두 번 칠해 경계를 섞는다 (앞쪽이 색 A).
- * o = { flame, sc, flying, blur: 글로우에 더할 번짐, aura(col): 후광을 그리는 함수 } */
+ * o = { flame, sc, flying, blur: 글로우에 더할 번짐, aura(col, k): 세기 k 의 후광을 그리는 함수 } */
 export function drawShipCos(g, base, c, T, o) {
   const duo = isDuo(c.paint) || isDuo(c.glowcol) || isDuo(c.flame);
   const one = (ctx, i) => {
@@ -115,11 +115,11 @@ export function drawShipCos(g, base, c, T, o) {
   };
   if (!duo) {
     const def = paintDef(base, c, 0, T), gl = glowOf(c, def, o.flying, T, 0);
-    if (gl.aura && o.aura) o.aura(gl.col);
+    if (gl.aura && o.aura) o.aura(gl.col, gl.aura);
     one(g, 0); return;
   }
   const def0 = paintDef(base, c, 0, T), gl0 = glowOf(c, def0, o.flying, T, 0);
-  if (gl0.aura && o.aura) o.aura(isDuo(c.glowcol) ? hslOf(c.glowcol, def0.L.h, T, 75, undefined, duoW(T)) : gl0.col);   // 후광은 두 색이 섞인 색 하나로
+  if (gl0.aura && o.aura) o.aura(isDuo(c.glowcol) ? hslOf(c.glowcol, def0.L.h, T, 75, undefined, duoW(T)) : gl0.col, gl0.aura);   // 후광은 두 색이 섞인 색 하나로
   drawDuo(g, 11 * SHIP_SC[base.t] * o.sc, T, one);
 }
 

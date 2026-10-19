@@ -2,13 +2,16 @@
  * 그리기는 shop-ui.js, 장착한 이펙트를 실제로 쓰는 쪽은 cos.js. */
 import { G } from './state.js';
 import { load, save } from './util.js';
-import { ITEMS, SPEC_STEP, SPEC_PRICE, SHIELD_PRICE, SHARD_RATE, LEGACY_REFUND, LEGACY_PAINT, PAINT_TARGETS } from './shop-data.js';
+import { ITEMS, SPEC_STEP, SPEC_PRICE, SHIELD_PRICE, SHARD_RATE, LEGACY_REFUND, LEGACY_PAINT, LEGACY_GLOW, PAINT_TARGETS, UPGRADES } from './shop-data.js';
 
 const ALL = /[?&]allshop\b/.test(location.search);   // 테스트용: 주소에 ?allshop 이 있으면 전부 구매된 상태(저장 안 함)
 const KEY = 'swingby_shop', KEY_SHARDS = 'swingby_shards';
 
-/** 저장되는 상태. own 보유 상품 · eq 칸별 장착 상품 · spec 초기 스펙 단계(shield 는 0/1). ver 는 바뀔 때마다 오른다(캐시 무효화) */
-export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
+/** 저장되는 상태. own 보유 상품 · eq 칸별 장착 상품 · spec 초기 스펙 단계(shield 는 0/1) · up 강화 트랙별 {max 도달한 최고 단계, use 적용 중인 단계}.
+ * ver 는 바뀔 때마다 오른다(캐시 무효화) */
+export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, up: {}, ver: 0 };
+for (const k in UPGRADES) SHOP.up[k] = { max: 0, use: 0 };
+const upTop = k => UPGRADES[k].levels.length - 1;
 
 (function restore() {
   SHOP.shards = Math.max(0, Math.floor(+load(KEY_SHARDS, 0) || 0));
@@ -17,9 +20,12 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
   for (const id of o.own || []) {
     if (ITEMS[id]) SHOP.own[id] = 1;
     else if (LEGACY_PAINT[id]) { SHOP.own[LEGACY_PAINT[id]] = 1; dirty = true; }   // 예전 기체 도색 → 같은 색 페인트
+    else if (LEGACY_GLOW[id]) { SHOP.up.glow.max = Math.max(SHOP.up.glow.max, LEGACY_GLOW[id]); dirty = true; }   // 예전 글로우 상품 → 같은 값의 강화 단계
     else if (LEGACY_REFUND[id]) refund += LEGACY_REFUND[id];                       // 없어진 부품별 색 상품 → 별 조각으로
   }
   if (refund) SHOP.shards += refund;
+  for (const k in o.up || {}) if (SHOP.up[k]) { const u = o.up[k], mx = clampLv(u.max, upTop(k)); SHOP.up[k] = { max: Math.max(SHOP.up[k].max, mx), use: clampLv(u.use, mx) }; }
+  if (o.eq && LEGACY_GLOW[o.eq.glow]) SHOP.up.glow.use = Math.min(SHOP.up.glow.max, LEGACY_GLOW[o.eq.glow]);   // 장착하던 예전 글로우는 그 단계로 적용
   if (o.eq && o.eq.trailcol) { if (!o.eq.flame) o.eq.flame = o.eq.trailcol; delete o.eq.trailcol; dirty = true; }   // 꼬리 색 부위는 불꽃과 합쳐졌다
   for (const slot in o.eq || {}) {
     const sl = slot === 'paint' ? 'hull' : slot, id = slot === 'paint' ? LEGACY_PAINT[o.eq[slot]] || o.eq[slot] : o.eq[slot], it = ITEMS[id];
@@ -29,7 +35,7 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
   if (ALL) { // ?allshop: 모든 상품 보유 + 별 조각 넉넉히 (저장하지 않으니 진짜 기록은 그대로다)
     for (const id in ITEMS) if (!ITEMS[id].spec) SHOP.own[id] = 1;
     for (const k of ['spd', 'grav', 'o2', 'decay']) SHOP.spec[k] = SPEC_PRICE.length;
-    SHOP.spec.shield = 1; SHOP.shards = 999999; return;
+    SHOP.spec.shield = 1; SHOP.shards = 999999; return;   // 강화 트랙은 0 단계에서 시작한다(강화를 직접 해 볼 수 있게)
   }
   if (refund || dirty) persist();   // 초기 스펙까지 불러온 뒤에 저장한다
 })();
@@ -37,8 +43,31 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
 function persist() {
   SHOP.ver++;
   if (ALL) return;
-  save(KEY, JSON.stringify({ own: Object.keys(SHOP.own), eq: SHOP.eq, spec: SHOP.spec }));
+  save(KEY, JSON.stringify({ own: Object.keys(SHOP.own), eq: SHOP.eq, spec: SHOP.spec, up: SHOP.up }));
   save(KEY_SHARDS, SHOP.shards);
+}
+
+function clampLv(v, top) { return Math.max(0, Math.min(top, v | 0)); }
+
+/* ---------- 강화 (단계표는 shop-data.js 의 UPGRADES) ---------- */
+/** 다음 단계 {lv, cost, p}. 이미 최고 단계면 null */
+export function upNext(k) {
+  const L = UPGRADES[k].levels, s = SHOP.up[k], n = s.max + 1;
+  return n < L.length ? { lv: n, cost: L[n].cost, p: L[n].p } : null;
+}
+/** 강화 시도: 비용을 내고 확률대로 한 단계 오른다. 'ok' 성공(새 단계를 바로 적용) · 'fail' 실패(별 조각만 소모) · 'poor' 조각 부족 · 'max' 최고 단계 */
+export function upTry(k, roll = Math.random()) {
+  const nx = upNext(k); if (!nx) return 'max';
+  if (SHOP.shards < nx.cost) return 'poor';
+  SHOP.shards -= nx.cost;
+  const ok = roll < nx.p;
+  if (ok) SHOP.up[k] = { max: nx.lv, use: nx.lv };
+  persist(); return ok ? 'ok' : 'fail';
+}
+/** 도달한 단계 중 하나를 적용한다. 바뀌었으면 true */
+export function upUse(k, lv) {
+  const s = SHOP.up[k]; if (lv < 0 || lv > s.max || lv === s.use) return false;
+  s.use = lv; persist(); return true;
 }
 
 export const specLv = k => SHOP.spec[k] || 0;
