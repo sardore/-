@@ -4,6 +4,7 @@ import { G } from './state.js';
 import { load, save } from './util.js';
 import { ITEMS, SPEC_STEP, SPEC_PRICE, SHIELD_PRICE, SHARD_RATE, LEGACY_REFUND, LEGACY_PAINT, PAINT_TARGETS } from './shop-data.js';
 
+const ALL = /[?&]allshop\b/.test(location.search);   // 테스트용: 주소에 ?allshop 이 있으면 전부 구매된 상태(저장 안 함)
 const KEY = 'swingby_shop', KEY_SHARDS = 'swingby_shards';
 
 /** 저장되는 상태. own 보유 상품 · eq 칸별 장착 상품 · spec 초기 스펙 단계(shield 는 0/1). ver 는 바뀔 때마다 오른다(캐시 무효화) */
@@ -24,11 +25,17 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
     if (it && SHOP.own[it.id] && (it.slot === sl || (it.slot === 'pt' && PAINT_TARGETS.some(t => t.k === sl)))) SHOP.eq[sl] = it.id;
   }
   for (const k in o.spec || {}) SHOP.spec[k] = Math.max(0, Math.min(k === 'shield' ? 1 : SPEC_PRICE.length, o.spec[k] | 0));
+  if (ALL) { // ?allshop: 모든 상품 보유 + 별 조각 넉넉히 (저장하지 않으니 진짜 기록은 그대로다)
+    for (const id in ITEMS) if (!ITEMS[id].spec) SHOP.own[id] = 1;
+    for (const k of ['spd', 'grav', 'o2', 'decay']) SHOP.spec[k] = SPEC_PRICE.length;
+    SHOP.spec.shield = 1; SHOP.shards = 999999; return;
+  }
   if (refund || dirty) persist();   // 초기 스펙까지 불러온 뒤에 저장한다
 })();
 
 function persist() {
   SHOP.ver++;
+  if (ALL) return;
   save(KEY, JSON.stringify({ own: Object.keys(SHOP.own), eq: SHOP.eq, spec: SHOP.spec }));
   save(KEY_SHARDS, SHOP.shards);
 }
