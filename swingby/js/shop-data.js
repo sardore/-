@@ -73,9 +73,9 @@ const DUO = [ // [id, 이름, 설명, 색 A [색상, 채도], 색 B, 가격]
   ['champagne', '샴페인', '황금빛과 순백이 어우러진다', [46, 100], [0, 0], 1000]
 ];
 SOLID.forEach(([id, n, h, sat, price]) => add({ id: 'pt_' + id, tab: 'paint', slot: 'pt', grp: '단색', n, d: '', price, v: { h, s: sat } }));
-add({ id: 'pt_prism', tab: 'paint', slot: 'pt', grp: '다색', n: '프리즘', d: '무지갯빛으로 계속 변한다', price: 1500, v: { rb: 1 } });
+add({ id: 'pt_prism', tab: 'paint', slot: 'pt', grp: '무지개', n: '프리즘', d: '무지갯빛으로 계속 변한다', price: 1500, v: { rb: 1 } });
 DUO.forEach(([id, n, d, A, B, price]) => add({ id: 'pt_' + id, tab: 'paint', slot: 'pt', grp: '다색', n, d, price, v: { duo: [A, B] } }));
-export const PAINT_GROUPS = [{ k: '단색', n: '단색 페인트', note: '한 번 사면 어느 부위에든 칠할 수 있다' }, { k: '다색', n: '다색 페인트', note: '두 색이 함께 있으면서 비중이 천천히 바뀐다' }];
+export const PAINT_GROUPS = [{ k: '단색', n: '단색 페인트', note: '한 번 사면 어느 부위에든 칠할 수 있다' }, { k: '다색', n: '다색 페인트 (그라데이션)', note: '두 색이 함께 있으면서 비중이 천천히 바뀐다' }, { k: '무지개', n: '무지개 페인트', note: '모든 색으로 계속 변한다' }];
 
 /* 기체별 전용 장식: 그 기체로 날 때만 보인다 (4단 기체). 그림·입자는 decor.js */
 const DECOR_LIST = [
