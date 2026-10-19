@@ -12,10 +12,10 @@ export const TARGET_NAMES = Object.fromEntries(PAINT_TARGETS.map(t => [t.k, t.n]
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */
 export const SLOTS = [
-  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '강화할수록 빛이 강해진다. 색은 페인트 탭에서' },
-  { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '기체가 지나간 자리의 모양. 색은 페인트 탭에서' },
-  { k: 'landshape', tab: 'fx', n: '착지 링 모양',  note: '행성에 붙을 때 번지는 링의 모양. 색은 기체 색' },
-  { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '돌진을 충전할 때 기체 둘레에 그려지는 링의 모양. 색은 페인트 탭에서' },
+  { k: 'glow',    tab: 'fx',   n: '기체 글로우',   note: '' },
+  { k: 'trail',   tab: 'fx',   n: '꼬리 잔상',     note: '색은 페인트 탭' },
+  { k: 'landshape', tab: 'fx', n: '착지 링 모양',  note: '색은 기체 색' },
+  { k: 'charge',  tab: 'fx',   n: '충전 링 디자인', note: '색은 페인트 탭' },
 ];
 
 /* 예전의 부품별 색 상품(글로우·불꽃·꼬리·충전 링·열기·별빛 × 8색)은 없어졌다. 가진 만큼 별 조각으로 돌려준다 (shop.js 가 불러올 때 처리) */
@@ -49,7 +49,7 @@ export const GLOW_LEVELS = [
 ];
 /** 강화 트랙 목록. 상점 목록에는 up 이 붙은 행 하나로 보인다 */
 export const UPGRADES = { glow: { k: 'glow', n: '글로우', levels: GLOW_LEVELS } };
-add({ id: 'up_glow', tab: 'fx', slot: 'glow', up: 'glow', n: '기체 글로우', d: '강화할수록 빛이 강해진다' });
+add({ id: 'up_glow', tab: 'fx', slot: 'glow', up: 'glow', n: '기체 글로우', d: '' });
 /** 예전 글로우 상품 → 그 값과 같은 강화 단계 */
 export const LEGACY_GLOW = { glow1: 3, glow2: 6, glow3: 9 };
 
