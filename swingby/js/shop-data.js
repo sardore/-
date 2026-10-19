@@ -1,13 +1,13 @@
 /* 별 조각 상점의 상품 목록. 값(가격·효과)은 전부 여기서 정한다.
  * 상품 {id, tab, slot, n, d, price, v}: tab 은 화면 탭(fx 이펙트 · ship 기체 · spec 초기 스펙), slot 은 같은 칸에는 하나만 장착, v 는 효과 값.
- * 색은 전부 '페인트' 탭의 색 상품(slot 'pt')이다: 한 번 사면 기체·글로우·불꽃·꼬리·충전 링·열기·별빛 어디에든 칠할 수 있다(칠한 곳은 SHOP.eq 의 PAINT_TARGETS 칸).
+ * 색은 전부 '페인트' 탭의 색 상품(slot 'pt')이다: 한 번 사면 기체·글로우·불꽃·꼬리(엔진 불꽃과 꼬리 잔상은 한 부위)·충전 링·열기·별빛 어디에든 칠할 수 있다(칠한 곳은 SHOP.eq 의 PAINT_TARGETS 칸).
  * 색 값 v = {h 색상, s 채도(%)} · {rb:1}(무지갯빛) · {duo:[[h,s],[h,s]]}(두 색이 비중을 바꾸며 함께 있는 그라데이션). */
 import { SHIPS } from './ships.js';
 
 export const TABS = [{ k: 'fx', n: '이펙트' }, { k: 'paint', n: '페인트' }, { k: 'ship', n: '기체 장식' }, { k: 'spec', n: '초기 스펙' }];
 
 /** 페인트를 칠할 수 있는 부위. k 는 SHOP.eq 의 칸 이름 */
-export const PAINT_TARGETS = [{ k: 'hull', n: '기체' }, { k: 'glowcol', n: '글로우' }, { k: 'flame', n: '불꽃' }, { k: 'trailcol', n: '꼬리' }, { k: 'chargecol', n: '충전' }, { k: 'heat', n: '열기' }, { k: 'starfx', n: '별빛' }];
+export const PAINT_TARGETS = [{ k: 'hull', n: '기체' }, { k: 'glowcol', n: '글로우' }, { k: 'flame', n: '불꽃·꼬리' }, { k: 'chargecol', n: '충전' }, { k: 'heat', n: '열기' }, { k: 'starfx', n: '별빛' }];
 export const TARGET_NAMES = Object.fromEntries(PAINT_TARGETS.map(t => [t.k, t.n]));
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */

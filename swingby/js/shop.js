@@ -20,6 +20,7 @@ export const SHOP = { shards: 0, own: {}, eq: {}, spec: {}, ver: 0 };
     else if (LEGACY_REFUND[id]) refund += LEGACY_REFUND[id];                       // 없어진 부품별 색 상품 → 별 조각으로
   }
   if (refund) SHOP.shards += refund;
+  if (o.eq && o.eq.trailcol) { if (!o.eq.flame) o.eq.flame = o.eq.trailcol; delete o.eq.trailcol; dirty = true; }   // 꼬리 색 부위는 불꽃과 합쳐졌다
   for (const slot in o.eq || {}) {
     const sl = slot === 'paint' ? 'hull' : slot, id = slot === 'paint' ? LEGACY_PAINT[o.eq[slot]] || o.eq[slot] : o.eq[slot], it = ITEMS[id];
     if (it && SHOP.own[it.id] && (it.slot === sl || (it.slot === 'pt' && PAINT_TARGETS.some(t => t.k === sl)))) SHOP.eq[sl] = it.id;

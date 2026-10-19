@@ -11,7 +11,7 @@ import { drawShip, SHIP_SC } from './ship-art.js';
 export function cfgFor(eq, shipId) {
   const v = slot => { const it = ITEMS[eq[slot]]; return it ? it.v : null; };
   const dc = DECOR[shipId] && eq['decor_' + shipId] ? DECOR[shipId] : null;   // 장착한 전용 장식이 있을 때만
-  const tStyle = v('trail') || (dc && dc.trail) || null, tCol = v('trailcol');   // 꼬리: 모양(별가루·분신)과 색(페인트)을 한 값으로 합친다
+  const tStyle = v('trail') || (dc && dc.trail) || null, tCol = v('flame');   // 꼬리: 모양(별가루·분신)과 색(불꽃 부위의 페인트, 엔진 불꽃과 공유)을 한 값으로 합친다
   return {
     paint: v('hull'), glow: v('glow') ? v('glow').lv : 0, glowcol: v('glowcol') || (dc && dc.glowcol) || null,
     flame: v('flame') || (dc && dc.flame) || null, trail: tStyle || tCol ? Object.assign({}, tCol, tStyle) : null,
