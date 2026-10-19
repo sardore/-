@@ -7,7 +7,7 @@ import { SHIPS } from './ships.js';
 export const TABS = [{ k: 'fx', n: '이펙트' }, { k: 'paint', n: '페인트' }, { k: 'ship', n: '기체 장식' }, { k: 'spec', n: '초기 스펙' }];
 
 /** 페인트를 칠할 수 있는 부위. k 는 SHOP.eq 의 칸 이름 */
-export const PAINT_TARGETS = [{ k: 'hull', n: '기체' }, { k: 'glowcol', n: '글로우' }, { k: 'flame', n: '불꽃·꼬리' }, { k: 'chargecol', n: '충전' }, { k: 'heat', n: '열기' }, { k: 'starfx', n: '별빛' }];
+export const PAINT_TARGETS = [{ k: 'hull', n: '기체' }, { k: 'glowcol', n: '글로우' }, { k: 'flame', n: '불꽃' }, { k: 'chargecol', n: '충전' }, { k: 'heat', n: '열기' }, { k: 'starfx', n: '별빛' }];
 export const TARGET_NAMES = Object.fromEntries(PAINT_TARGETS.map(t => [t.k, t.n]));
 
 /** 칸(slot) 정의와 화면에 보이는 순서. note 는 칸 머리글 설명 */
