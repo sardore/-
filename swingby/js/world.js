@@ -90,6 +90,7 @@ export function gen() {
     if (mod === 'drift' && p.t !== 'm') p.drift = { x0: x, amp: Math.min(70 * fs(), x - 40, G.w - 40 - x), sp: rnd(.5, .8), t: rnd(0, TAU) };
     if (kind) { const { post, moon } = applySpecial(kind, p, mkPlanet); if (moon) G.planets.push(moon); G.genY = p.y - post; }
     G.planets.push(p);
+    if (G.safeGen > 0) { G.safeGen--; addStars(prev, p); continue; }   // 보스 격파 직후 구간: 블랙홀·독 행성·벽·소형함 없음
     if (kind || prev.sp) continue;   // 특수 행성 앞뒤로는 별·블랙홀·독 행성·벽·소형함을 두지 않는다(움직이는 행성과 겹치지 않게)
     addStars(prev, p);
     maybeHole(prev, p, dy);

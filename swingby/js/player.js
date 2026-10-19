@@ -155,7 +155,8 @@ export function stepShip(dt) {
       if (G.st !== 'play') return false;
     }
   }
-  if (!boss) for (const h of G.holes) { if (Math.hypot(s.x - h.x, s.y - h.y) < h.r + 6) { die('블랙홀에 흡수'); if (G.st !== 'play') return false; break; } }
+  // 보스 격파 직후(grace)·피격 직후(inv)에는 블랙홀에 흡수되지 않는다
+  if (!boss && !(s.grace > 0) && !(s.inv > 0)) for (const h of G.holes) { if (Math.hypot(s.x - h.x, s.y - h.y) < h.r + 6) { die('블랙홀에 흡수'); if (G.st !== 'play') return false; break; } }
   collectStars();
   s.trail.push(s.x, s.y); if (s.trail.length > 48) s.trail.splice(0, 2);
   return true;

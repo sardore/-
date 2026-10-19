@@ -123,4 +123,5 @@ function settleAfterBoss(s) {
   s.grace = 4; s.air = s.mode === 'free' ? -2.5 : 0; s.inv = Math.max(s.inv, 1.5);
   if (s.mode === 'orb') s.r = Math.max(s.r, (s.p.R + capOf(s.p)) / 2);
   G.genY = Math.min(...G.planets.map(p => p.y)) - 30;
+  G.safeGen = 3;   // 격파 직후 새로 만들어지는 첫 행성 3개 구간에는 블랙홀·독 행성을 두지 않는다: 날아가던 경로에 갑자기 놓이지 않게
 }
