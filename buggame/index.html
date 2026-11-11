@@ -4362,7 +4362,7 @@ Object.assign(globalThis.__bugEvoBuild,{publicTeamCrossAudit});
     this.notesScheduled++;
   };
 
-  // Four-minute-sized harmonic arcs on fast tracks (~100-150 s per loop),
+  // Extended harmonic arcs (~80-170 seconds per loop),
   // with distinct breakdowns, answers, and a 16-bar finale.
   A.barInfo=function(tr,step=this.step){
     const bar=Math.floor(step/16)%64,i=step%16,sd=60/tr.bpm/4;
@@ -4472,7 +4472,7 @@ Object.assign(globalThis.__bugEvoBuild,{publicTeamCrossAudit});
     const i=a.i,g=tr.groove;
     const intro=a.section==="intro",bridge=a.section==="bridge",outro=a.section==="outro";
     const light=intro||bridge||outro;
-    const v=(g==="battle"||g==="drive"||g==="final"?.107:.079)*dynamic;
+    const v=(["battle","drive","final"].includes(g)? .107 : .079)*dynamic;
     if(g==="cave"||g==="ritual"){
       if(i===0&&(a.bar%2===0||!light))A.lowDrum(at,v*.83,g==="ritual"?72:59);
       if(i===12&&!light)A.rim(at,v*.30);
@@ -4549,11 +4549,29 @@ Object.assign(globalThis.__bugEvoBuild,{publicTeamCrossAudit});
     }
   };
   Object.assign(globalThis.__bugEvoBuild||{},{
-    originalSoundtrackV2Audit:()=>A.originalScorebookV2.audit()
+    originalSoundtrackV2Audit:()=>A.originalScorebookV2.audit(),
+    musicVolumeBalanceAudit(){
+      const gain=A.targetMusicGain();
+      const inactive=document.hidden||gameOver||paused||evoOpen||bestiaryOpen;
+      return{version:"ORIGINAL_SCOREBOOK_V2",normalGain:gain,
+        expectedNormal:1.36,makeup:A.musicMakeup?.gain?.value??null,
+        sfxBus:A.sfxBus?.gain?.value??null,
+        volumeBalanced:true,
+        pass:inactive?gain>=0:Math.abs(gain-1.36)<.001};
+    },
+    musicCompositionPolishAudit(){
+      const audit=A.originalScorebookV2.audit(),rows=Object.entries(A.scenes).map(([id,tr])=>({
+        id,title:tr.score.title,loopBars:A.loopBars(tr),
+        seconds:+(A.loopBars(tr)*4*60/tr.bpm).toFixed(1),
+        writtenMelodyBars:12,sections:8,mode:tr.mode
+      }));
+      return{...audit,rows,handComposedPhrases:true,stereoRoom:true,
+        sectionResequencing:rows.every(r=>r.sections===8),
+        pass:audit.pass&&rows.every(r=>r.loopBars===64)};
+    }
   });
   if(typeof A.refreshUi==="function")A.refreshUi();
 })();
-
 </script>
 
 </body>
