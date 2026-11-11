@@ -83,3 +83,35 @@ test("scene section evolution and mixer levels are deliberate",()=>{
   const names=[0,6,14,22,30,38,48,62].map(bar=>A.barInfo(tr,bar*16).section);
   assert.deepEqual(names,["intro","verse","verse2","lift","bridge","build","finale","outro"]);
 });
+
+test("standalone HTML embeds the exact checked scorebook with no external audio dependency",()=>{
+  const scorebook=fs.readFileSync(path.join(__dirname,"original-scorebook-v2.js"),"utf8").trimEnd();
+  assert.ok(html.includes(scorebook),"index.html must contain the entire original scorebook");
+  assert.equal(html.includes("bgmV14"),false,"stale V14 marker must be removed");
+  assert.equal(html.includes('<script src="./music/'),false,"music must not rely on external files");
+});
+
+test("real score voice uses WebAudio note envelopes without throwing",()=>{
+  const {A}=install();
+  const calls={started:0,stopped:0,connected:0};
+  const param=()=>({
+    value:0,setValueAtTime(){},linearRampToValueAtTime(){},
+    exponentialRampToValueAtTime(){}
+  });
+  const makeNode=()=>({
+    gain:param(),frequency:param(),detune:param(),Q:param(),
+    connect(){calls.connected++},setPeriodicWave(){},
+    start(){calls.started++},stop(){calls.stopped++}
+  });
+  A.ctx={
+    createGain:makeNode,createBiquadFilter:makeNode,createOscillator:makeNode
+  };
+  A.getWave=()=>({});
+  A.routeMusic=()=>({});
+  A.scoreVoice(69,1,.45,"flute",.08,-.2,1);
+  A.scoreVoice(55,1,.35,"guitar",.07,.3,1);
+  A.scoreVoice(47,1,.4,"sub",.09,0,1);
+  assert.equal(A.notesScheduled,3);
+  assert.ok(calls.started>=3&&calls.stopped===calls.started);
+  assert.ok(calls.connected>=7);
+});
