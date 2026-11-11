@@ -246,7 +246,7 @@
       </div>
       <div class="buttonRow"><button class="primary" id="soloBtn">싱글 플레이</button><button class="secondary" id="tutorialBtn">튜토리얼</button><button class="secondary" id="soundBtn">음악·효과음 끄기</button><button class="secondary" id="startBestiaryBtn">생물도감</button></div><div class="audioHint">처음 싱글 플레이 시 짧은 팝업 튜토리얼이 표시됩니다. 언제든 스킵할 수 있습니다.</div>
       <div class="onlineBox">
-        <div class="onlineIdentityRow"><input class="onlineInput" id="nicknameInput" maxlength="12" aria-label="공개 월드 닉네임" placeholder="닉네임 (2~12자)"><input class="onlineInput" id="serverUrl" aria-label="공개 월드 서버 주소" placeholder="wss://YOUR-SERVICE.onrender.com/ws"></div>
+        <div class="onlineIdentityRow"><input class="onlineInput" id="nicknameInput" maxlength="12" aria-label="공개 월드 닉네임" placeholder="닉네임 (2~12자)"><input class="onlineInput" id="serverUrl" aria-label="공개 월드 서버 주소" placeholder="wss://cp32-online-relay.onrender.com/online"></div>
         <div class="onlineRow"><input class="onlineInput" id="roomCodeInput" value="PUBLIC" style="display:none" aria-hidden="true"></div>
         <div class="buttonRow" style="margin-top:9px"><button class="primary" id="createRoomBtn">공개 온라인 월드 참가</button><button class="secondary" id="joinRoomBtn" style="display:none" aria-hidden="true">공개 월드 참가</button></div>
         <div class="onlineHint" id="netStatus">PUBLIC 월드 · 방 코드 없음 · 포탈/성장/부활은 개인 진행 · 중앙 안전구역 밖에서는 플레이어끼리 전투 가능</div>
@@ -3514,8 +3514,8 @@ const PUBLIC_PVP_SAFE_RADIUS=SAFE_RADIUS*.92;
 function publicPvpProtected(a){return !a||layerOf(a)==='surface'&&Math.hypot(a.x||0,a.y||0)<PUBLIC_PVP_SAFE_RADIUS||((a.spawnShield||0)>0)||((a.invuln||0)>1.2)}
 function publicLayerKey(a=player){if(!a)return'surface';if(a?.isRemotePlayer&&typeof a.layerKey==='string'&&a.layerKey)return a.layerKey;const l=layerOf(a),owner=a===player?(a.publicInstanceOwner||net.id||net.clientToken||'local'):(a.netId||a.publicInstanceOwner||'remote');if(l===TREE_LAYER)return`private:${owner}:tree:${a.treeId||TreeWorld.activeId||'unknown'}`;if(l===TERMITE_LAYER)return`private:${owner}:termite:${a.termiteId||TermiteWorld.activeId||'unknown'}:${a.termiteFloor||TermiteWorld.floor||1}`;if(l===EXPEDITION_LAYER)return`private:${owner}:expedition:${a.expeditionId||ExpeditionWorld.activeId||'unknown'}`;if(l===UNDERGROUND_LAYER)return`underground:${a.deepUnderground?'deep':'cave'}`;if(l===ARENA_LAYER)return`private:${owner}:arena`;if(l===APEX_LAYER)return`private:${owner}:apex`;return'surface'}
 function publicInstanceOwnerFromActor(a){const k=a?.layerKey||'';const m=/^private:([^:]+):/.exec(k);return m?.[1]||a?.netId||null}
-function defaultServerUrl(){const saved=safeStore.get('bug_public_server_url','');if(saved)return saved;if(location.protocol==='file:')return'ws://localhost:8080/ws';return`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws`}
-function normalizeWsUrl(url){let u=String(url||'').trim();if(/^https:\/\//i.test(u))u='wss://'+u.slice(8);else if(/^http:\/\//i.test(u))u='ws://'+u.slice(7);if(!/^wss?:\/\//i.test(u))throw new Error('WebSocket URL required');if(!/\/ws(?:[?#].*)?$/i.test(u))u=u.replace(/\/$/,'')+'/ws';return u}
+function defaultServerUrl(){return 'wss://cp32-online-relay.onrender.com/online'}
+function normalizeWsUrl(url){let u=String(url||'').trim();if(/^https:\/\//i.test(u))u='wss://'+u.slice(8);else if(/^http:\/\//i.test(u))u='ws://'+u.slice(7);if(!/^wss?:\/\//i.test(u))throw new Error('WebSocket URL required');if(!/\/(?:ws|online)(?:[?#].*)?$/i.test(u))u=u.replace(/\/$/,'')+'/online';return u}
 function setNetStatus(t){$('netStatus').textContent=t}
 function netSend(obj){if(net.socket?.readyState===1)net.socket.send(JSON.stringify(obj))}
 function netDirect(to,payload){if(net.active&&net.publicMode&&to)netSend({type:'direct',to,payload:{...(payload||{})}})}
