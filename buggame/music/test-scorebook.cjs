@@ -6,7 +6,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-const audioSceneSource=html.split("  scenes:{")[1]?.split("\n  midi(n)")[0]||"";
+const audioSceneSource=html.split("\n scenes:{")[1]?.split("\n midi(n)")[0]||"";
 const sceneNames = [...new Set([...audioSceneSource.matchAll(/([A-Za-z][A-Za-z0-9]*):\{label:/g)].map(x=>x[1]))];
 const modes = {
   major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],
