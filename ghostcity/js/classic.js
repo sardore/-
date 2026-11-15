@@ -4,7 +4,7 @@
 // This is NOT a turn-based game: enemies can act while the player is standing still.
 import {Game} from './game.js';
 import {T,TILE,makeRng,clamp} from './config.js';
-import {generateFloor,gridToPixel,refreshVision,buildFlow,tileAt,serializeWorld,restoreWorld,flowDirection} from './world.js';
+import {generateFloor,gridToPixel,refreshVision,buildFlow,tileAt,serializeWorld,restoreWorld,flowDirection,lineOfSight} from './world.js';
 
 const TIMES={player:.09,monster:.340,iframe:.40,pet:.9,sniper:.9,witch:2.7};
 const DIRS=[[1,0],[0,1],[-1,0],[0,-1]];
@@ -342,6 +342,8 @@ export class ClassicGame extends Game {
     this.tutorial=false;this.world=generateFloor(next,this.seed);
     const w=this.world,p=this.player;const isBoss=next===10||next===20;
     for(const e of w.enemies){
+      const originalKind={hound:'wanderer',spider:'wanderer',sentinel:'digger'};
+      e.kind=originalKind[e.kind]||e.kind;
       e.moveAcc=this.rng.rand()*.34;e.cd=this.rng.rand()*.35;e.see=0;e.slow=0;
       e.hp=e.maxHp=e.kind.startsWith('boss')?(next===10?72:96):1;
       e.damage=e.kind==='sniper'?1+Math.floor((next-1)/7):1+Math.floor((next-1)/3);
@@ -390,8 +392,8 @@ export class ClassicGame extends Game {
   }
   shooterTick(e,dt){
     const w=this.world,p=this.player;
-    const visible=w.visible[Math.floor(e.y/TILE)*w.w+Math.floor(e.x/TILE)];
-    const los=visible&&super.lineOfSight===undefined?true:true;
+    const visible=w.visible[Math.floor(e.y/TILE)*w.w+Math.floor(e.x/TILE)]&&
+      lineOfSight(w,e.x,e.y,p.x,p.y);
     if(e.kind==='witch'){
       if(visible)e.see=(e.see||0)+dt;
       else e.see=0;
@@ -545,7 +547,16 @@ export class ClassicGame extends Game {
       const data=JSON.parse(raw);
       if(data.version!==1||!data.player?.slots||!data.world)throw Error('Invalid save');
       this.seed=data.seed>>>0;this.rng=makeRng(this.seed);
-      this.world=restoreWorld(data.world);this.player=data.player;
+      if(data.tutorial){
+        const w=tutorialWorld(this.seed);
+        w.tiles=Uint8Array.from(data.world.tiles||[]);
+        w.pickups=data.world.pickups||[];
+        w.seen=Uint8Array.from(data.world.seen||[]);
+        if(w.tiles.length!==w.w*w.h)throw Error('bad tutorial tiles');
+        if(w.seen.length!==w.w*w.h)w.seen=new Uint8Array(w.w*w.h);
+        this.world=w;
+      }else this.world=restoreWorld(data.world);
+      this.player=data.player;
       this.tutorial=!!data.tutorial;this.elapsed=data.elapsed||0;
       this.kills=data.kills||0;this.score=data.score||0;this.time=data.time||0;
       this.shopFloor=data.shopFloor;this.shopOffers=data.shopOffers||[];
