@@ -236,6 +236,12 @@ export function generateFloor(floor,seed=Date.now()){
     }
     loot(world,rng,floor,start,stairs,false);
   }
+  // A safe 3x3 spawn zone is guaranteed on all seeds, including boss arenas.
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    const x=world.start.x+dx,y=world.start.y+dy;
+    if(x>0&&y>0&&x<world.w-1&&y<world.h-1&&!(x===world.stairs.x&&y===world.stairs.y))
+      setTile(world,x,y,T.FLOOR);
+  }
   refreshVision(world,(world.start.x+.5)*TILE,(world.start.y+.5)*TILE,11);
   return world;
 }
