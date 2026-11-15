@@ -1,10 +1,10 @@
-// The Ghost City: Reborn — shared deterministic data and helpers.
-export const TILE = 32;
-export const MAP_W = 62;
-export const MAP_H = 38;
+// The Ghost City: original-rule web port — shared deterministic data and helpers.
+export const TILE = 30;
+export const MAP_W = 60;
+export const MAP_H = 30;
 export const MAX_FLOOR = 20;
 export const T = Object.freeze({ WALL:0, FLOOR:1, RUBBLE:2, GLASS:3, DOOR:4, STAIRS:5, ELEVATOR:6, BROKEN:7, SHOP:8, WATER:9, WEB:10, TUTOR_EXIT:11 });
-export const BLOCKED = new Set([T.WALL,T.RUBBLE,T.GLASS]);
+export const BLOCKED = new Set([T.WALL,T.RUBBLE]);
 export const WEAPONS = Object.freeze({
   sword:{id:'sword',name:'유령검',eng:'PHANTOM BLADE',power:15,rate:.38,range:68,arc:1.8,knock:80,color:'#94e7ff',icon:'⚔',description:'빠른 근접 연속 공격'},
   spear:{id:'spear',name:'영혼창',eng:'SOUL LANCE',power:21,rate:.59,range:114,arc:.59,knock:145,color:'#85f8d9',icon:'♜',description:'좁지만 긴 관통 찌르기'},
