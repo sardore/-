@@ -92,7 +92,7 @@ function menuMarkup(){
   return '<div class="pretitle">THE ORIGINAL RETURNS · EDITION 2026</div>'+
     '<h1>THE GHOST<br><em>CITY</em></h1><span class="subline">R E B O R N</span>'+
     '<p>죽은 도시의 하층부에 남은 마지막 신호.<br>20개의 층을 돌파하고 두 수호자를 쓰러뜨려 도시의 진실을 밝히세요.</p>'+
-    '<div class="feature-row"><div><strong>20</strong><span>FLOORS</span></div><div><strong>5</strong><span>WEAPONS</span></div><div><strong>2</strong><span>BOSSES</span></div></div>'+
+    '<div class="feature-row"><div><strong>20</strong><span>FLOORS</span></div><div><strong>6</strong><span>WEAPONS</span></div><div><strong>2</strong><span>BOSSES</span></div></div>'+
     '<div class="actions"><button class="modal-btn primary" data-action="new">새 탐험 시작</button>'+
     (canContinue?'<button class="modal-btn" data-action="continue">이어서 하기</button>':'')+
     '</div><div class="note">WASD 이동 · 마우스 공격 · SPACE 대시 · E 상호작용 · 자동 저장'+
