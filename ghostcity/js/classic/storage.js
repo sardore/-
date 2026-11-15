@@ -15,7 +15,9 @@ export function createStorage(getGame,onSave=()=>{}){
   }
   function finish(record){
     del(SAVE_KEY);
-    const score={score:record.score,floor:record.floor,kills:record.kills,time:Math.round(record.time),victory:record.victory};
+    const score={name:String(record.name||'NONAME').replace(/[<>&"']/g,'').slice(0,18)||'NONAME',
+      score:record.score,floor:record.floor,kills:record.kills,
+      time:Math.round(record.time),victory:record.victory};
     write(RANK_KEY,JSON.stringify([...ranks(),score].sort((a,b)=>b.score-a.score).slice(0,10)));
   }
   return {read,write,del,ranks,persist,finish,SAVE:SAVE_KEY,RANKS:RANK_KEY};
