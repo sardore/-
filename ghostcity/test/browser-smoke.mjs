@@ -30,7 +30,7 @@ try{
   const response=await page.goto(url,{waitUntil:'networkidle'});
   assert.equal(response.status(),200);
   await page.waitForSelector('[data-action="new"]');
-  assert.equal(await page.title(),'THE GHOST CITY: CLASSIC');
+  assert.equal(await page.title(),'THE GHOST CITY');
   assert.ok(await page.locator('.ranking-panel').isVisible());
   assert.ok(await page.locator('#player-name').isVisible());
   await page.locator('#player-name').fill('PIXEL');
