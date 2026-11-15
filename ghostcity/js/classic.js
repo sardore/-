@@ -8,6 +8,7 @@ import * as combat from './classic/combat.js';
 import * as enemies from './classic/enemies.js';
 import * as progression from './classic/progression.js';
 import * as persistence from './classic/persistence.js';
+import * as companions from './classic/companions.js';
 
 export class ClassicGame extends ClassicBase {
   constructor(notify=()=>{}){
@@ -119,23 +120,10 @@ export class ClassicGame extends ClassicBase {
       }
     }
     w.enemies=w.enemies.filter(e=>!e.dead);
-    p.petCd=Math.max(0,p.petCd-dt);
-    if(p.petCount>0&&p.petCd===0){
-      let e=null,near=11*TILE;
-      for(const monster of w.enemies){
-        if(monster.dead)continue;
-        const d=dist(p,monster);
-        if(d<near){near=d;e=monster;}
-      }
-      if(e){
-        e.hp-=.1;e.slow=1.6;
-        this.sparks(e.x,e.y,'#ffe4a1',12);
-        p.petCd=p.petCount>=2?.65:.9;
-        if(e.hp<=0){this.killEnemy(e);w.enemies=w.enemies.filter(q=>!q.dead);}
-      }
-    }
+    this.petTick(dt);
     for(const e of w.enemies)e.slow=Math.max(0,(e.slow||0)-dt);
   }
+  petTick(dt){return companions.petTick(this,dt);}
   usePotion(){return inventory.usePotion(this);}
   burst(){return combat.burst(this);}
   interactHint(){return progression.interactHint(this);}
