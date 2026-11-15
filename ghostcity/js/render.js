@@ -236,6 +236,10 @@ export class Renderer{
     ctx.strokeStyle=WEAPONS[p.weapon]?.color||'#fff';ctx.lineWidth=3.2;
     line(ctx,14,-7,19,-26);ctx.fillStyle='#c5b2ce';ctx.fillRect(14,-8,8,3);
     ctx.restore();
+    if(p.parry>0){
+      ctx.shadowColor='#c0c7ff';ctx.shadowBlur=16;
+      ctx.strokeStyle='#b5beff';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(p.x,p.y,24,0,TAU);ctx.stroke();ctx.shadowBlur=0;
+    }
     if(p.shield>0){
       ctx.strokeStyle='#abb1ff8b';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,19+Math.sin(now*3)*1.8,0,TAU);ctx.stroke();
     }
@@ -280,7 +284,31 @@ export class Renderer{
       ctx.shadowColor=b.color;ctx.shadowBlur=15;ctx.fillStyle=b.color;
       ellipse(ctx,b.x,b.y,b.r,b.r);ctx.fill();ctx.shadowBlur=0;
     }
+    // Short attack-warning telegraphs for lethal ranged enemies and bosses.
+    for(const e of world.enemies){
+      if(e.dead||e.cd>.48||e.cd<0)continue;
+      const tx=Math.floor(e.x/TILE),ty=Math.floor(e.y/TILE);
+      if(tx<0||ty<0||tx>=world.w||ty>=world.h||!world.visible[ty*world.w+tx])continue;
+      if(e.kind==='bossSpider'||e.kind==='bossKing'){
+        ctx.strokeStyle='#ff9db4aa';ctx.lineWidth=2+Math.sin(now*19)*1;
+        ctx.setLineDash([7,7]);ctx.beginPath();ctx.arc(e.x,e.y,e.r+22+(1-e.cd/.48)*8,0,TAU);ctx.stroke();ctx.setLineDash([]);
+      }else if(e.kind==='sniper'){
+        ctx.strokeStyle='#ff9aab96';ctx.lineWidth=1.5;ctx.setLineDash([8,8]);
+        line(ctx,e.x,e.y,p.x,p.y);ctx.setLineDash([]);
+      }
+    }
     this.drawPlayer(ctx,p,now);
+    for(let i=0;i<p.petCount;i++){
+      const a=now*1.75+i*TAU/p.petCount,x=p.x+Math.cos(a)*30,y=p.y-18+Math.sin(a)*18;
+      glow(ctx,x,y,28,'#ffe8a545');
+      ctx.save();ctx.translate(x,y+Math.sin(now*7+i)*2);
+      ctx.fillStyle='#f4d4a4';ellipse(ctx,0,0,6,6);ctx.fill();
+      ctx.strokeStyle='#f6efd0';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#ffffffca';
+      poly(ctx,[[-3,0],[-15,-7],[-12,6],[-3,4]]);ctx.fill();
+      poly(ctx,[[3,0],[15,-7],[12,6],[3,4]]);ctx.fill();
+      ctx.restore();
+    }
     if(game.slash){
       const sl=game.slash,a=sl.angle,arc=sl.arc;
       const opacity=clamp(sl.life/sl.max,0,1);
