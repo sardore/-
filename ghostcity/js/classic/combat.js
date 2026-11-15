@@ -12,7 +12,8 @@ export function attack(game){
       if(x<0||y<0||x>=w.w||y>=w.h)break;
       game.atkTiles.push({x,y});
       if(st.breaks&&w.tiles[y*w.w+x]===T.RUBBLE){
-        w.tiles[y*w.w+x]=T.FLOOR;game.sparks((x+.5)*TILE,(y+.5)*TILE,'#cbb99e',16);
+        w.tiles[y*w.w+x]=T.FLOOR;game.visionDirty=true;
+        game.sparks((x+.5)*TILE,(y+.5)*TILE,'#cbb99e',16);
       }
       for(const e of w.enemies){
         if(e.dead)continue;
@@ -79,7 +80,9 @@ export function dash(game){
     for(let n=0;n<Math.max(1,s.level*2);n++){
       const x=t.x+face[0],y=t.y+face[1];
       if(x<1||y<1||x>=w.w-1||y>=w.h-1)break;
-      const ix=y*w.w+x;if([T.WALL,T.RUBBLE].includes(w.tiles[ix]))w.tiles[ix]=T.FLOOR;
+      const ix=y*w.w+x;if([T.WALL,T.RUBBLE].includes(w.tiles[ix])){
+        w.tiles[ix]=T.FLOOR;game.visionDirty=true;
+      }
       for(const e of w.enemies){
         if(e.dead)continue;
         if(game.bossTiles(e).some(a=>a.x===x&&a.y===y)&&e.kind.startsWith('boss')){
