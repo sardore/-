@@ -85,7 +85,7 @@ try{
   await shopPage.keyboard.press('Escape');
   assert.ok(await shopPage.locator('[data-action="next"]').isVisible(),
     'shop must remain visible after Escape');
-  assert.equal((await shopPage.locator('#floor-number').textContent()).trim(),'01');
+  await shopPage.waitForFunction(()=>document.querySelector('#floor-number')?.textContent.trim()==='01');
   await shopPage.close();
 
   const mobile=await browserInstance.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
