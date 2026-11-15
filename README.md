@@ -1,7 +1,7 @@
-## 👻 [더 고스트 시티 THE GHOST CITY: REBORN — 지금 플레이](https://raw.githack.com/sardore/-/main/ghostcity/index.html)
+## 👻 [더 고스트 시티 THE GHOST CITY: CLASSIC — 지금 플레이](https://raw.githack.com/sardore/-/main/ghostcity/index.html)
 
-예전에 제작했던 Pygame 액션 로그라이크의 브라우저 리메이크. 절차적 도시 20층, 10·20층 보스, 6종 무기·수호 정령, 실시간 전투·회피, 레벨업 특성, 안개 시야·미니맵, 보석 상점·엘리베이터, 자동저장, PC·모바일 조작.
-[기획서](ghostcity/DESIGN.md) · [소스](ghostcity/)
+원래 Pygame 게임의 **격자 이동·방향 직선 공격·시간 간격에 따른 적 행동**을 살린 웹 복원판. 튜토리얼, 7칸 통합 인벤토리, 무기 강화, 보석·상점, 10·20층 보스, 절차 생성 맵과 안개 시야를 구현했다. 마우스 자유 이동 액션 게임이 아닌 원작 조작 방식 중심.
+[코드 구조·원작과의 차이](ghostcity/DESIGN.md) · [소스](ghostcity/)
 
 ## 🐛 [벌레랑 · 진화 먹이사슬 — 지금 플레이](https://raw.githack.com/sardore/-/main/buggame/index.html)
 
