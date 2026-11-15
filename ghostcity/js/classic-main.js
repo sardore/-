@@ -1,7 +1,7 @@
 // Composition root: connects rules, UI, input, sound and persistence.
 import {ClassicGame} from './classic.js';
 import {Renderer} from './render.js';
-import {clamp} from './config.js';
+import {TILE} from './config.js';
 import {createStorage} from './classic/storage.js';
 import {createAudio} from './classic/audio.js';
 import {createUI} from './classic/ui.js';
@@ -16,8 +16,7 @@ function emit(type,payload){
   if(type==='toast')ui?.toast(payload.text);
   if(type==='start'||type==='floor'){
     const p=game.player,w=game.world;
-    renderer.camera.x=clamp(p.x-renderer.w/2,0,Math.max(0,w.w*32-renderer.w));
-    renderer.camera.y=clamp(p.y-renderer.h/2,0,Math.max(0,w.h*32-renderer.h));
+    renderer.track(game);
     ui?.invalidateWeapons();
     if(type==='floor')store.persist();
   }
