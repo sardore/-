@@ -111,3 +111,29 @@ test('corrupt saves do not load',()=>{
   const g=new Game();
   assert.equal(g.restore('{"bad":1}'),false);
 });
+
+test('shield guard prevents one incoming attack and restores energy',()=>{
+  const g=new Game();g.newRun(112);
+  g.addWeapon('shield');g.changeWeapon('shield');
+  g.world.enemies=[];g.player.energy=0;
+  assert.ok(g.attack(1,0));
+  assert.ok(g.player.parry>0);
+  const hp=g.player.hp;
+  assert.equal(g.damagePlayer(2),false);
+  assert.equal(g.player.hp,hp);
+  assert.ok(g.player.energy>=18);
+});
+test('guardian angel can be purchased and fires autonomously',()=>{
+  const g=new Game();g.newRun(115);
+  g.player.gems=50;g.setMode('shop');
+  assert.ok(g.buy('angel'));assert.equal(g.player.petCount,1);
+  g.closeShop();
+  const p=g.player;
+  g.world.enemies=[{id:1,kind:'wanderer',x:p.x+30,y:p.y,r:10,
+    hp:90,maxHp:90,speed:0,damage:1,attack:10,cd:10,hit:0,wind:0,
+    aiTime:0,angle:0,teleport:0,charge:0}];
+  g.player.petCd=0;
+  g.tick(.016,{});
+  assert.ok(p.petCd>0,'angel must fire at visible hostile');
+  assert.ok(g.world.projectiles.length>0||g.world.enemies[0].hp<90);
+});
