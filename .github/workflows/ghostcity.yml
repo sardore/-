@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
+      - run: python3 -m py_compile original/the_ghost_city.py
 
   browser-smoke:
     runs-on: ubuntu-latest
