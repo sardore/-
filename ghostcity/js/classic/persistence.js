@@ -29,7 +29,7 @@ function reviveWorld(source,seed){
 }
 export function serialize(game){
   return JSON.stringify({version:VERSION,mode:game.mode,
-    seed:game.seed,luck:game.luck,player:game.player,world:serializeWorld(game.world),
+    seed:game.seed,rngState:game.rng.state,luck:game.luck,player:game.player,world:serializeWorld(game.world),
     tutorial:game.tutorial,elapsed:game.elapsed,kills:game.kills,
     score:game.score,time:game.time,shopFloor:game.shopFloor,
     shopOffers:game.shopOffers,shopSold:game.shopSold});
@@ -46,7 +46,9 @@ export function restore(game,raw){
     if(p.x<0||p.y<0||p.x>=w.w*TILE||p.y>=w.h*TILE)throw Error('invalid player position');
     if(!!data.tutorial&&w.floor!==0)throw Error('invalid tutorial');
     if(!data.tutorial&&(!Number.isInteger(w.floor)||w.floor<1||w.floor>20))throw Error('invalid floor');
-    game.seed=data.seed>>>0;game.rng=makeRng(game.seed);
+    game.seed=data.seed>>>0;
+    // Continue the random stream instead of restarting enemy/shop randomness on reload.
+    game.rng=makeRng(Number.isInteger(data.rngState)?data.rngState:game.seed);
     game.luck=Number.isFinite(data.luck)?data.luck:.16;
     game.world=w;game.player=p;game.tutorial=!!data.tutorial;
     game.elapsed=Number(data.elapsed)||0;game.time=Number(data.time)||0;
@@ -55,6 +57,7 @@ export function restore(game,raw){
     game.shopOffers=Array.isArray(data.shopOffers)?data.shopOffers:[];
     game.shopSold=Array.isArray(data.shopSold)?data.shopSold:[];
     game.runEnded=false;game.flow=null;game.flowTimer=0;game.moveCd=0;
+    game.visionTile=null;game.visionDirty=true;
     game.messages=[];game.sniperWarnings=[];game.shake=0;game.flash=0;
     game.syncInventory();
     const savedMode=['shop','info','midclear'].includes(data.mode)?data.mode:'playing';
