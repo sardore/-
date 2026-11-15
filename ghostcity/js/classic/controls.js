@@ -19,6 +19,9 @@ window.addEventListener('keydown',e=>{
   if(e.repeat)return;
   if(k==='escape'){togglePause();return;}
   if(game.mode==='shop'&&k==='enter'){game.closeShop();store.persist();ui.drawOverlay();return;}
+  if(game.mode==='shop'&&k>='1'&&k<='4'){game.buy(Number(k)-1);ui.drawOverlay();store.persist();return;}
+  if(game.mode==='info'&&k==='enter'){game.confirmTutorial();ui.drawOverlay();store.persist();return;}
+  if(game.mode==='midclear'&&k==='enter'){game.continueMidBoss();ui.drawOverlay();store.persist();return;}
   if(game.mode==='inventory'){
     if(k==='g'){ui.toggleDrop();return;}
     if(k>='1'&&k<='7'){
@@ -26,6 +29,7 @@ window.addEventListener('keydown',e=>{
     }
   }
   if(game.mode!=='playing')return;
+  if(game.tutorial&&![' ','enter','e'].includes(k))return;
   if(k===' '){if(e.shiftKey)pressed.dash=true;else pressed.attack=true;}
   else if(k==='e'||(k==='enter'&&game.tutorial))pressed.interact=true;
   else if(k==='h')pressed.potion=true;
@@ -76,7 +80,7 @@ function loop(now){
   renderer.render(game,dt);
   if(now-mapAt>220){renderer.drawMinimap(game);mapAt=now;}
   if(now-hudAt>70){ui.hud();hudAt=now;}
-  if(game.mode==='playing'&&now-savedAt>14000){store.store.persist();savedAt=now;}
+  if(game.mode==='playing'&&now-savedAt>14000){store.persist();savedAt=now;}
   requestAnimationFrame(loop);
 }
 
