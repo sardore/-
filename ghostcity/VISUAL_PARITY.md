@@ -24,9 +24,11 @@ The **source of truth** for the appearance is [original/the_ghost_city.py](origi
 |---|---|---|
 | Floor, visible | (60,55,78) | (34,30,50) |
 | Wall, visible | (150,150,178) | (120,110,155) |
-| Floor, explored/unseen | (10,10,16) | (4,4,9) |
-| Wall, explored/unseen | (26,26,44) | (16,16,30) |
+| Floor, explored but out of sight | (10,10,16) | (4,4,9) |
+| Wall, explored but out of sight | (26,26,44) | (16,16,30) |
 | Treasure floor | (95,55,145) | (80,30,140) |
+
+Unexplored tiles remain solid black, as in the Pygame source.
 
 Sprites: player (215,245,255); melee (220,90,150); sniper (255,0,0); digger (90,255,120); witch (170,60,255); boss (160,60,255). These values are pixel-tested in Chromium.
 
