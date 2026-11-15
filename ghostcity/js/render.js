@@ -79,6 +79,12 @@ export class Renderer{
       ctx.strokeStyle=game.world.boss&&!game.world.bossDefeated?'#e57086':'#91fff0';
       ctx.lineWidth=2;ctx.strokeRect(a+2,b+2,28,28);
       glow(ctx,a+16,b+16,26,game.world.boss&&!game.world.bossDefeated?'#ed4b5727':'#47f4de44');
+    }else if(t===T.TUTOR_EXIT){
+      ctx.fillStyle='#73582c';ctx.fillRect(a+2,b+2,28,28);
+      ctx.fillStyle='#ffe390';ctx.fillRect(a+6,b+8,20,3);
+      ctx.fillRect(a+6,b+14,20,3);ctx.fillRect(a+6,b+20,20,3);
+      ctx.strokeStyle='#ffe190';ctx.lineWidth=2;ctx.strokeRect(a+3,b+3,26,26);
+      glow(ctx,a+16,b+16,35,'#ffca5547');
     }else if(t===T.ELEVATOR||t===T.BROKEN){
       ctx.fillStyle='#0a1527';ctx.fillRect(a+2,b+2,28,28);
       ctx.fillStyle='#566783';ctx.fillRect(a+4,b+4,11,24);ctx.fillRect(a+17,b+4,11,24);
