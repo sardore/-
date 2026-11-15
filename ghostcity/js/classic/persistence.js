@@ -29,7 +29,7 @@ function reviveWorld(source,seed){
 }
 export function serialize(game){
   return JSON.stringify({version:VERSION,mode:game.mode,
-    seed:game.seed,rngState:game.rng.state,luck:game.luck,player:game.player,world:serializeWorld(game.world),
+    seed:game.seed,rngState:game.rng.state,luck:game.luck,playerName:game.playerName||'NONAME',player:game.player,world:serializeWorld(game.world),
     tutorial:game.tutorial,elapsed:game.elapsed,kills:game.kills,
     score:game.score,time:game.time,shopFloor:game.shopFloor,
     shopOffers:game.shopOffers,shopSold:game.shopSold});
@@ -50,6 +50,7 @@ export function restore(game,raw){
     // Continue the random stream instead of restarting enemy/shop randomness on reload.
     game.rng=makeRng(Number.isInteger(data.rngState)?data.rngState:game.seed);
     game.luck=Number.isFinite(data.luck)?data.luck:.16;
+    game.playerName=String(data.playerName||'NONAME').replace(/[<>&"']/g,'').slice(0,18)||'NONAME';
     game.world=w;game.player=p;game.tutorial=!!data.tutorial;
     game.elapsed=Number(data.elapsed)||0;game.time=Number(data.time)||0;
     game.kills=Number(data.kills)||0;game.score=Number(data.score)||0;
