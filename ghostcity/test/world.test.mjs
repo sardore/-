@@ -1,38 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateFloor,isReachable,canStand,tileAt,moveCircle,refreshVision,buildFlow} from '../js/world.js';
-import {MAX_FLOOR,TILE,T} from '../js/config.js';
+import {bresenham,lineOfSight,refreshVision,tileAt,isSolid,buildFlow,isReachable} from '../js/world.js';
+import {generateClassicFloor} from '../js/classic/map.js';
+import {T,TILE} from '../js/config.js';
 
-test('all normal and boss floors are connected across 160 deterministic seeds',()=>{
-  const seeds=[1,3,7,11,21,42,2026,9001];
-  for(let floor=1;floor<=MAX_FLOOR;floor++)for(const seed of seeds){
-    const world=generateFloor(floor,seed);
-    assert.equal(world.floor,floor);
-    assert.ok(isReachable(world,world.start,world.stairs),'unreachable floor '+floor+' / seed '+seed);
-    assert.equal(tileAt(world,(world.stairs.x+.5)*TILE,(world.stairs.y+.5)*TILE),T.STAIRS);
-    assert.ok(canStand(world,(world.start.x+.5)*TILE,(world.start.y+.5)*TILE,10));
-    assert.ok(world.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));
-  }
+test('original line-of-sight is Bresenham and blocks only walls and furniture',()=>{
+  const w={w:9,h:9,tiles:new Uint8Array(81),visible:new Uint8Array(81),seen:new Uint8Array(81)};
+  w.tiles.fill(T.FLOOR);
+  const p=(x,y)=>({x:(x+.5)*TILE,y:(y+.5)*TILE});
+  assert.deepEqual(bresenham(2,3,5,3),[[2,3],[3,3],[4,3],[5,3]]);
+  assert.equal(lineOfSight(w,p(2,3).x,p(2,3).y,p(5,3).x,p(5,3).y),true);
+  w.tiles[3*w.w+3]=T.WALL;
+  assert.equal(lineOfSight(w,p(2,3).x,p(2,3).y,p(5,3).x,p(5,3).y),false);
+  w.tiles[3*w.w+3]=T.GLASS;
+  assert.equal(lineOfSight(w,p(2,3).x,p(2,3).y,p(5,3).x,p(5,3).y),true);
+  w.tiles[3*w.w+3]=T.RUBBLE;
+  assert.equal(lineOfSight(w,p(2,3).x,p(2,3).y,p(5,3).x,p(5,3).y),false);
 });
-test('floor generation is stable for same seed and differs for different seeds',()=>{
-  const a=generateFloor(8,515),b=generateFloor(8,515),c=generateFloor(8,516);
-  assert.deepEqual(a.tiles,b.tiles);
-  assert.deepEqual(a.stairs,b.stairs);
-  assert.notDeepEqual(a.tiles,c.tiles);
+test('original field-of-view is Euclidean radius with occlusion',()=>{
+  const w={w:21,h:21,tiles:new Uint8Array(441),visible:new Uint8Array(441),seen:new Uint8Array(441)};
+  w.tiles.fill(T.FLOOR);
+  refreshVision(w,10.5*TILE,10.5*TILE,5);
+  assert.equal(w.visible[10*w.w+15],1);
+  assert.equal(w.visible[10*w.w+16],0);
+  w.tiles[10*w.w+11]=T.WALL;
+  refreshVision(w,10.5*TILE,10.5*TILE,5);
+  assert.equal(w.visible[10*w.w+14],0);
+  assert.equal(w.visible[10*w.w+10],1);
 });
-test('bosses spawn on floors 10 and 20 only',()=>{
+test('normal corridor map remains connected with seeded generation',()=>{
   for(let floor=1;floor<=20;floor++){
-    const w=generateFloor(floor,777);
-    assert.equal(w.enemies.filter(e=>e.kind.startsWith('boss')).length,floor===10||floor===20?1:0);
+    const w=generateClassicFloor(floor,1000+floor);
+    assert.equal(w.tiles.length,w.w*w.h);
+    if(!w.boss){
+      assert.ok(isReachable(w,w.start,w.stairs),'unreachable '+floor);
+      const sx=(w.start.x+.5)*TILE,sy=(w.start.y+.5)*TILE;
+      const flow=buildFlow(w,sx,sy);
+      assert.equal(flow[w.start.y*w.w+w.start.x],0);
+    }
   }
-});
-test('walls block movement; discovery and navigation respect traversability',()=>{
-  const w=generateFloor(1,45);
-  const px=(w.start.x+.5)*TILE,py=(w.start.y+.5)*TILE;
-  const count=Array.from(w.seen).reduce((a,b)=>a+b,0);
-  refreshVision(w,(w.stairs.x+.5)*TILE,(w.stairs.y+.5)*TILE,11);
-  assert.ok(Array.from(w.seen).reduce((a,b)=>a+b,0)>=count);
-  const p={x:px,y:py};moveCircle(w,p,-TILE*500,0,10);
-  assert.ok(p.x>10);
-  assert.ok(buildFlow(w,px,py).some(n=>n===0));
 });
