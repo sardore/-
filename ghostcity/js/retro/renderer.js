@@ -39,8 +39,10 @@ export class Renderer {
   screenToWorld(x,y){return {x:x+this.camera.x,y:y+this.camera.y};}
   setPointer(x,y){this.pointer={x,y};}
   viewport(p){
-    const cols=Math.max(1,Math.floor(this.w/TILE)|1);
-    const rows=Math.max(1,Math.floor(this.h/TILE)|1);
+    const maxCols=Math.max(1,Math.floor(this.w/TILE));
+    const maxRows=Math.max(1,Math.floor(this.h/TILE));
+    const cols=maxCols%2===1?maxCols:Math.max(1,maxCols-1);
+    const rows=maxRows%2===1?maxRows:Math.max(1,maxRows-1);
     const padX=Math.floor((this.w-cols*TILE)/2),padY=Math.floor((this.h-rows*TILE)/2);
     const center=tilePos(p.x,p.y);
     const minX=center.x-Math.floor(cols/2),minY=center.y-Math.floor(rows/2);
