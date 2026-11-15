@@ -34,13 +34,14 @@ export class ClassicGame extends ClassicBase {
   newRun(seed=((Math.random()*4294967295)>>>0)){
     this.seed=seed>>>0;this.rng=makeRng(this.seed);
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();
-    this.sniperWarnings=[];
+    this.sniperWarnings=[];this.visionDirty=false;
     this.elapsed=0;this.kills=0;this.score=0;this.time=0;
     this.mode='playing';this.tutorial=true;this.floorEnding=false;
     this.shopOffers=[];this.shopSold=[];this.moveCd=0;this.attackFlash=0;this.atkTiles=[];
     this.flow=null;this.flowTimer=0;this.visionTimer=0;this.visionTile='';
     this.runEnded=false;this.shake=0;this.flash=0;this.slash=null;this.messages=[];
     refreshVision(this.world,this.player.x,this.player.y,13);
+    this.visionTile='0:'+pt(this.player.x,this.player.y).x+':'+pt(this.player.x,this.player.y).y;
     this.say('튜토리얼: WASD 이동 · SPACE 직선 공격 · 노란 출구에서 ENTER',5);
     this.notify('start',{floor:0});
   }
@@ -105,7 +106,14 @@ export class ClassicGame extends ClassicBase {
       this.moveCd=TIMES.player;p.walk+=1.1;this.onStep();
     }
     if(this.mode!=='playing')return;
-    refreshVision(w,p.x,p.y,w.floor>=11?6:13);
+    // Visibility depends on grid position and terrain, not animation frames.
+    // Recompute only when the player changes tile or the map is modified.
+    const position=pt(p.x,p.y);
+    const visibleKey=w.floor+':'+position.x+':'+position.y;
+    if(this.visionDirty||visibleKey!==this.visionTile){
+      refreshVision(w,p.x,p.y,w.floor>=11?6:13);
+      this.visionDirty=false;this.visionTile=visibleKey;
+    }
     if(this.tutorial)return;
     for(const e of [...w.enemies]){
       if(e.dead)continue;
