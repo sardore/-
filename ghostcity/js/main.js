@@ -71,10 +71,16 @@ function onEvent(type,payload){
   if(type==='mode'||type==='perk')drawOverlay();
   if(type==='floor'){
     sfx('level');save();lastWeaponSig='';
+    renderer.camera.x=clamp(game.player.x-renderer.w/2,0,Math.max(0,game.world.w*32-renderer.w));
+    renderer.camera.y=clamp(game.player.y-renderer.h/2,0,Math.max(0,game.world.h*32-renderer.h));
   }
   if(type==='autosave')save();
-  if(type==='end'){removeStore(SAVE_KEY);addRank(payload);drawOverlay();}
-  if(type==='start'){ui.toasts.innerHTML='';lastWeaponSig='';}
+  if(type==='end'){removeStore(SAVE_KEY);addRank(payload);lastOverlay='';drawOverlay();}
+  if(type==='start'){
+    ui.toasts.innerHTML='';lastWeaponSig='';
+    renderer.camera.x=clamp(game.player.x-renderer.w/2,0,Math.max(0,game.world.w*32-renderer.w));
+    renderer.camera.y=clamp(game.player.y-renderer.h/2,0,Math.max(0,game.world.h*32-renderer.h));
+  }
 }
 game=new Game(onEvent);
 function panelTitle(title,subtitle){
@@ -165,6 +171,8 @@ overlay.addEventListener('click',e=>{
   if(action==='continue'){
     const raw=getStore(SAVE_KEY);
     if(!game.restore(raw)){removeStore(SAVE_KEY);game.newRun();}
+    renderer.camera.x=clamp(game.player.x-renderer.w/2,0,Math.max(0,game.world.w*32-renderer.w));
+    renderer.camera.y=clamp(game.player.y-renderer.h/2,0,Math.max(0,game.world.h*32-renderer.h));
     lastWeaponSig='';drawOverlay();
   }
   if(action==='resume'||action==='close'){game.setMode('playing');drawOverlay();}
