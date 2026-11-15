@@ -30,32 +30,90 @@ try{
   const response=await page.goto(url,{waitUntil:'networkidle'});
   assert.equal(response.status(),200);
   await page.waitForSelector('[data-action="new"]');
-  assert.equal(await page.title(),'THE GHOST CITY: CLASSIC');
-  await page.click('[data-action="new"]');
+  assert.equal(await page.title(),'THE GHOST CITY');
+  assert.ok(await page.locator('.ranking-panel').isVisible());
+  assert.ok(await page.locator('#player-name').isVisible());
+  await page.locator('#player-name').fill('PIXEL');
+  await page.locator('#player-name').press('Enter');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
   assert.equal((await page.locator('#floor-number').textContent()).trim(),'TUT');
   const canvas=await page.locator('#game-canvas').boundingBox();
   assert.ok(canvas.width>400&&canvas.height>300);
+  // The live game—not only isolated sprite functions—must render a Pygame
+  // white player at the middle of a 30px square viewport.
+  const live=await page.locator('#game-canvas').evaluate(cv=>{
+    const ctx=cv.getContext('2d'),centerX=Math.floor(cv.width/2),centerY=Math.floor(cv.height/2);
+    return {player:Array.from(ctx.getImageData(centerX,centerY,1,1).data),
+      imageSmoothing:ctx.imageSmoothingEnabled};
+  });
+  assert.deepEqual(live.player,[215,245,255,255],'in-game player must be the original white block');
+  assert.equal(live.imageSmoothing,false,'pixel art should never be interpolated');
+  const design=await page.evaluate(()=>{
+    const css=(selector)=>getComputedStyle(document.querySelector(selector));
+    return {background:css('body').backgroundColor,
+      bodyGradient:css('body').backgroundImage,
+      headerGradient:css('.topbar').backgroundImage,
+      modalGradient:css('.modal').backgroundImage,
+      layout:css('.layout').display,
+      pixelScaling:css('#game-canvas').imageRendering,
+      extrasInitiallyClosed:!document.querySelector('.utility-details').open,
+      font:css('body').fontFamily};
+  });
+  assert.equal(design.background,'rgb(10, 10, 18)');
+  assert.equal(design.bodyGradient,'none');
+  assert.equal(design.headerGradient,'none');
+  assert.equal(design.modalGradient,'none');
+  assert.equal(design.layout,'block');
+  assert.equal(design.pixelScaling,'pixelated');
+  assert.equal(design.extrasInitiallyClosed,true);
+  assert.ok(!design.font.toLowerCase().includes('rajdhani'));
   assert.ok((await page.locator('#explored-text').textContent()).includes('탐색'));
   assert.match(await page.locator('#save-status').textContent(),/저장됨/);
+  const persistedName=await page.evaluate(()=>JSON.parse(
+    localStorage.getItem('ghost-city-classic-v1')
+  ).playerName);
+  assert.equal(persistedName,'PIXEL');
+
   await page.click('#help-toggle');
   await page.waitForSelector('[data-action="help-close"]');
   await page.click('[data-action="help-close"]');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
-  // Original monster data omits id/angle; no Canvas transform may receive NaN.
-  const transforms=await page.evaluate(async()=>{
-    const {Renderer}=await import('/js/render.js');
-    const canvas=document.createElement('canvas');canvas.width=160;canvas.height=160;
-    const ctx=canvas.getContext('2d'),angles=[],moves=[];
-    const originalRotate=ctx.rotate,originalTranslate=ctx.translate;
-    ctx.rotate=function(angle){angles.push(Number.isFinite(angle));return originalRotate.call(this,angle);};
-    ctx.translate=function(x,y){moves.push(Number.isFinite(x)&&Number.isFinite(y));return originalTranslate.call(this,x,y);};
-    const drawer=Object.create(Renderer.prototype);
-    drawer.drawEnemy(ctx,{kind:'wanderer',x:80,y:80,r:10,hp:1,maxHp:1,hit:0},1.12);
-    return {angles,moves};
+  // Pixel-level visual assertions: these must match the original Pygame RGB.
+  // The old "not NaN" test was checking rotation from an invented sprite engine.
+  const pixels=await page.evaluate(async()=>{
+    const [{Renderer},{T,TILE}]=await Promise.all([
+      import('/js/render.js'),import('/js/config.js')
+    ]);
+    const c=document.createElement('canvas');c.width=200;c.height=200;
+    const ctx=c.getContext('2d');
+    const renderer=Object.create(Renderer.prototype);
+    const sample=(x,y)=>Array.from(ctx.getImageData(x,y,1,1).data);
+    renderer.drawTile(ctx,10,10,T.FLOOR,'NORMAL',true,false);
+    const normalFloor=sample(15,15);
+    ctx.clearRect(0,0,200,200);
+    renderer.drawTile(ctx,10,10,T.WALL,'NORMAL',true,false);
+    const normalWall=sample(15,15);
+    ctx.clearRect(0,0,200,200);
+    renderer.drawTile(ctx,10,10,T.FLOOR,'DARK',true,false);
+    const darkFloor=sample(15,15);
+    ctx.clearRect(0,0,200,200);
+    renderer.drawEnemy(ctx,{kind:'wanderer',x:75,y:75,r:10,hp:1,maxHp:1,hit:0},1.12);
+    const wanderer=sample(75,75);
+    ctx.clearRect(0,0,200,200);
+    renderer.drawEnemy(ctx,{kind:'sniper',x:75,y:75,r:10,hp:1,maxHp:1,hit:0},1.12);
+    const sniper=sample(75,75);
+    ctx.clearRect(0,0,200,200);
+    renderer.drawPlayer(ctx,{x:75,y:75});
+    const player=sample(75,75);
+    return {tile:TILE,normalFloor,normalWall,darkFloor,wanderer,sniper,player};
   });
-  assert.ok(transforms.angles.length>0&&transforms.angles.every(Boolean));
-  assert.ok(transforms.moves.length>0&&transforms.moves.every(Boolean));
+  assert.equal(pixels.tile,30);
+  assert.deepEqual(pixels.normalFloor,[60,55,78,255]);
+  assert.deepEqual(pixels.normalWall,[150,150,178,255]);
+  assert.deepEqual(pixels.darkFloor,[34,30,50,255]);
+  assert.deepEqual(pixels.wanderer,[220,90,150,255]);
+  assert.deepEqual(pixels.sniper,[255,0,0,255]);
+  assert.deepEqual(pixels.player,[215,245,255,255]);
   await page.keyboard.down('d');await page.waitForTimeout(270);await page.keyboard.up('d');
   await page.mouse.move(canvas.x+canvas.width/2,canvas.y+canvas.height/2);
   await page.keyboard.press('Space');await page.waitForTimeout(100);
@@ -86,6 +144,14 @@ try{
   assert.ok(await shopPage.locator('[data-action="next"]').isVisible(),
     'shop must remain visible after Escape');
   await shopPage.waitForFunction(()=>document.querySelector('#floor-number')?.textContent.trim()==='01');
+  const ranking=await shopPage.evaluate(async()=>{
+    const {createStorage}=await import('/js/classic/storage.js');
+    const storage=createStorage(()=>null);
+    storage.finish({name:'PIXEL',score:9250,floor:10,kills:14,time:127,victory:true});
+    return storage.ranks();
+  });
+  assert.equal(ranking[0].name,'PIXEL');
+  assert.equal(ranking[0].score,9250);
   await shopPage.close();
 
   const mobile=await browserInstance.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,

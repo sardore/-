@@ -12,7 +12,7 @@ import * as companions from './classic/companions.js';
 
 export class ClassicGame extends ClassicBase {
   constructor(notify=()=>{}){
-    super(notify);this.classic=true;this.mode='menu';this.tutorial=true;this.luck=.16;this.sniperWarnings=[];
+    super(notify);this.classic=true;this.playerName='NONAME';this.mode='menu';this.tutorial=true;this.luck=.16;this.sniperWarnings=[];
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();this.shopOffers=[];
     this.shopSold=[];this.moveCd=0;this.attackFlash=0;this.atkTiles=[];this.floorEnding=false;
   }
