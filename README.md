@@ -1,3 +1,8 @@
+## 👻 [더 고스트 시티 THE GHOST CITY: REBORN — 지금 플레이](https://raw.githack.com/sardore/-/main/ghostcity/index.html)
+
+예전에 제작했던 Pygame 액션 로그라이크의 브라우저 리메이크. 절차적 도시 20층, 10·20층 보스, 5종 무기, 실시간 전투·회피, 레벨업 특성, 안개 시야·미니맵, 보석 상점·엘리베이터, 자동저장, PC·모바일 조작.
+[기획서](ghostcity/DESIGN.md) · [소스](ghostcity/)
+
 ## 🐛 [벌레랑 · 진화 먹이사슬 — 지금 플레이](https://raw.githack.com/sardore/-/main/buggame/index.html)
 
 먹고, 싸우고, 진화하며 먹이사슬의 정점까지 올라가는 생태 액션 게임. 다양한 곤충·절지동물 진화 트리와 스킬, 지상·수중·지하 지역, 보스·원정·아레나·온라인 시스템을 한 파일에 담은 최신 빌드.
