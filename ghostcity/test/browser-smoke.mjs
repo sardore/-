@@ -33,12 +33,12 @@ try{
   assert.equal(await page.title(),'THE GHOST CITY: CLASSIC');
   await page.click('[data-action="new"]');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
-  assert.equal((await page.locator('#floor-number').textContent()).trim(),'01');
+  assert.equal((await page.locator('#floor-number').textContent()).trim(),'TUT');
   const canvas=await page.locator('#game-canvas').boundingBox();
   assert.ok(canvas.width>400&&canvas.height>300);
   await page.keyboard.down('d');await page.waitForTimeout(270);await page.keyboard.up('d');
   await page.mouse.move(canvas.x+canvas.width/2,canvas.y+canvas.height/2);
-  await page.mouse.down();await page.waitForTimeout(240);await page.mouse.up();
+  await page.keyboard.press('Space');await page.waitForTimeout(100);
   await page.keyboard.press('Escape');
   await page.waitForSelector('[data-action="resume"]');
   await page.click('[data-action="resume"]');
@@ -46,7 +46,7 @@ try{
   await page.waitForSelector('[data-action="continue"]');
   await page.click('[data-action="continue"]');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
-  assert.equal((await page.locator('#floor-number').textContent()).trim(),'01');
+  assert.equal((await page.locator('#floor-number').textContent()).trim(),'TUT');
 
   const mobile=await browserInstance.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
     isMobile:true,hasTouch:true});
@@ -59,7 +59,7 @@ try{
   assert.notEqual(displayed,'none','touch pad should be visible on mobile');
   await mp.locator('[data-touch="dash"]').tap();
   await mp.waitForTimeout(150);
-  assert.equal((await mp.locator('#floor-number').textContent()).trim(),'01');
+  assert.equal((await mp.locator('#floor-number').textContent()).trim(),'TUT');
   await mobile.close();
   assert.deepEqual(errors,[],'browser JavaScript must not throw');
   console.log('Browser smoke PASS: menu, game, controls, pause, save-resume, mobile viewport');
