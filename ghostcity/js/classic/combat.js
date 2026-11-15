@@ -44,11 +44,10 @@ export function killEnemy(game,e){
     if(isBoss){
       game.score+=1200;
       game.world.bossDefeated=true;
-      // Original: either boss fight ends the game. The 10F boss is a mid-boss
-      // in the source constants but the loop terminates on boss defeat.
-      // Here the 10F win transitions to 11F, honoring intended 20F progression.
-      if(game.world.floor===20){game.end(true);}
-      else game.say('중간보스 격파! 다음 층으로 이동 가능.',5);
+      // Original Python enters STATE_END on both boss floors; retain that
+      // outcome but offer an explicit 11F continuation to make 20F accessible.
+      if(game.world.floor===20)game.end(true);
+      else {game.setMode('midclear');game.say('10층 보스 격파 · 게임 종료 또는 11층 계속 진행',5);}
     }else{
       game.score+=50;game.addXP(5);game.kills++;game.player.kills++;
     }
