@@ -3,6 +3,7 @@ import {generateFloor,restoreWorld,serializeWorld,gridToPixel,canStand,moveCircl
 
 const TAU=Math.PI*2;
 const norm=(x,y)=>{const d=Math.hypot(x,y)||1;return {x:x/d,y:y/d};};
+const gameAngle=(t,i,n)=>t*1.75+i*Math.PI*2/n;
 const distance=(x,y,xx,yy)=>Math.hypot(x-xx,y-yy);
 const SAVE_VERSION=2;
 export const SAVE_KEY='ghost-city-reborn-v2';
@@ -22,7 +23,7 @@ export class Game{
   makePlayer(){
     const at=gridToPixel(this.world.start.x,this.world.start.y);
     return {x:at.x,y:at.y,r:10,facing:0,hp:8,maxHp:8,shield:0,level:1,xp:0,xpNext:32,
-      gems:0,potions:2,energy:25,weapon:'sword',inventory:['sword'],weaponLevels:{sword:1},
+      gems:0,potions:2,energy:25,petCount:0,petCd:1.4,parry:0,weapon:'sword',inventory:['sword'],weaponLevels:{sword:1},
       damageMult:1,speedMult:1,dashMult:1,guard:0,crit:0,luck:1,vamp:0,attackMult:1,
       dash:0,dashCd:0,dashX:1,dashY:0,invuln:0,attackCd:0,skillCd:0,walk:0,
       maxFloor:1,perks:[],kills:0,attackPulse:0};
@@ -107,9 +108,16 @@ export class Game{
   }
   damagePlayer(amount,fromX=null,fromY=null){
     const p=this.player;if(this.mode!=='playing'||p.invuln>0||p.dash>0)return false;
+    if(p.parry>0){
+      p.parry=0;p.energy=Math.min(100,p.energy+18);
+      this.sparks(p.x,p.y,'#a3afff',32,185);this.shake=.16;this.say('완벽한 방어! 영혼 에너지 +18',1.7);this.sound('hit');
+      for(const foe of [...this.world.enemies])if(!foe.dead&&dist(foe,p)<74+foe.r)this.hitEnemy(foe,12,p.x,p.y,180);
+      return false;
+    }
     const reduced=Math.max(1,Math.round(amount*(1-p.guard)));
-    if(p.shield){p.shield=Math.max(0,p.shield-reduced);this.say('보호막이 피해를 흡수했습니다.',1.1);}
-    else p.hp=Math.max(0,p.hp-reduced);
+    const absorbed=Math.min(p.shield,reduced);p.shield-=absorbed;
+    p.hp=Math.max(0,p.hp-(reduced-absorbed));
+    if(absorbed)this.say(absorbed===reduced?'보호막이 피해를 흡수했습니다.':'보호막이 일부 피해를 흡수했습니다.',1.1);
     p.invuln=.85;this.shake=.3;this.flash=.28;
     this.sparks(p.x,p.y,'#ff7297',20,150);this.sound('hurt');
     if(fromX!==null){
@@ -175,7 +183,8 @@ export class Game{
     if(p.attackCd>0||p.dash>0)return false;
     if(dx||dy)p.facing=Math.atan2(dy,dx);
     p.attackCd=weapon.rate*p.attackMult/(1+Math.min(8,this.weaponLevel()-1)*.035);
-    p.attackPulse=.18;this.sound(weapon.id==='crossbow'?'shoot':'swing');
+    p.attackPulse=.18;if(weapon.id==='shield')p.parry=.43;
+    this.sound(weapon.id==='crossbow'?'shoot':'swing');
     const power=weapon.power*(1+(this.weaponLevel()-1)*.32);
     if(weapon.id==='crossbow'){
       const vx=Math.cos(p.facing),vy=Math.sin(p.facing);
@@ -257,6 +266,7 @@ export class Game{
     if(!item||p.gems<item.cost){this.say('보석이 부족합니다.',2);return false;}
     if(id==='heal'&&p.hp>=p.maxHp){this.say('이미 체력이 가득 찼습니다.',2);return false;}
     if(id==='crossbow'&&p.inventory.includes('crossbow')){this.say('이미 보유한 무기입니다.',2);return false;}
+    if(id==='angel'&&p.petCount>=3){this.say('동행 정령은 최대 3마리입니다.',2);return false;}
     p.gems-=item.cost;
     if(id==='heal')p.hp=Math.min(p.maxHp,p.hp+4);
     if(id==='heart'){p.maxHp++;p.hp++;}
@@ -264,6 +274,7 @@ export class Game{
     if(id==='potion')p.potions++;
     if(id==='ward')p.shield+=2;
     if(id==='crossbow')this.addWeapon('crossbow');
+    if(id==='angel'){p.petCount++;p.petCd=Math.min(p.petCd,.3);this.say('수호 정령 '+p.petCount+'마리 합류!',3);}
     this.say(item.name+' 구매 완료',2);this.sound('buy');
     return true;
   }
@@ -284,6 +295,7 @@ export class Game{
       next>=11?next+'층 · 침수된 유령구역':next+'층 · 버려진 고층도시',5);
     if(next===2&&!this.player.inventory.includes('spear'))this.addWeapon('spear');
     if(next===4&&!this.player.inventory.includes('axe'))this.addWeapon('axe');
+    if(next===5&&!this.player.inventory.includes('shield'))this.addWeapon('shield');
     if(next===7&&!this.player.inventory.includes('hammer'))this.addWeapon('hammer');
     this.notify('floor',{floor:next});
     if(this.mode==='playing')this.notify('autosave',{floor:next});
@@ -391,7 +403,8 @@ export class Game{
     const p=this.player,w=this.world;
     for(const m of this.messages)m.life-=dt;
     this.messages=this.messages.filter(m=>m.life>0);
-    p.invuln=Math.max(0,p.invuln-dt);p.attackCd=Math.max(0,p.attackCd-dt);
+    p.invuln=Math.max(0,p.invuln-dt);p.parry=Math.max(0,p.parry-dt);
+    p.petCd=Math.max(0,p.petCd-dt);p.attackCd=Math.max(0,p.attackCd-dt);
     p.attackPulse=Math.max(0,p.attackPulse-dt);
     p.dashCd=Math.max(0,p.dashCd-dt);p.dash=Math.max(0,p.dash-dt);
     if(this.slash){this.slash.life-=dt;if(this.slash.life<=0)this.slash=null;}
@@ -412,6 +425,23 @@ export class Game{
     }else moveCircle(w,p,vx*speed*dt,vy*speed*dt,p.r);
     if(vx||vy)p.walk+=dt*12;
     p.energy=Math.min(100,p.energy+dt*1.2);
+    if(p.petCount>0&&p.petCd<=0){
+      let victim=null,best=260;
+      for(const foe of w.enemies){
+        if(foe.dead)continue;
+        const d=dist(p,foe);
+        if(d<best&&lineOfSight(w,p.x,p.y,foe.x,foe.y)){best=d;victim=foe;}
+      }
+      if(victim){
+        const side=this.rng.int(0,p.petCount-1),a=gameAngle(this.anim,side,p.petCount);
+        const sx=p.x+Math.cos(a)*30,sy=p.y-18+Math.sin(a)*18;
+        const dir=norm(victim.x-sx,victim.y-sy);
+        w.projectiles.push({x:sx,y:sy,vx:dir.x*415,vy:dir.y*415,r:4,owner:'player',
+          power:9+4*p.petCount,life:1.1,color:'#ffe6a2',trail:[],pierce:0});
+        this.sparks(sx,sy,'#fff1a6',5,50);this.sound('shoot');
+        p.petCd=1.65/(1+.22*(p.petCount-1));
+      }
+    }
     // Vision invalidates on tile motion, then refreshes at low frequency during stationary combat.
     const visionKey=Math.floor(p.x/TILE)+','+Math.floor(p.y/TILE);
     this.visionTimer-=dt;
