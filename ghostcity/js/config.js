@@ -10,7 +10,8 @@ export const WEAPONS = Object.freeze({
   spear:{id:'spear',name:'영혼창',eng:'SOUL LANCE',power:21,rate:.59,range:114,arc:.59,knock:145,color:'#85f8d9',icon:'♜',description:'좁지만 긴 관통 찌르기'},
   axe:{id:'axe',name:'그림자 도끼',eng:'SHADE AXE',power:35,rate:.82,range:76,arc:2.2,knock:185,color:'#ffb56a',icon:'◆',description:'느리지만 강력한 광역 공격'},
   hammer:{id:'hammer',name:'묘지 파쇄기',eng:'GRAVE HAMMER',power:49,rate:1.14,range:73,arc:2.0,knock:225,color:'#f8cc8c',icon:'✦',description:'가구까지 부수는 충격파'},
-  crossbow:{id:'crossbow',name:'월광 석궁',eng:'MOON CROSSBOW',power:17,rate:.46,range:380,arc:.1,knock:55,color:'#cf9cff',icon:'➶',description:'사거리가 긴 원거리 무기'}
+  crossbow:{id:'crossbow',name:'월광 석궁',eng:'MOON CROSSBOW',power:17,rate:.46,range:380,arc:.1,knock:55,color:'#cf9cff',icon:'➶',description:'사거리가 긴 원거리 무기'},
+  shield:{id:'shield',name:'수호 방패',eng:'WRAITH AEGIS',power:12,rate:.68,range:60,arc:2.5,knock:130,color:'#a5acff',icon:'▣',description:'공격 후 잠시 가드 및 피해 반격'}
 });
 export const ENEMIES = Object.freeze({
   wanderer:{name:'배회자',hp:31,speed:64,damage:1,range:24,attack:1.05,score:45,color:'#a3b4cc'},
@@ -37,7 +38,8 @@ export const SHOP = Object.freeze([
   {id:'blade',name:'무기 제련',desc:'현재 무기 레벨 +1',cost:12,icon:'⚒'},
   {id:'potion',name:'치유 물약',desc:'휴대 물약 +1',cost:9,icon:'◉'},
   {id:'ward',name:'보호막 부적',desc:'보호막 +2',cost:12,icon:'✧'},
-  {id:'crossbow',name:'월광 석궁',desc:'원거리 무기 해금',cost:18,icon:'➶'}
+  {id:'crossbow',name:'월광 석궁',desc:'원거리 무기 해금',cost:18,icon:'➶'},
+  {id:'angel',name:'수호의 정령',desc:'주변 적을 공격하는 동행 정령',cost:24,icon:'✺'}
 ]);
 export function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 export function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
