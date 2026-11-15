@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080c17">
+  <meta name="description" content="The Ghost City: Reborn — 버려진 도시의 20층을 탐험하는 브라우저 액션 로그라이트">
+  <title>THE GHOST CITY: REBORN</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="identity">
+        <div class="identity-mark"><span>G</span><i></i></div>
+        <div><span class="eyebrow">THE LOST DISTRICT / 2026 REMASTER</span><strong>THE GHOST CITY <em>REBORN</em></strong></div>
+      </div>
+      <div class="top-actions">
+        <span class="online-dot"></span><span class="desktop-label">LOCAL SINGLEPLAYER</span>
+        <button id="audio-toggle" class="icon-btn" aria-label="소리 켜기 또는 끄기" title="소리 켜기 또는 끄기">♫</button>
+        <button id="pause-toggle" class="icon-btn" aria-label="일시정지" title="일시정지">Ⅱ</button>
+      </div>
+    </header>
+    <div class="dashboard">
+      <div class="stat primary-stat">
+        <span class="stat-title">SURVIVOR / HP</span>
+        <div class="health-line"><b id="hp-text">8 / 8</b><span id="shield-text">+0 SHIELD</span></div>
+        <div class="track"><div id="hp-bar" class="fill hp-fill"></div></div>
+      </div>
+      <div class="stat">
+        <span class="stat-title">DEPTH</span><div class="stat-number"><span id="floor-number">01</span><small>/ 20F</small></div>
+      </div>
+      <div class="stat">
+        <span class="stat-title">SOUL GEMS</span><div class="stat-number teal">◈ <span id="gem-number">0</span></div>
+      </div>
+      <div class="stat">
+        <span class="stat-title">SCORE</span><div id="score-number" class="stat-number">000000</div>
+      </div>
+      <div class="stat time-stat">
+        <span class="stat-title">RUN TIME</span><div id="time-number" class="stat-number">00:00</div>
+      </div>
+    </div>
+    <div class="layout">
+      <div class="stage-frame">
+        <div class="stage-topline">
+          <span><i class="accent-square"></i><b id="zone-name">01F / THE SILENT DISTRICT</b></span>
+          <span id="mode-label">EXPLORATION</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="game-canvas" aria-label="The Ghost City 게임 화면. WASD로 이동하고 마우스로 공격합니다."></canvas>
+          <div class="toast-stack" id="toasts" aria-live="polite"></div>
+          <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+          <div class="overlay" id="overlay">
+            <div class="modal" id="modal-content"></div>
+          </div>
+          <div class="mobile-pad" id="mobile-pad">
+            <div class="joystick" id="joystick"><span class="joystick-core" id="joystick-core"></span></div>
+            <div class="mobile-buttons">
+              <button class="touch-action attack" data-touch="attack">공격</button>
+              <button class="touch-action dash" data-touch="dash">대시</button>
+              <button class="touch-action" data-touch="interact">E</button>
+              <button class="touch-action" data-touch="potion">물약</button>
+              <button class="touch-action ultimate" data-touch="skill">영혼 폭발</button>
+            </div>
+          </div>
+        </div>
+        <div class="stage-footer">
+          <div class="resources">
+            <div class="res"><span class="res-head"><b>SOUL ENERGY</b><span id="energy-text">25 / 100</span></span><div class="track"><div id="energy-bar" class="fill energy-fill"></div></div></div>
+            <div class="res"><span class="res-head"><b>EXPERIENCE / LV.<span id="level-num">1</span></b><span id="xp-text">0 / 32</span></span><div class="track"><div id="xp-bar" class="fill xp-fill"></div></div></div>
+          </div>
+          <div class="key-guide">WASD 이동 <span>·</span> 좌클릭 공격 <span>·</span> SPACE 회피 <span>·</span> E 상호작용</div>
+        </div>
+      </div>
+      <aside class="sidebar">
+        <section class="side-panel map-panel">
+          <div class="side-heading"><span>SECTOR SCAN</span><small>LIVE / FOG</small></div>
+          <canvas id="minimap" aria-label="탐험 미니맵"></canvas>
+          <div class="map-caption"><span><i class="legend-dot player-dot"></i>YOU</span><span><i class="legend-dot exit-dot"></i>EXIT</span><span><i class="legend-dot shop-dot"></i>SHOP</span></div>
+        </section>
+        <section class="side-panel loadout-panel">
+          <div class="side-heading"><span>ARSENAL</span><small id="inventory-count">1 / 7</small></div>
+          <div id="weapon-list" class="weapon-list"></div>
+          <div class="weapon-hint">무기 선택: 1–5 / Q 전환</div>
+        </section>
+        <section class="side-panel">
+          <div class="side-heading"><span>FIELD MANUAL</span><small>QUICK REF</small></div>
+          <div class="guide-list">
+            <div><kbd>SHIFT / SPACE</kbd><span>회피 대시</span></div>
+            <div><kbd>R</kbd><span>영혼 폭발</span></div>
+            <div><kbd>H</kbd><span>치유 물약 <b id="potion-count">×2</b></span></div>
+            <div><kbd>E</kbd><span>출구 · 상점 · 엘리베이터</span></div>
+            <div><kbd>ESC</kbd><span>일시정지</span></div>
+          </div>
+          <div class="cooldown-block"><span>DASH RECHARGE</span><span id="dash-text">READY</span></div>
+          <div class="track"><div id="dash-bar" class="fill dash-fill"></div></div>
+        </section>
+        <section class="side-panel objective">
+          <span class="eyebrow">OBJECTIVE / 20F</span>
+          <strong id="objective-title">도시의 심장으로</strong>
+          <p id="objective-text">보석을 모으고 엘리베이터를 이용하세요. 10층과 20층에는 강력한 수호자가 기다립니다.</p>
+        </section>
+      </aside>
+    </div>
+    <footer class="footer"><span>THE GHOST CITY · ORIGINAL CONCEPT RESTORED</span><span>NO ACCOUNT · AUTOSAVE · WEB AUDIO</span></footer>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
