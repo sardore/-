@@ -10,7 +10,7 @@ import {startControls} from './classic/controls.js';
 const renderer=new Renderer(document.getElementById('game-canvas'),document.getElementById('minimap'));
 const audio=createAudio();
 let game,ui;
-const store=createStorage(()=>game);
+const store=createStorage(()=>game,ok=>ui?.markSaved(ok));
 function emit(type,payload){
   if(type==='sound')audio.play(payload.name);
   if(type==='toast')ui?.toast(payload.text);
