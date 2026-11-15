@@ -166,6 +166,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
   .top-actions{gap:5px}
   .icon-btn{width:30px;height:30px}
   .dashboard{grid-template-columns:1.5fr repeat(3,1fr);gap:4px;margin-bottom:7px}
+  .primary-stat{grid-column:auto}
   .stat{padding:8px 7px;min-height:60px}
   .stat-title{font-size:9px;letter-spacing:1px}
   .stat-number{font-size:20px}
