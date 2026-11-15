@@ -1,6 +1,6 @@
 # THE GHOST CITY — CLASSIC WEB PORT
 
-This is a browser-based reconstruction of the user's Python/Pygame game, **not** a conversion into a free-motion action game. It intentionally uses grid/tile movement, cardinal attacks, cooldown-based monster actions and the original-style inventory/economy. The web artwork and renderer are new; some map details and less-common behaviors are still reinterpretations and should not be described as exact source parity.
+The original Python source is preserved under [original/the_ghost_city.py](original/the_ghost_city.py). This is a browser-based reconstruction of the user's Python/Pygame game, **not** a conversion into a free-motion action game. It intentionally uses grid/tile movement, cardinal attacks, cooldown-based monster actions and the original-style inventory/economy. The web artwork and renderer are new; some map details and less-common behaviors are still reinterpretations and should not be described as exact source parity.
 
 ## Architecture (dependency direction)
 
@@ -25,10 +25,13 @@ js/
     storage.js             browser localStorage and high scores
     audio.js               synthesized optional sound cues
   config.js                shared immutable tile and biome definitions
-  world.js                 procedural generation, collision, line of sight and pathing
+  classic/map.js          original-style 60x30 corridor lattice, 45x27 boss arenas
+  classic/companions.js   angel missile damage, slow effects, LOS and scoring
+  world.js                 Bresenham LOS, original-radius FOV and grid path helpers
   render.js                Canvas2D scene rendering and fog of war
 test/
   classic.test.mjs         original behavior regression tests
+  original-parity.test.mjs source numeric constants, map size, boss, shop and saves
   world.test.mjs           deterministic map connectivity tests
   browser-smoke.mjs        desktop and touchscreen Chromium smoke tests
 ```
@@ -51,11 +54,11 @@ Boundary rules:
 - Tutorial floor before regular levels. Initial spear level -3 and a cheap potion.
 - 7-slot shared item inventory, drops, weapon levels and consumables.
 - Stairs open a fixed four-offer shop; shop exit proceeds to next floor. Gems serve as currency.
-- 10F/20F bosses with 72/96 base HP in the classic adaptation.
+- 10F/20F bosses with 72/96 base HP in the classic adaptation; 10F may end the run as in the original Python loop or continue to 11F to access the otherwise unreachable 20F.
 - Optional angel companion, recovery, timed monster actions and local save/continue.
 - A new Canvas2D presentation with procedural tiles, visibility/fog and minimap.
 
-**Remaining discrepancies:** This is not yet a mechanically byte-for-byte port. Procedural room layouts, exact enemy placement and some rarer events differ from the Pygame source. Original gameplay design remains the source of truth for further changes.
+**Remaining discrepancies:** This is not a mechanically byte-for-byte port: seeded RNG differs, the browser visuals are newly drawn, frame timing is browser-based, and some less common interactions and developer-only options are not carried over. The original source is retained for direct comparison. Original gameplay design remains the source of truth for further changes.
 
 ## Execution and verification
 
@@ -75,4 +78,4 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The Node tests cover timing, movement, original weapons, inventory/shop, enemy behavior, bosses and 160 procedural floors. Playwright covers launch, desktop keyboard attack, pause/resume, persistence and touch input. GitHub Actions runs both suites on changes under ghostcity/.
+The Node tests cover timing, movement, original weapons, inventory/shop, enemy behavior, bosses, original 60x30/45x27 map sizing, dark-zone FOV and save/restore. The original Python source is also syntax-compiled in CI. Playwright covers launch, desktop keyboard attack, pause/resume, persistence and touch input. GitHub Actions runs both suites on changes under ghostcity/.
