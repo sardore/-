@@ -66,6 +66,8 @@ export class ClassicGame extends ClassicBase {
   closeShop(){return inventory.closeShop(this);}
   advance(n=1){return progression.advance(this,n);}
   confirmTutorial(){return progression.confirmTutorial(this);}
+  continueMidBoss(){if(this.mode!=='midclear')return false;this.advance(1);return true;}
+  finishMidBoss(){if(this.mode!=='midclear')return false;this.end(true);return true;}
   enemyStep(e){return enemies.enemyStep(this,e);}
   shooterTick(e,dt){return enemies.shooterTick(this,e,dt);}
   bossTick(e,dt){return enemies.bossTick(this,e,dt);}
