@@ -16,18 +16,35 @@ export function createUI({game,renderer,store}){
   setTimeout(()=>el.remove(),2400);
 }
 const heading=(small,big)=>'<div class="pretitle">'+small+'</div><h2>'+big+'</h2>';
+function escapeHTML(value){
+  return String(value??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function normalizeName(value){
+  const cleaned=String(value||'').replace(/[<>&"']/g,'').trim().slice(0,18);
+  return cleaned||'NONAME';
+}
 function menu(){
-  const best=ranks()[0];
-  return '<div class="pretitle">PYGAME ORIGINAL RULES / RESTORED</div>'+
-    '<h1>THE GHOST<br><em>CITY</em></h1><span class="subline">C L A S S I C</span>'+
-    '<p>2026년 Pygame 원작의 격자 기반 진행을 복원했습니다.<br>'+
-    '이동은 90ms에 한 칸, 몬스터는 340ms마다 한 칸씩 움직입니다. 시간은 계속 흐릅니다.</p>'+
-    '<div class="feature-row"><div><strong>20</strong><span>FLOORS</span></div>'+
-    '<div><strong>5</strong><span>ORIGINAL WEAPONS</span></div><div><strong>7</strong><span>INVENTORY SLOTS</span></div></div>'+
-    '<div class="actions"><button class="modal-btn primary" data-action="new">튜토리얼부터 시작</button>'+
-    (read(SAVE)?'<button class="modal-btn" data-action="continue">이어서 하기</button>':'')+
-    '</div><div class="note">WASD 1칸 이동 · SPACE 직선 공격 · Shift+Space 창 돌진 · I 가방 · E 엘리베이터'+
-    (best?'<br>최고 점수 '+best.score.toLocaleString():'')+'</div>';
+  const top=ranks().slice(0,10);
+  const rows=top.map((entry,i)=>
+    '<div class="rank-row"><span>'+String(i+1).padStart(2,'0')+'. '+
+    escapeHTML(String(entry.name||'NONAME').slice(0,18))+'</span>'+
+    '<strong>'+Math.max(0,Number(entry.score)||0).toLocaleString()+'</strong></div>'
+  ).join('');
+  return '<h1>THE GHOST CITY</h1>'+
+    '<div class="ranking-panel"><h2>RANKING (TOP 10)</h2>'+
+    (rows||'<p>아직 기록이 없습니다.</p>')+
+    rows+'</div>'+
+    '<div class="name-panel">'+
+    '<label for="player-name">Enter your name, then press ENTER:</label>'+
+    '<input id="player-name" name="player-name" maxlength="18" spellcheck="false"'+
+    ' autocomplete="off" placeholder="NONAME" value="'+escapeHTML(game.playerName||'')+'">'+
+    '</div>'+
+    '<div class="actions"><button class="modal-btn primary" data-action="new">ENTER / START</button>'+
+    (read(SAVE)?'<button class="modal-btn" data-action="continue">CONTINUE</button>':'')+
+    '</div>'+
+    '<div class="note">WASD / ARROWS · SPACE ATTACK · I INVENTORY · ESC MENU</div>';
 }
 function info(){
   return heading('HOW TO PLAY / ORIGINAL','튜토리얼 완료')+
@@ -121,6 +138,13 @@ function drawOverlay(){
     mode==='paused'?pause():mode==='help'?help():mode==='info'?info():mode==='midclear'?midclear():
     mode==='victory'?finished(true):mode==='dead'?finished(false):pause();
 }
+// Enter starts a run from the original name-entry screen.
+overlay.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='player-name'){
+    e.preventDefault();
+    modal.querySelector('[data-action="new"]')?.click();
+  }
+});
 overlay.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const action=b.dataset.action,buy=b.dataset.buy,slot=b.dataset.slot;
@@ -129,7 +153,10 @@ overlay.addEventListener('click',e=>{
     if(dropMode)game.dropSlot(Number(slot));else game.useSlot(Number(slot));
     drawOverlay();persist();lastWeapons='';return;
   }
-  if(action==='new'){del(SAVE);game.newRun();persist();drawOverlay();}
+  if(action==='new'){
+    game.playerName=normalizeName(modal.querySelector('#player-name')?.value);
+    del(SAVE);game.newRun();persist();drawOverlay();
+  }
   if(action==='begin'){game.confirmTutorial();persist();drawOverlay();}
   if(action==='continue-mid'){game.continueMidBoss();persist();drawOverlay();}
   if(action==='finish-mid'){game.finishMidBoss();drawOverlay();}
