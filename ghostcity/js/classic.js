@@ -1,5 +1,5 @@
 // Original-rules game orchestration. Rendering and UI remain separate.
-import {Game} from './game.js';
+import {ClassicBase} from './classic/base.js';
 import {TILE,makeRng,clamp} from './config.js';
 import {refreshVision} from './world.js';
 import {TIMES,dist,pt,center,makeWeapon,makeItem,safeTile,tutorialWorld} from './classic/rules.js';
@@ -9,7 +9,7 @@ import * as enemies from './classic/enemies.js';
 import * as progression from './classic/progression.js';
 import * as persistence from './classic/persistence.js';
 
-export class ClassicGame extends Game {
+export class ClassicGame extends ClassicBase {
   constructor(notify=()=>{}){
     super(notify);this.classic=true;this.mode='menu';this.tutorial=true;
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();this.shopOffers=[];
@@ -18,7 +18,7 @@ export class ClassicGame extends Game {
   makePlayer(){
     const start=this.world?.start||{x:2,y:2};
     const p=center(start.x,start.y);
-    return {...super.makePlayer(),x:p.x,y:p.y,hp:6,maxHp:6,shield:0,
+    return {x:p.x,y:p.y,r:10,hp:6,maxHp:6,shield:0,
       level:1,xp:0,xpNext:25,gems:0,potions:0,energy:0,
       weapon:'spear',inventory:['spear'],weaponLevels:{spear:-3},
       slots:[makeItem('cheap'),makeWeapon('spear',-3),null,null,null,null,null],
