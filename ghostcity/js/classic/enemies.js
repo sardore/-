@@ -64,7 +64,7 @@ export function enemyStep(game,e){
       if(t===T.RUBBLE)continue; // diggers do not destroy furniture in the original.
       if(t===T.WALL){
         if(e.digCd>0)continue;
-        w.tiles[id]=T.FLOOR;e.digCd=.220;
+        w.tiles[id]=T.FLOOR;game.visionDirty=true;e.digCd=.220;
         game.sparks((x+.5)*TILE,(y+.5)*TILE,'#c7b1a1',28);
       }
       if(x===target.x&&y===target.y){
@@ -148,8 +148,9 @@ export function bossTick(game,e,dt){
         const next=center(nx,ny);e.x=next.x;e.y=next.y;
         const ids=new Set(blocks.map(b=>key(w,b.x,b.y)));
         for(const id of ids){
-          if(w.tiles[id]===T.RUBBLE)w.tiles[id]=T.FLOOR;
-          else if(w.tiles[id]===T.WALL)w.tiles[id]=T.FLOOR;
+          if(w.tiles[id]===T.RUBBLE||w.tiles[id]===T.WALL){
+            w.tiles[id]=T.FLOOR;game.visionDirty=true;
+          }
         }
         w.pickups=w.pickups.filter(item=>!ids.has(key(w,Math.floor(item.x/TILE),Math.floor(item.y/TILE))));
       }

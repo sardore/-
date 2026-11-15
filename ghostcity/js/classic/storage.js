@@ -1,7 +1,7 @@
 // Classic-only persistence. Storage failures never break gameplay.
 export const SAVE_KEY='ghost-city-classic-v1';
 export const RANK_KEY='ghost-city-classic-ranks-v1';
-export function createStorage(getGame){
+export function createStorage(getGame,onSave=()=>{}){
   function read(key){try{return localStorage.getItem(key);}catch{return null;}}
   function write(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
   function del(key){try{localStorage.removeItem(key);}catch{}}
@@ -9,7 +9,9 @@ export function createStorage(getGame){
   function persist(){
     const game=getGame();
     if(!game||game.runEnded||['menu','dead','victory'].includes(game.mode))return;
-    return write(SAVE_KEY,game.serialize());
+    const ok=write(SAVE_KEY,game.serialize());
+    onSave(ok);
+    return ok;
   }
   function finish(record){
     del(SAVE_KEY);

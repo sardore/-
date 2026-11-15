@@ -93,8 +93,8 @@ export function useSlot(game,index){
         if(Math.hypot(x-here.x,y-here.y)>r)continue;
         const id=at(w,x,y),t=w.tiles[id];
         // Preserve stairs, elevators, doors and windows (original explicit exception).
-        if(t===T.WALL){w.tiles[id]=T.FLOOR;walls++;}
-        else if(t===T.RUBBLE){w.tiles[id]=T.FLOOR;furniture++;}
+        if(t===T.WALL){w.tiles[id]=T.FLOOR;walls++;game.visionDirty=true;}
+        else if(t===T.RUBBLE){w.tiles[id]=T.FLOOR;furniture++;game.visionDirty=true;}
       }
     w.pickups=w.pickups.filter(it=>{
       if(radius(pt(it.x,it.y),here)<=r){items++;return false;}

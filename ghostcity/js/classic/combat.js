@@ -12,7 +12,8 @@ export function attack(game){
       if(x<0||y<0||x>=w.w||y>=w.h)break;
       game.atkTiles.push({x,y});
       if(st.breaks&&w.tiles[y*w.w+x]===T.RUBBLE){
-        w.tiles[y*w.w+x]=T.FLOOR;game.sparks((x+.5)*TILE,(y+.5)*TILE,'#cbb99e',16);
+        w.tiles[y*w.w+x]=T.FLOOR;game.visionDirty=true;
+        game.sparks((x+.5)*TILE,(y+.5)*TILE,'#cbb99e',16);
       }
       for(const e of w.enemies){
         if(e.dead)continue;
@@ -21,6 +22,8 @@ export function attack(game){
           // Each enemy is hit once per attack, even if a multi-tile boss spans several cells.
           if(e.lastHit===game.time)continue;
           e.lastHit=game.time;e.hp-=st.power;e.hit=.16;
+          w.effects.push({type:'text',x:e.x,y:e.y-e.r-8,life:.62,max:.62,vy:-26,
+            color:onBoss?'#ffe4a2':'#b9f6ff',text:'−'+st.power});
           game.sparks(e.x,e.y,'#a9deff',12);
           if(onBoss)game.score+=3;
           if(e.hp<=0)game.killEnemy(e);
@@ -66,6 +69,8 @@ export function damagePlayer(game,amount){
     if(value<=0){game.say('방패로 공격을 막았습니다!',1.2);return false;}
     if(p.hp-value<=0&&p.petCount>0){p.petCount--;p.hp=1;game.say('수호 천사가 희생했습니다! 남은 '+p.petCount,4);}
     else p.hp=Math.max(0,p.hp-value);
+    game.world.effects.push({type:'text',x:p.x,y:p.y-20,life:.7,max:.7,vy:-25,
+      color:'#ff9bad',text:'−'+value});
     p.invuln=TIMES.iframe;game.flash=.14;game.shake=.17;game.sparks(p.x,p.y,'#ff9aab',12);
     game.sound('hurt');if(p.hp<=0)game.end(false);
     return true;
@@ -79,7 +84,9 @@ export function dash(game){
     for(let n=0;n<Math.max(1,s.level*2);n++){
       const x=t.x+face[0],y=t.y+face[1];
       if(x<1||y<1||x>=w.w-1||y>=w.h-1)break;
-      const ix=y*w.w+x;if([T.WALL,T.RUBBLE].includes(w.tiles[ix]))w.tiles[ix]=T.FLOOR;
+      const ix=y*w.w+x;if([T.WALL,T.RUBBLE].includes(w.tiles[ix])){
+        w.tiles[ix]=T.FLOOR;game.visionDirty=true;
+      }
       for(const e of w.enemies){
         if(e.dead)continue;
         if(game.bossTiles(e).some(a=>a.x===x&&a.y===y)&&e.kind.startsWith('boss')){

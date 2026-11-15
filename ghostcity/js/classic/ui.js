@@ -8,7 +8,7 @@ export function createUI({game,renderer,store}){
   const itemLabel={cheap:'싸구려 물약',potion:'회복 물약',amulet:'수호의 부적',ticket:'무기 강화권',
     axe:'도끼',spear:'창',sword:'검',shield:'방패',hammer:'망치'};
   const prices=price;
-  let lastWeapons='',lastMode='',dropMode=false;
+  let lastWeapons='',lastMode='',dropMode=false,helpReturnMode='playing';
   function toast(text){
   if(!text)return;
   const el=document.createElement('div');el.className='toast';el.textContent=text;
@@ -45,6 +45,22 @@ function midclear(){
     '이 복원판에서는 원본처럼 기록을 마치거나, 20층까지 계속 진행하도록 선택할 수 있습니다.</p>'+
     '<div class="actions"><button class="modal-btn" data-action="finish-mid">원작대로 여기서 종료</button>'+
     '<button class="modal-btn primary" data-action="continue-mid">11층으로 계속</button></div>';
+}
+function help(){
+  return heading('SURVIVOR GUIDE / CLASSIC','조작법 · 게임 안내')+
+    '<p>원작의 타일 이동·방향 공격·실시간 적 행동을 유지합니다. '+
+    '메뉴가 열려 있을 때는 게임 시간이 정지합니다.</p>'+
+    '<div class="manual-grid">'+
+    '<div><kbd>W A S D</kbd><span>타일 한 칸 이동 · 바라보는 방향 결정</span></div>'+
+    '<div><kbd>SPACE</kbd><span>바라보는 방향으로 직선 공격</span></div>'+
+    '<div><kbd>SHIFT + SPACE</kbd><span>창 3레벨 이상이면 층당 1회 돌진</span></div>'+
+    '<div><kbd>1 – 7</kbd><span>7칸 통합 인벤토리 사용·장착</span></div>'+
+    '<div><kbd>I / G</kbd><span>가방 열기 / 드롭 모드</span></div>'+
+    '<div><kbd>H / E</kbd><span>물약 사용 / 엘리베이터·출구 상호작용</span></div>'+
+    '<div><kbd>ENTER</kbd><span>튜토리얼 완료·상점 다음 층 이동</span></div>'+
+    '<div><kbd>ESC</kbd><span>일시정지 또는 메뉴 닫기</span></div>'+
+    '</div>'+
+    '<div class="actions"><button class="modal-btn primary" data-action="help-close">게임으로 돌아가기</button></div>';
 }
 function pause(){
   return heading('PAUSED','일시정지')+
@@ -102,7 +118,7 @@ function drawOverlay(){
   if(mode===lastMode&&!['shop','inventory'].includes(mode))return;
   lastMode=mode;
   modal.innerHTML=mode==='menu'?menu():mode==='shop'?shop():mode==='inventory'?inventory():
-    mode==='paused'?pause():mode==='info'?info():mode==='midclear'?midclear():
+    mode==='paused'?pause():mode==='help'?help():mode==='info'?info():mode==='midclear'?midclear():
     mode==='victory'?finished(true):mode==='dead'?finished(false):pause();
 }
 overlay.addEventListener('click',e=>{
@@ -124,6 +140,7 @@ overlay.addEventListener('click',e=>{
     drawOverlay();
   }
   if(action==='resume'){game.setMode('playing');drawOverlay();}
+  if(action==='help-close'){hideHelp();}
   if(action==='next'){game.closeShop();drawOverlay();persist();}
   if(action==='inventory'){dropMode=false;game.setMode('inventory');drawOverlay();}
   if(action==='drop'){dropMode=!dropMode;drawOverlay();}
@@ -146,6 +163,20 @@ $('weapon-list').addEventListener('click',e=>{
 });
 function hud(){
   const p=game.player,depth=game.world.floor;
+  const w=game.world,attack=game.weaponStats();
+  $('weapon-title').textContent=(attack.id?attack.name:'맨손')+' · '+attack.power+' DMG';
+  $('attack-text').textContent=p.attackCd>0?p.attackCd.toFixed(2)+'s':'READY';
+  $('attack-bar').style.width=clamp((1-p.attackCd/Math.max(.01,attack.rate))*100,0,100)+'%';
+  let explored=0;
+  for(let i=0;i<w.seen.length;i++)explored+=w.seen[i]>0?1:0;
+  $('explored-text').textContent='탐색 '+Math.round(explored/w.seen.length*100)+'%';
+  let threats=0;
+  for(const e of w.enemies){
+    if(e.dead)continue;
+    const x=Math.floor(e.x/32),y=Math.floor(e.y/32);
+    if(x>=0&&y>=0&&x<w.w&&y<w.h&&w.visible[y*w.w+x])threats++;
+  }
+  $('threat-text').textContent='시야 내 적 '+threats;
   $('hp-text').textContent=p.hp+' / '+p.maxHp;
   $('hp-bar').style.width=clamp(p.hp/p.maxHp*100,0,100)+'%';
   $('shield-text').textContent='ANGELS ×'+p.petCount;
@@ -186,5 +217,24 @@ function hud(){
     else game.useSlot(index);
     invalidateWeapons();drawOverlay();persist();
   }
-  return {drawOverlay,hud,toast,invalidateWeapons,resetOverlay,toggleDrop,useSlot};
+  function showHelp(){
+    if(game.mode==='help')return;
+    helpReturnMode=game.mode;
+    game.setMode('help');
+    drawOverlay();
+  }
+  function hideHelp(){
+    if(game.mode!=='help')return;
+    game.setMode(helpReturnMode);
+    drawOverlay();
+  }
+  function markSaved(ok){
+    const status=$('save-status');
+    if(!status)return;
+    status.textContent=ok?'✓ 저장됨':'저장 실패';
+    status.classList.toggle('saved',!!ok);
+    status.classList.toggle('failed',!ok);
+  }
+  return {drawOverlay,hud,toast,invalidateWeapons,resetOverlay,toggleDrop,useSlot,
+    showHelp,hideHelp,markSaved};
 }

@@ -110,21 +110,32 @@ export class Renderer{
     }
   }
   drawPickup(ctx,it,now){
-    const t=it.type,x=it.x,y=it.y+Math.sin(now*2.7+it.x)*3;
-    ctx.save();ctx.translate(x,y);
-    const color=t==='gem'?'#93ffdb':t==='potion'?'#f789a7':t==='shield'?'#b3b3ff':'#ffd384';
-    ctx.shadowColor=color;ctx.shadowBlur=15;ctx.strokeStyle=color;ctx.lineWidth=1.5;
+    const t=it.type,x=it.x,y=it.y+Math.sin(now*2.7+it.x)*2.4;
+    const palette={gem:'#93ffdb',cheap:'#c5b18d',potion:'#f789a7',
+      amulet:'#c2a6ff',ticket:'#ffe2a0',weapon:'#a5e0fc'};
+    const color=palette[t]||'#ffd384';
+    ctx.save();ctx.translate(x,y);ctx.shadowColor=color;ctx.shadowBlur=13;
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;
     if(t==='gem'){
-      ctx.fillStyle='#246d72';
-      poly(ctx,[[0,-9],[7,-3],[5,7],[0,10],[-6,4],[-7,-3]]);ctx.fill();ctx.stroke();
-      ctx.strokeStyle='#e4fff4';line(ctx,0,-8,0,8);
-    }else if(t==='potion'){
-      ctx.fillStyle='#823d5f';rr(ctx,-6,-5,12,14,3);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#246d72';poly(ctx,[[0,-9],[7,-3],[5,7],[0,10],[-6,4],[-7,-3]]);
+      ctx.fill();ctx.stroke();ctx.strokeStyle='#e4fff4';line(ctx,0,-8,0,8);
+    }else if(t==='potion'||t==='cheap'){
+      ctx.fillStyle=t==='potion'?'#823d5f':'#605342';
+      rr(ctx,-6,-5,12,14,3);ctx.fill();ctx.stroke();
       ctx.fillStyle='#ece7d5';ctx.fillRect(-3,-9,6,5);ctx.fillRect(-4,-10,8,2);
-      ctx.fillStyle='#ffb9d2';ctx.fillRect(-4,0,8,5);
-    }else if(t==='shield'){
-      ctx.fillStyle='#4f4a88';poly(ctx,[[0,-10],[9,-5],[7,6],[0,11],[-7,6],[-9,-5]]);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#d9dcff';ctx.fillRect(-1,-6,2,12);
+      ctx.fillStyle=t==='potion'?'#ffb9d2':'#c6b59b';ctx.fillRect(-4,0,8,5);
+      if(t==='cheap'){ctx.strokeStyle='#38261e';line(ctx,-2,0,3,6);}
+    }else if(t==='amulet'){
+      ctx.fillStyle='#513f76';poly(ctx,[[0,-10],[9,-2],[6,9],[0,12],[-6,9],[-9,-2]]);
+      ctx.fill();ctx.stroke();ctx.strokeStyle='#ede2ff';line(ctx,-4,0,4,0);line(ctx,0,-5,0,6);
+    }else if(t==='ticket'){
+      ctx.fillStyle='#846c42';rr(ctx,-10,-8,20,16,3);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#fff1c3';ctx.fillRect(-6,-2,12,2);
+      ctx.fillRect(-1,-6,2,11);ctx.fillRect(-5,3,10,2);
+    }else if(t==='weapon'){
+      ctx.strokeStyle='#ccefff';ctx.lineWidth=3;line(ctx,-7,7,7,-7);
+      ctx.strokeStyle='#81b5d0';ctx.lineWidth=4;line(ctx,3,-8,10,-14);
+      ctx.strokeStyle='#ffe7b1';ctx.lineWidth=3;line(ctx,-12,5,-2,9);
     }else{
       ctx.fillStyle='#6e5033';rr(ctx,-10,-7,20,16,3);ctx.fill();ctx.stroke();
       ctx.fillStyle='#f6cc75';ctx.fillRect(-2,-7,4,16);ctx.fillRect(-10,-1,20,4);
@@ -140,8 +151,12 @@ export class Renderer{
     if(k==='bossKing')return this.drawKing(ctx,e,now);
     ctx.save();ctx.translate(e.x,e.y);
     ellipse(ctx,0,8,e.r+5,e.r*.53);ctx.fillStyle='#0009';ctx.fill();
-    ctx.rotate(e.angle+Math.PI/2);
-    const bob=Math.sin(now*4+e.id%100)*1.5;
+    // The original grid monsters have neither an angle nor a numeric id.
+    // Never feed undefined into Canvas transforms: rotate(NaN) makes sprites vanish.
+    const heading=Number.isFinite(e.angle)?e.angle:-Math.PI/2;
+    const phase=Number.isFinite(e.id)?e.id%100:hash(Math.floor(e.x/TILE),Math.floor(e.y/TILE),29)*TAU;
+    ctx.rotate(heading+Math.PI/2);
+    const bob=Math.sin(now*4+phase)*1.5;
     ctx.translate(0,bob);
     ctx.shadowColor=c;ctx.shadowBlur=e.hit>0?22:8;
     if(k==='hound'){
@@ -242,8 +257,10 @@ export class Renderer{
     ctx.strokeStyle=p.invuln>0&&Math.floor(now*16)%2?'#ff9da9':'#9cefff';ctx.lineWidth=2.2;ctx.stroke();
     ctx.fillStyle='#5e8fbb';poly(ctx,[[-8,-6],[0,-16],[8,-6],[0,2]]);ctx.fill();
     ctx.fillStyle='#dffaff';ctx.fillRect(-6,-4,4,3);ctx.fillRect(2,-4,4,3);
-    ctx.strokeStyle=WEAPONS[p.weapon]?.color||'#fff';ctx.lineWidth=3.2;
-    line(ctx,14,-7,19,-26);ctx.fillStyle='#c5b2ce';ctx.fillRect(14,-8,8,3);
+    if(p.equippedSlot!==null){
+      ctx.strokeStyle=WEAPONS[p.weapon]?.color||'#fff';ctx.lineWidth=3.2;
+      line(ctx,14,-7,19,-26);ctx.fillStyle='#c5b2ce';ctx.fillRect(14,-8,8,3);
+    }
     ctx.restore();
     if(p.parry>0){
       ctx.shadowColor='#c0c7ff';ctx.shadowBlur=16;
@@ -330,18 +347,15 @@ export class Renderer{
         ctx.lineWidth=2;ctx.strokeRect(bx+3,by+3,TILE-6,TILE-6);
       }
     }
-    // Short attack-warning telegraphs for lethal ranged enemies and bosses.
+    // Boss warning is tied to the actual five-blink dash phase.
+    // Sniper shots remain instant, represented by the on-hit laser above.
     for(const e of world.enemies){
-      if(e.dead||e.cd>.48||e.cd<0)continue;
+      if(!e.kind?.startsWith('boss')||e.bossPhase!=='blink')continue;
       const tx=Math.floor(e.x/TILE),ty=Math.floor(e.y/TILE);
       if(tx<0||ty<0||tx>=world.w||ty>=world.h||!world.visible[ty*world.w+tx])continue;
-      if(e.kind==='bossSpider'||e.kind==='bossKing'){
-        ctx.strokeStyle='#ff9db4aa';ctx.lineWidth=2+Math.sin(now*19)*1;
-        ctx.setLineDash([7,7]);ctx.beginPath();ctx.arc(e.x,e.y,e.r+22+(1-e.cd/.48)*8,0,TAU);ctx.stroke();ctx.setLineDash([]);
-      }else if(e.kind==='sniper'){
-        ctx.strokeStyle='#ff9aab96';ctx.lineWidth=1.5;ctx.setLineDash([8,8]);
-        line(ctx,e.x,e.y,p.x,p.y);ctx.setLineDash([]);
-      }
+      ctx.save();ctx.strokeStyle='#ff9db4d0';ctx.lineWidth=2.5+Math.sin(now*24)*.7;
+      ctx.setLineDash([7,5]);ctx.beginPath();ctx.arc(e.x,e.y,e.r+22,0,TAU);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
     }
     this.drawPlayer(ctx,p,now);
     for(let i=0;i<p.petCount;i++){
