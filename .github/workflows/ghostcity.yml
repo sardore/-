@@ -1,0 +1,36 @@
+name: Ghost City smoke tests
+on:
+  push:
+    paths:
+      - 'ghostcity/**'
+      - '.github/workflows/ghostcity.yml'
+  pull_request:
+    paths:
+      - 'ghostcity/**'
+      - '.github/workflows/ghostcity.yml'
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghostcity
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghostcity
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
