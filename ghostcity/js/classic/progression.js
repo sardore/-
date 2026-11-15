@@ -41,7 +41,11 @@ export function interact(game){
     const p=game.player,w=game.world,t=pt(p.x,p.y);
     const tile=w.tiles[t.y*w.w+t.x];
     if(game.tutorial&&tile===T.TUTOR_EXIT){game.setMode('info');game.say('튜토리얼 완료 · Enter로 게임 시작',4);return true;}
-    if(tile===T.STAIRS){if(w.boss&&!w.bossDefeated)return false;game.advance(1);return true;}
+    if(tile===T.STAIRS){
+      if(w.boss){if(!w.bossDefeated)return false;game.advance(1);}
+      else game.openShop();
+      return true;
+    }
     if(tile!==T.ELEVATOR&&tile!==T.BROKEN){game.say('엘리베이터 위에서 E를 누르세요.',2);return false;}
     if([9,19].includes(w.floor)){game.say('이 층의 엘리베이터는 작동하지 않습니다.',2);return false;}
     if(p.gems<5){game.say('엘리베이터에는 보석 5개가 필요합니다.',2);return false;}
@@ -69,13 +73,15 @@ export function advance(game,n=1){
   // Original score applies when advancing beyond first floor.
   if(next!==1){game.score+=200;game.addXP(10);}
   game.shopFloor=null;game.shopOffers=[];game.shopSold=[];
-  game.flow=null;game.flowTimer=0;game.visionTimer=0;game.visionTile='';
+  game.flow=null;game.flowTimer=0;game.visionTimer=0;game.visionTile=next+':'+w.start.x+':'+w.start.y;
+  game.visionDirty=false;
   game.sniperWarnings=[];
   refreshVision(w,p.x,p.y,next>=11?6:13);
   game.say(next===10?'10층 · 메가 스파이더':next===20?'20층 · 최종 보스':next+'층에 진입했습니다.',4);
+  // A checkpoint must serialize the NEW floor in playing mode, never the old shop/info overlay.
+  game.setMode('playing');
   game.notify('floor',{floor:next});
   game.notify('autosave',{floor:next});
-  game.setMode('playing');
 }
 
 export function interactHint(game){
