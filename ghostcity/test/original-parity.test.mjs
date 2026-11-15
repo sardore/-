@@ -109,7 +109,7 @@ test('variable-sized boss, normal and tutorial maps can each roundtrip through s
 });
 test('10F boss clear offers end or 11F continuation without softlock',()=>{
   const g=new ClassicGame();g.newRun(42);
-  g.world.floor=9;g.advance(1);
+  g.advance(1);g.world.floor=9;g.advance(1);
   const boss=g.world.enemies.find(e=>e.kind==='bossSpider');
   boss.hp=0;g.killEnemy(boss);
   assert.equal(g.mode,'midclear');
