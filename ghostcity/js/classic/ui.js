@@ -1,12 +1,13 @@
 // Presentation and modal actions only. Gameplay rules live in ClassicGame.
 import {formatTime,clamp} from '../config.js';
+import {price} from './rules.js';
 export function createUI({game,renderer,store}){
   const $=id=>document.getElementById(id);
   const overlay=$('overlay'),modal=$('modal-content');
   const {read,del,ranks,persist,SAVE}=store;
   const itemLabel={cheap:'싸구려 물약',potion:'회복 물약',amulet:'수호의 부적',ticket:'무기 강화권',
     axe:'도끼',spear:'창',sword:'검',shield:'방패',hammer:'망치'};
-  const prices={potion:6,amulet:16,ticket:22,pet:18,maxhp:12,axe:12,spear:12,sword:12,shield:12,hammer:12};
+  const prices=price;
   let lastWeapons='',lastMode='',dropMode=false;
   function toast(text){
   if(!text)return;
@@ -27,6 +28,23 @@ function menu(){
     (read(SAVE)?'<button class="modal-btn" data-action="continue">이어서 하기</button>':'')+
     '</div><div class="note">WASD 1칸 이동 · SPACE 직선 공격 · Shift+Space 창 돌진 · I 가방 · E 엘리베이터'+
     (best?'<br>최고 점수 '+best.score.toLocaleString():'')+'</div>';
+}
+function info(){
+  return heading('HOW TO PLAY / ORIGINAL','튜토리얼 완료')+
+    '<p>당신의 목표는 격자를 따라 이동하며 층마다 출구를 찾는 것입니다.<br>'+
+    '<b>WASD / 방향키</b>: 타일 한 칸 이동<br>'+
+    '<b>SPACE</b>: 바라보는 방향으로 직선 공격<br>'+
+    '<b>1–7</b>: 통합 인벤토리 사용 / 장착<br>'+
+    '<b>G</b>: 드롭 모드 · <b>I</b>: 가방 · <b>E</b>: 엘리베이터<br>'+
+    '<b>Shift+Space</b>: 창 Lv.3+의 층당 1회 돌진</p>'+
+    '<div class="actions"><button class="modal-btn primary" data-action="begin">1층 탐험 시작</button></div>';
+}
+function midclear(){
+  return heading('MID BOSS DEFEATED','10층의 수호자를 쓰러뜨렸습니다')+
+    '<p>원본 Pygame 코드는 여기서 엔딩으로 진입합니다.<br>'+
+    '이 복원판에서는 원본처럼 기록을 마치거나, 20층까지 계속 진행하도록 선택할 수 있습니다.</p>'+
+    '<div class="actions"><button class="modal-btn" data-action="finish-mid">원작대로 여기서 종료</button>'+
+    '<button class="modal-btn primary" data-action="continue-mid">11층으로 계속</button></div>';
 }
 function pause(){
   return heading('PAUSED','일시정지')+
@@ -84,7 +102,8 @@ function drawOverlay(){
   if(mode===lastMode&&!['shop','inventory'].includes(mode))return;
   lastMode=mode;
   modal.innerHTML=mode==='menu'?menu():mode==='shop'?shop():mode==='inventory'?inventory():
-    mode==='paused'?pause():mode==='victory'?finished(true):mode==='dead'?finished(false):pause();
+    mode==='paused'?pause():mode==='info'?info():mode==='midclear'?midclear():
+    mode==='victory'?finished(true):mode==='dead'?finished(false):pause();
 }
 overlay.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -95,6 +114,9 @@ overlay.addEventListener('click',e=>{
     drawOverlay();persist();lastWeapons='';return;
   }
   if(action==='new'){del(SAVE);game.newRun();persist();drawOverlay();}
+  if(action==='begin'){game.confirmTutorial();persist();drawOverlay();}
+  if(action==='continue-mid'){game.continueMidBoss();persist();drawOverlay();}
+  if(action==='finish-mid'){game.finishMidBoss();drawOverlay();}
   if(action==='continue'){
     if(!game.restore(read(SAVE))){del(SAVE);game.newRun();}
     renderer.camera.x=clamp(game.player.x-renderer.w/2,0,Math.max(0,game.world.w*32-renderer.w));
@@ -131,7 +153,7 @@ function hud(){
   $('gem-number').textContent=p.gems;
   $('score-number').textContent=String(Math.floor(game.score)).padStart(6,'0');
   $('time-number').textContent=formatTime(game.elapsed);
-  const ready=p.slots.some(s=>s?.id==='spear'&&s.level>=3)&&!p.dashUsed;
+  const ready=game.activeSlot()?.id==='spear'&&game.activeSlot().level>=3&&!p.dashUsed;
   $('energy-text').textContent=ready?'READY':'LOCKED';
   $('energy-bar').style.width=ready?'100%':'0%';
   $('level-num').textContent=p.level;

@@ -3,7 +3,7 @@ export const TILE = 32;
 export const MAP_W = 62;
 export const MAP_H = 38;
 export const MAX_FLOOR = 20;
-export const T = Object.freeze({ WALL:0, FLOOR:1, RUBBLE:2, GLASS:3, DOOR:4, STAIRS:5, ELEVATOR:6, BROKEN:7, SHOP:8, WATER:9, WEB:10 });
+export const T = Object.freeze({ WALL:0, FLOOR:1, RUBBLE:2, GLASS:3, DOOR:4, STAIRS:5, ELEVATOR:6, BROKEN:7, SHOP:8, WATER:9, WEB:10, TUTOR_EXIT:11 });
 export const BLOCKED = new Set([T.WALL,T.RUBBLE,T.GLASS]);
 export const WEAPONS = Object.freeze({
   sword:{id:'sword',name:'유령검',eng:'PHANTOM BLADE',power:15,rate:.38,range:68,arc:1.8,knock:80,color:'#94e7ff',icon:'⚔',description:'빠른 근접 연속 공격'},

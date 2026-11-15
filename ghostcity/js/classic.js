@@ -8,10 +8,11 @@ import * as combat from './classic/combat.js';
 import * as enemies from './classic/enemies.js';
 import * as progression from './classic/progression.js';
 import * as persistence from './classic/persistence.js';
+import * as companions from './classic/companions.js';
 
 export class ClassicGame extends ClassicBase {
   constructor(notify=()=>{}){
-    super(notify);this.classic=true;this.mode='menu';this.tutorial=true;
+    super(notify);this.classic=true;this.mode='menu';this.tutorial=true;this.luck=.16;this.sniperWarnings=[];
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();this.shopOffers=[];
     this.shopSold=[];this.moveCd=0;this.attackFlash=0;this.atkTiles=[];this.floorEnding=false;
   }
@@ -33,6 +34,7 @@ export class ClassicGame extends ClassicBase {
   newRun(seed=((Math.random()*4294967295)>>>0)){
     this.seed=seed>>>0;this.rng=makeRng(this.seed);
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();
+    this.sniperWarnings=[];
     this.elapsed=0;this.kills=0;this.score=0;this.time=0;
     this.mode='playing';this.tutorial=true;this.floorEnding=false;
     this.shopOffers=[];this.shopSold=[];this.moveCd=0;this.attackFlash=0;this.atkTiles=[];
@@ -64,6 +66,9 @@ export class ClassicGame extends ClassicBase {
   buy(index){return inventory.buy(this,index);}
   closeShop(){return inventory.closeShop(this);}
   advance(n=1){return progression.advance(this,n);}
+  confirmTutorial(){return progression.confirmTutorial(this);}
+  continueMidBoss(){if(this.mode!=='midclear')return false;this.advance(1);return true;}
+  finishMidBoss(){if(this.mode!=='midclear')return false;this.end(true);return true;}
   enemyStep(e){return enemies.enemyStep(this,e);}
   shooterTick(e,dt){return enemies.shooterTick(this,e,dt);}
   bossTick(e,dt){return enemies.bossTick(this,e,dt);}
@@ -77,6 +82,8 @@ export class ClassicGame extends ClassicBase {
     p.dash=Math.max(0,p.dash-dt);this.moveCd=Math.max(0,this.moveCd-dt);
     this.flash=Math.max(0,this.flash-dt);this.shake=Math.max(0,this.shake-dt);
     this.attackFlash=Math.max(0,this.attackFlash-dt);
+    for(const warning of this.sniperWarnings)warning.life-=dt;
+    this.sniperWarnings=this.sniperWarnings.filter(w=>w.life>0);
     for(const e of w.effects){e.life-=dt;if(e.type==='spark'){e.x+=e.vx*dt;e.y+=e.vy*dt;}}
     w.effects=w.effects.filter(e=>e.life>0);
     for(const m of this.messages)m.life-=dt;
@@ -98,7 +105,7 @@ export class ClassicGame extends ClassicBase {
       this.moveCd=TIMES.player;p.walk+=1.1;this.onStep();
     }
     if(this.mode!=='playing')return;
-    refreshVision(w,p.x,p.y,13);
+    refreshVision(w,p.x,p.y,w.floor>=11?6:13);
     if(this.tutorial)return;
     for(const e of [...w.enemies]){
       if(e.dead)continue;
@@ -113,23 +120,10 @@ export class ClassicGame extends ClassicBase {
       }
     }
     w.enemies=w.enemies.filter(e=>!e.dead);
-    p.petCd=Math.max(0,p.petCd-dt);
-    if(p.petCount>0&&p.petCd===0){
-      let e=null,near=11*TILE;
-      for(const monster of w.enemies){
-        if(monster.dead)continue;
-        const d=dist(p,monster);
-        if(d<near){near=d;e=monster;}
-      }
-      if(e){
-        e.hp-=.1;e.slow=1.6;
-        this.sparks(e.x,e.y,'#ffe4a1',12);
-        p.petCd=p.petCount>=2?.65:.9;
-        if(e.hp<=0){this.killEnemy(e);w.enemies=w.enemies.filter(q=>!q.dead);}
-      }
-    }
+    this.petTick(dt);
     for(const e of w.enemies)e.slow=Math.max(0,(e.slow||0)-dt);
   }
+  petTick(dt){return companions.petTick(this,dt);}
   usePotion(){return inventory.usePotion(this);}
   burst(){return combat.burst(this);}
   interactHint(){return progression.interactHint(this);}
