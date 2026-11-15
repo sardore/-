@@ -1,5 +1,5 @@
 // Presentation and modal actions only. Gameplay rules live in ClassicGame.
-import {formatTime,clamp} from '../config.js';
+import {formatTime,clamp,TILE} from '../config.js';
 import {price} from './rules.js';
 export function createUI({game,renderer,store}){
   const $=id=>document.getElementById(id);
@@ -135,8 +135,7 @@ overlay.addEventListener('click',e=>{
   if(action==='finish-mid'){game.finishMidBoss();drawOverlay();}
   if(action==='continue'){
     if(!game.restore(read(SAVE))){del(SAVE);game.newRun();}
-    renderer.camera.x=clamp(game.player.x-renderer.w/2,0,Math.max(0,game.world.w*32-renderer.w));
-    renderer.camera.y=clamp(game.player.y-renderer.h/2,0,Math.max(0,game.world.h*32-renderer.h));
+    renderer.track(game);
     drawOverlay();
   }
   if(action==='resume'){game.setMode('playing');drawOverlay();}
@@ -173,7 +172,7 @@ function hud(){
   let threats=0;
   for(const e of w.enemies){
     if(e.dead)continue;
-    const x=Math.floor(e.x/32),y=Math.floor(e.y/32);
+    const x=Math.floor(e.x/TILE),y=Math.floor(e.y/TILE);
     if(x>=0&&y>=0&&x<w.w&&y<w.h&&w.visible[y*w.w+x])threats++;
   }
   $('threat-text').textContent='시야 내 적 '+threats;
