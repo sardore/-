@@ -111,6 +111,16 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .modal-btn.primary{background:linear-gradient(90deg,#a6ffe7,#6dceb6);border-color:#98f8e3;color:#092b2c;box-shadow:0 5px 26px #3cead327}
 .modal-btn.primary:hover{background:#cbfff1}
 .modal-btn.danger{border-color:#86566b;color:#f1bacf}
+.manual-grid{display:grid;gap:7px;margin:16px 0;text-align:left}
+.manual-grid>div{display:flex;align-items:center;gap:12px;border:1px solid #2c4054;
+  border-radius:6px;background:#102033;padding:10px 12px;font-size:12px;color:#b3cbd9}
+.manual-grid kbd{font:700 11px Rajdhani,sans-serif;letter-spacing:.5px;
+  border:1px solid #466575;border-radius:4px;padding:5px 7px;min-width:108px;
+  color:#a2f7df;background:#183541;text-align:center;white-space:nowrap}
+.manual-grid span{font:500 11px/1.6 "Noto Sans KR",sans-serif}
+@media(max-width:580px){.manual-grid>div{gap:7px;padding:7px 8px}
+  .manual-grid kbd{min-width:93px;font-size:10px}
+  .manual-grid span{font-size:10px}}
 .modal .feature-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:23px}
 .feature-row div{padding:12px 7px;background:#0f1b2c;border:1px solid #263949;border-radius:6px}
 .feature-row strong{display:block;font-size:20px;color:#9ceadf;line-height:1.2}
