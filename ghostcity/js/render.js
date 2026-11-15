@@ -127,6 +127,9 @@ export class Renderer{
   }
   drawEnemy(ctx,e,now){
     const k=e.kind,c=ENEMIES[k]?.color||'#c8aadf';
+    if((k==='bossSpider'||k==='bossKing')&&e.bossPhase==='blink'&&Math.floor(now*12)%2){
+      ctx.save();ctx.globalAlpha=.5;glow(ctx,e.x,e.y,95,'#ff72825d');ctx.restore();
+    }
     if(k==='bossSpider')return this.drawSpiderBoss(ctx,e,now);
     if(k==='bossKing')return this.drawKing(ctx,e,now);
     ctx.save();ctx.translate(e.x,e.y);
@@ -283,6 +286,31 @@ export class Renderer{
       ctx.strokeStyle=b.color+'75';ctx.lineWidth=b.r;line(ctx,b.x-b.vx*.026,b.y-b.vy*.026,b.x,b.y);
       ctx.shadowColor=b.color;ctx.shadowBlur=15;ctx.fillStyle=b.color;
       ellipse(ctx,b.x,b.y,b.r,b.r);ctx.fill();ctx.shadowBlur=0;
+    }
+    // Sniper / witch damage is instantaneous in the original; laser warning
+    // shows the just-fired Bresenham line for 280ms rather than inventing
+    // delayed projectile combat.
+    if(Array.isArray(game.sniperWarnings)){
+      for(const marker of game.sniperWarnings){
+        const alpha=Math.max(0,Math.min(1,marker.life/(marker.max||.28)));
+        if(!alpha)continue;
+        ctx.save();ctx.globalAlpha=alpha;
+        ctx.strokeStyle=marker.color||'#ffa1b4';
+        ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=16;ctx.lineWidth=5;
+        ctx.beginPath();ctx.moveTo(marker.x,marker.y);ctx.lineTo(marker.tx,marker.ty);ctx.stroke();
+        ctx.strokeStyle='#f5ffff';ctx.shadowBlur=0;ctx.lineWidth=1.7;
+        ctx.beginPath();ctx.moveTo(marker.x,marker.y);ctx.lineTo(marker.tx,marker.ty);ctx.stroke();
+        ctx.restore();
+      }
+    }
+    // Original Guardian Angel attacks are fast beams, not permanent projectiles.
+    if(p.petLaserTime>0&&p.petLaserFrom&&p.petLaserTo){
+      ctx.save();ctx.globalAlpha=Math.min(1,p.petLaserTime/.14);
+      ctx.strokeStyle='#ffe8a6';ctx.shadowColor='#ffdd8b';ctx.shadowBlur=22;
+      ctx.lineWidth=3.5;ctx.beginPath();
+      ctx.moveTo(p.petLaserFrom.x,p.petLaserFrom.y);
+      ctx.lineTo(p.petLaserTo.x,p.petLaserTo.y);
+      ctx.stroke();ctx.restore();
     }
     // Original rules: attacks are a visible, straight cardinal line of tiles.
     if(game.classic&&game.attackFlash>0&&Array.isArray(game.atkTiles)){
