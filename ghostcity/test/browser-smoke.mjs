@@ -30,7 +30,7 @@ try{
   const response=await page.goto(url,{waitUntil:'networkidle'});
   assert.equal(response.status(),200);
   await page.waitForSelector('[data-action="new"]');
-  assert.equal(await page.title(),'THE GHOST CITY: REBORN');
+  assert.equal(await page.title(),'THE GHOST CITY: CLASSIC');
   await page.click('[data-action="new"]');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
   assert.equal((await page.locator('#floor-number').textContent()).trim(),'01');
