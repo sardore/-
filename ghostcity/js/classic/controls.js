@@ -8,7 +8,8 @@ export function startControls({game,renderer,ui,store,audio}){
 function togglePause(){
   if(game.mode==='playing')game.setMode('paused');
   else if(['paused','inventory'].includes(game.mode))game.setMode('playing');
-  else if(game.mode==='shop')game.closeShop();
+  else if(game.mode==='help')ui.hideHelp();
+  // Shop is a deliberate decision: ESC must never skip purchases or advance floors.
   ui.drawOverlay();
 }
 const codes=new Set([' ','arrowup','arrowdown','arrowleft','arrowright']);
@@ -17,7 +18,8 @@ window.addEventListener('keydown',e=>{
   if(codes.has(k))e.preventDefault();
   held.add(k);
   if(e.repeat)return;
-  if(k==='escape'){togglePause();return;}
+  if(k==='escape'){held.clear();togglePause();return;}
+  if(k==='?'||k==='f1'){e.preventDefault();held.clear();ui.showHelp();return;}
   if(game.mode==='shop'&&k==='enter'){game.closeShop();store.persist();ui.drawOverlay();return;}
   if(game.mode==='shop'&&k>='1'&&k<='4'){game.buy(Number(k)-1);ui.drawOverlay();store.persist();return;}
   if(game.mode==='info'&&k==='enter'){game.confirmTutorial();ui.drawOverlay();store.persist();return;}
@@ -40,6 +42,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>held.delete(e.key.toLowerCase()));
 window.addEventListener('blur',()=>{held.clear();finger=false;joy.x=joy.y=0;if(game.mode==='playing')game.setMode('paused');});
 $('pause-toggle').addEventListener('click',togglePause);
+$('help-toggle').addEventListener('click',()=>{held.clear();ui.showHelp();});
 $('audio-toggle').addEventListener('click',()=>{const muted=audio.toggle();$('audio-toggle').textContent=muted?'♪̸':'♫';});
 const stick=$('joystick'),core=$('joystick-core');
 function joyMove(e){
