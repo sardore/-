@@ -29,7 +29,7 @@ export function onStep(game){
       else game.say('가방이 가득 찼습니다.',1);
     }
     const tile=w.tiles[t.y*w.w+t.x];
-    if(game.tutorial&&tile===T.STAIRS)game.say('노란 출구입니다. Enter를 눌러 안내 화면으로 이동하세요.',1.4);
+    if(game.tutorial&&tile===T.TUTOR_EXIT)game.say('노란 출구입니다. Enter를 눌러 안내 화면으로 이동하세요.',1.4);
     if(!game.tutorial&&tile===T.STAIRS){
       if(w.boss){if(w.bossDefeated)game.advance(1);else game.say('보스를 먼저 처치해야 합니다.',2);}
       else game.openShop();
@@ -40,7 +40,7 @@ export function interact(game){
     if(game.mode!=='playing')return false;
     const p=game.player,w=game.world,t=pt(p.x,p.y);
     const tile=w.tiles[t.y*w.w+t.x];
-    if(game.tutorial&&tile===T.STAIRS){game.setMode('info');game.say('튜토리얼 완료 · Enter로 게임 시작',4);return true;}
+    if(game.tutorial&&tile===T.TUTOR_EXIT){game.setMode('info');game.say('튜토리얼 완료 · Enter로 게임 시작',4);return true;}
     if(tile===T.STAIRS){if(w.boss&&!w.bossDefeated)return false;game.advance(1);return true;}
     if(tile!==T.ELEVATOR&&tile!==T.BROKEN){game.say('엘리베이터 위에서 E를 누르세요.',2);return false;}
     if([9,19].includes(w.floor)){game.say('이 층의 엘리베이터는 작동하지 않습니다.',2);return false;}
