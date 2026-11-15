@@ -6,7 +6,7 @@ This is a browser-based reconstruction of the user's Python/Pygame game, **not**
 
 The browser layer only translates input and paints state. It never mutates combat balance directly.
 
-\`\`\`text
+```text
 index.html                 browser entrypoint
 style.css                  theme, HUD and responsive layout
 js/
@@ -31,7 +31,7 @@ test/
   classic.test.mjs         original behavior regression tests
   world.test.mjs           deterministic map connectivity tests
   browser-smoke.mjs        desktop and touchscreen Chromium smoke tests
-\`\`\`
+```
 
 Boundary rules:
 - No DOM, browser storage or sound engine calls inside game rules, enemy AI or map generation.
@@ -61,18 +61,18 @@ Boundary rules:
 
 Use a local HTTP server (ES modules cannot reliably load via file://):
 
-\`\`\`bash
+```bash
 cd ghostcity
 python -m http.server 8000
-\`\`\`
+```
 
 Open http://localhost:8000/. No build step is necessary.
 
-\`\`\`bash
+```bash
 npm test
 npm install
 npx playwright install chromium
 npm run test:browser
-\`\`\`
+```
 
 The Node tests cover timing, movement, original weapons, inventory/shop, enemy behavior, bosses and 160 procedural floors. Playwright covers launch, desktop keyboard attack, pause/resume, persistence and touch input. GitHub Actions runs both suites on changes under ghostcity/.
