@@ -31,7 +31,10 @@ try{
   assert.equal(response.status(),200);
   await page.waitForSelector('[data-action="new"]');
   assert.equal(await page.title(),'THE GHOST CITY: CLASSIC');
-  await page.click('[data-action="new"]');
+  assert.ok(await page.locator('.ranking-panel').isVisible());
+  assert.ok(await page.locator('#player-name').isVisible());
+  await page.locator('#player-name').fill('PIXEL');
+  await page.locator('#player-name').press('Enter');
   await page.waitForFunction(()=>document.querySelector('#overlay').classList.contains('hidden'));
   assert.equal((await page.locator('#floor-number').textContent()).trim(),'TUT');
   const canvas=await page.locator('#game-canvas').boundingBox();
@@ -66,6 +69,11 @@ try{
   assert.ok(!design.font.toLowerCase().includes('rajdhani'));
   assert.ok((await page.locator('#explored-text').textContent()).includes('탐색'));
   assert.match(await page.locator('#save-status').textContent(),/저장됨/);
+  const persistedName=await page.evaluate(()=>JSON.parse(
+    localStorage.getItem('ghost-city-classic-v1')
+  ).playerName);
+  assert.equal(persistedName,'PIXEL');
+
   await page.click('#help-toggle');
   await page.waitForSelector('[data-action="help-close"]');
   await page.click('[data-action="help-close"]');
@@ -136,6 +144,14 @@ try{
   assert.ok(await shopPage.locator('[data-action="next"]').isVisible(),
     'shop must remain visible after Escape');
   await shopPage.waitForFunction(()=>document.querySelector('#floor-number')?.textContent.trim()==='01');
+  const ranking=await shopPage.evaluate(async()=>{
+    const {createStorage}=await import('/js/classic/storage.js');
+    const storage=createStorage(()=>null);
+    storage.finish({name:'PIXEL',score:9250,floor:10,kills:14,time:127,victory:true});
+    return storage.ranks();
+  });
+  assert.equal(ranking[0].name,'PIXEL');
+  assert.equal(ranking[0].score,9250);
   await shopPage.close();
 
   const mobile=await browserInstance.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,
