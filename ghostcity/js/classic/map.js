@@ -45,7 +45,8 @@ function flood(w,start,mode='walk'){
   return {vis,count:q.length};
 }
 function connectRooms(w,base){
-  const reachable=()=>flood(w,base);
+  const first=cells(w,(x,y)=>canWalk(w.tiles[at(w.w,x,y)]))[0]||base;
+  const reachable=()=>flood(w,first);
   let connected=reachable();
   // 0-1 BFS: cutting through a wall costs 1; traversing an open cell costs 0.
   for(let pass=0;pass<28;pass++){
@@ -169,8 +170,9 @@ function addElevators(w,rng,count){
   }
 }
 function addDrops(w,rng,type,count,region=null){
-  const list=region?region.filter(p=>w.tiles[at(w.w,p.x,p.y)]===T.FLOOR):
-    cells(w,(x,y)=>w.tiles[at(w.w,x,y)]===T.FLOOR);
+  const occupied=new Set(w.pickups.map(p=>at(w.w,Math.floor(p.x/TILE),Math.floor(p.y/TILE))));
+  const list=(region?region:cells(w,(x,y)=>w.tiles[at(w.w,x,y)]===T.FLOOR))
+    .filter(p=>w.tiles[at(w.w,p.x,p.y)]===T.FLOOR&&!occupied.has(at(w.w,p.x,p.y)));
   shuffle(rng,list);
   for(const p of list.slice(0,count)){
     const index=at(w.w,p.x,p.y);
@@ -205,8 +207,8 @@ function addMonsters(w,rng,floor,start){
   }
 }
 function pickSafeSpawn(w,rng){
-  const available=cells(w,(x,y)=>w.tiles[at(w.w,x,y)]===T.FLOOR&&
-    !w.pickups.some(p=>Math.floor(p.x/TILE)===x&&Math.floor(p.y/TILE)===y));
+  const occupied=new Set(w.pickups.map(p=>at(w.w,Math.floor(p.x/TILE),Math.floor(p.y/TILE))));
+  const available=cells(w,(x,y)=>w.tiles[at(w.w,x,y)]===T.FLOOR&&!occupied.has(at(w.w,x,y)));
   shuffle(rng,available);
   if(!available.length)return {x:2,y:2};
   return available.find(p=>w.enemies.every(e=>Math.abs(Math.floor(e.x/TILE)-p.x)+Math.abs(Math.floor(e.y/TILE)-p.y)>=4))||available[0];
