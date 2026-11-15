@@ -17,6 +17,8 @@
       </div>
       <div class="top-actions">
         <span class="online-dot"></span><span class="desktop-label">LOCAL SINGLEPLAYER</span>
+        <span id="save-status" class="save-indicator" role="status" aria-live="polite">로컬 저장</span>
+        <button id="help-toggle" class="icon-btn" aria-label="조작법 보기" title="조작법 보기">?</button>
         <button id="audio-toggle" class="icon-btn" aria-label="소리 켜기 또는 끄기" title="소리 켜기 또는 끄기">♫</button>
         <button id="pause-toggle" class="icon-btn" aria-label="일시정지" title="일시정지">Ⅱ</button>
       </div>
@@ -24,7 +26,7 @@
     <div class="dashboard">
       <div class="stat primary-stat">
         <span class="stat-title">SURVIVOR / HP</span>
-        <div class="health-line"><b id="hp-text">8 / 8</b><span id="shield-text">+0 SHIELD</span></div>
+        <div class="health-line"><b id="hp-text">6 / 6</b><span id="shield-text">ANGELS ×0</span></div>
         <div class="track"><div id="hp-bar" class="fill hp-fill"></div></div>
       </div>
       <div class="stat">
@@ -47,7 +49,7 @@
           <span id="mode-label">EXPLORATION</span>
         </div>
         <div class="canvas-wrap">
-          <canvas id="game-canvas" aria-label="The Ghost City 게임 화면. WASD로 이동하고 마우스로 공격합니다."></canvas>
+          <canvas id="game-canvas" aria-label="The Ghost City 게임 화면. WASD나 방향키로 한 칸씩 이동하고 스페이스바로 직선 공격합니다."></canvas>
           <div class="toast-stack" id="toasts" aria-live="polite"></div>
           <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
           <div class="overlay" id="overlay">
@@ -66,8 +68,9 @@
         </div>
         <div class="stage-footer">
           <div class="resources">
-            <div class="res"><span class="res-head"><b>SPEAR DASH</b><span id="energy-text">25 / 100</span></span><div class="track"><div id="energy-bar" class="fill energy-fill"></div></div></div>
-            <div class="res"><span class="res-head"><b>EXPERIENCE / LV.<span id="level-num">1</span></b><span id="xp-text">0 / 32</span></span><div class="track"><div id="xp-bar" class="fill xp-fill"></div></div></div>
+            <div class="res attack-resource"><span class="res-head"><b id="weapon-title">공격 재사용</b><span id="attack-text">READY</span></span><div class="track"><div id="attack-bar" class="fill attack-fill"></div></div></div>
+            <div class="res"><span class="res-head"><b>SPEAR DASH</b><span id="energy-text">LOCKED</span></span><div class="track"><div id="energy-bar" class="fill energy-fill"></div></div></div>
+            <div class="res"><span class="res-head"><b>EXPERIENCE / LV.<span id="level-num">1</span></b><span id="xp-text">0 / 25</span></span><div class="track"><div id="xp-bar" class="fill xp-fill"></div></div></div>
           </div>
           <div class="key-guide">WASD 격자 이동 <span>·</span> SPACE 직선 공격 <span>·</span> SHIFT+SPACE 창 돌진 <span>·</span> E 엘리베이터</div>
         </div>
@@ -76,6 +79,7 @@
         <section class="side-panel map-panel">
           <div class="side-heading"><span>SECTOR SCAN</span><small>LIVE / FOG</small></div>
           <canvas id="minimap" aria-label="탐험 미니맵"></canvas>
+          <div class="scan-meta"><span id="explored-text">탐색 0%</span><span id="threat-text">시야 내 적 0</span></div>
           <div class="map-caption"><span><i class="legend-dot player-dot"></i>YOU</span><span><i class="legend-dot exit-dot"></i>EXIT</span><span><i class="legend-dot shop-dot"></i>SHOP</span></div>
         </section>
         <section class="side-panel loadout-panel">
@@ -86,13 +90,13 @@
         <section class="side-panel">
           <div class="side-heading"><span>FIELD MANUAL</span><small>QUICK REF</small></div>
           <div class="guide-list">
-            <div><kbd>SHIFT / SPACE</kbd><span>창 Lv.3 돌진</span></div>
-            <div><kbd>R</kbd><span>가방 열기</span></div>
+            <div><kbd>SHIFT + SPACE</kbd><span>창 Lv.3 돌진</span></div>
+            <div><kbd>I</kbd><span>가방 열기</span></div>
             <div><kbd>H</kbd><span>회복 물약 <b id="potion-count">×2</b></span></div>
             <div><kbd>E</kbd><span>출구 · 상점 · 엘리베이터</span></div>
             <div><kbd>ESC</kbd><span>일시정지</span></div>
           </div>
-          <div class="cooldown-block"><span>DASH RECHARGE</span><span id="dash-text">READY</span></div>
+          <div class="cooldown-block"><span>창 돌진 / 층당 1회</span><span id="dash-text">READY</span></div>
           <div class="track"><div id="dash-bar" class="fill dash-fill"></div></div>
         </section>
         <section class="side-panel objective">
