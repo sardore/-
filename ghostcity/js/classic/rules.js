@@ -36,8 +36,8 @@ export function tutorialWorld(seed){
   for(let y=12;y<15;y++)tiles[y*w+22]=T.WALL;
   tiles[14*w+23]=T.RUBBLE;tiles[14*w+24]=T.RUBBLE;
   const stair={x:w-3,y:h-3};
-  tiles[stair.y*w+stair.x]=T.STAIRS;
-  tiles[4*w+4]=T.DOOR;
+  tiles[stair.y*w+stair.x]=T.TUTOR_EXIT;
+  tiles[4*w+4]=T.STAIRS;
   return {floor:0,w,h,tiles,visible:new Uint8Array(w*h),seen:new Uint8Array(w*h),
     start:{x:2,y:2},stairs:stair,rooms:[],enemies:[],pickups:[
       {...center(30,6),type:'gem',value:1},
