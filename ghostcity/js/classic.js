@@ -34,6 +34,7 @@ export class ClassicGame extends ClassicBase {
   newRun(seed=((Math.random()*4294967295)>>>0)){
     this.seed=seed>>>0;this.rng=makeRng(this.seed);
     this.world=tutorialWorld(this.seed);this.player=this.makePlayer();
+    this.syncInventory();
     this.sniperWarnings=[];this.visionDirty=false;
     this.elapsed=0;this.kills=0;this.score=0;this.time=0;
     this.mode='playing';this.tutorial=true;this.floorEnding=false;
@@ -85,7 +86,11 @@ export class ClassicGame extends ClassicBase {
     this.attackFlash=Math.max(0,this.attackFlash-dt);
     for(const warning of this.sniperWarnings)warning.life-=dt;
     this.sniperWarnings=this.sniperWarnings.filter(w=>w.life>0);
-    for(const e of w.effects){e.life-=dt;if(e.type==='spark'){e.x+=e.vx*dt;e.y+=e.vy*dt;}}
+    for(const e of w.effects){
+      e.life-=dt;
+      if(e.type==='spark'){e.x+=e.vx*dt;e.y+=e.vy*dt;}
+      else if(e.type==='text')e.y+=(e.vy??-26)*dt;
+    }
     w.effects=w.effects.filter(e=>e.life>0);
     for(const m of this.messages)m.life-=dt;
     this.messages=this.messages.filter(m=>m.life>0);
