@@ -284,6 +284,18 @@ export class Renderer{
       ctx.shadowColor=b.color;ctx.shadowBlur=15;ctx.fillStyle=b.color;
       ellipse(ctx,b.x,b.y,b.r,b.r);ctx.fill();ctx.shadowBlur=0;
     }
+    // Original rules: attacks are a visible, straight cardinal line of tiles.
+    if(game.classic&&game.attackFlash>0&&Array.isArray(game.atkTiles)){
+      const opacity=Math.min(1,game.attackFlash/.16);
+      for(const hit of game.atkTiles){
+        if(hit.x<0||hit.y<0||hit.x>=world.w||hit.y>=world.h)continue;
+        if(!world.visible[hit.y*world.w+hit.x])continue;
+        const bx=hit.x*TILE,by=hit.y*TILE;
+        ctx.fillStyle='rgba(129,236,223,'+(opacity*.19)+')';ctx.fillRect(bx+2,by+2,TILE-4,TILE-4);
+        ctx.strokeStyle='rgba(165,250,247,'+(opacity*.75)+')';
+        ctx.lineWidth=2;ctx.strokeRect(bx+3,by+3,TILE-6,TILE-6);
+      }
+    }
     // Short attack-warning telegraphs for lethal ranged enemies and bosses.
     for(const e of world.enemies){
       if(e.dead||e.cd>.48||e.cd<0)continue;
