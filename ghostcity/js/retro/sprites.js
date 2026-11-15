@@ -61,17 +61,12 @@ export function drawEnemy(ctx,e,x,y,now=0){
   border(ctx,c[1],x+3,y+3,TILE-6,TILE-6,2);
   if(e.slow>0)border(ctx,C.slow,x+2,y+2,TILE-4,TILE-4,2);
 }
-export function drawBoss(ctx,e,cellX,cellY,now=0){
-  // Pygame Boss.blocks() is exactly a five-tile diagonal X.
+export function drawBossCell(ctx,e,x,y,isLeg,now=0){
   const bright=e.bossPhase==='blink'&&Math.floor(now/.09)%2===0;
   const legFlip=Math.floor(now/.16)%2===0;
-  const tiles=[[0,0],[-1,-1],[1,-1],[-1,1],[1,1]];
-  for(const [dx,dy] of tiles){
-    const x=cellX+dx*TILE,y=cellY+dy*TILE;
-    inner(ctx,bright?C.bossFlash:C.boss,x,y,2);
-    border(ctx,C.bossBorder,x+2,y+2,TILE-4,TILE-4,2);
-    if(dx||dy)border(ctx,legFlip?C.bossLegAlt:C.bossLeg,x+1,y+1,TILE-2,TILE-2,2);
-  }
+  inner(ctx,bright?C.bossFlash:C.boss,x,y,2);
+  border(ctx,C.bossBorder,x+2,y+2,TILE-4,TILE-4,2);
+  if(isLeg)border(ctx,legFlip?C.bossLegAlt:C.bossLeg,x+1,y+1,TILE-2,TILE-2,2);
 }
 export function drawPlayer(ctx,x,y){
   inner(ctx,C.player,x,y,3);
