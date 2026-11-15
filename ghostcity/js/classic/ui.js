@@ -32,9 +32,9 @@ function menu(){
     escapeHTML(String(entry.name||'NONAME').slice(0,18))+'</span>'+
     '<strong>'+Math.max(0,Number(entry.score)||0).toLocaleString()+'</strong></div>'
   ).join('');
-  return '<h1>THE GHOST CITY</h1>'+
+  return '<h1 class="menu-title">THE GHOST CITY</h1>'+
     '<div class="ranking-panel"><h2>RANKING (TOP 10)</h2>'+
-    (rows||'<p>아직 기록이 없습니다.</p>')+
+    (rows||'<p>No records yet.</p>')+
     rows+'</div>'+
     '<div class="name-panel">'+
     '<label for="player-name">Enter your name, then press ENTER:</label>'+
