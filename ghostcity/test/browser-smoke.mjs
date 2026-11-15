@@ -36,6 +36,34 @@ try{
   assert.equal((await page.locator('#floor-number').textContent()).trim(),'TUT');
   const canvas=await page.locator('#game-canvas').boundingBox();
   assert.ok(canvas.width>400&&canvas.height>300);
+  // The live game—not only isolated sprite functions—must render a Pygame
+  // white player at the middle of a 30px square viewport.
+  const live=await page.locator('#game-canvas').evaluate(cv=>{
+    const ctx=cv.getContext('2d'),centerX=Math.floor(cv.width/2),centerY=Math.floor(cv.height/2);
+    return {player:Array.from(ctx.getImageData(centerX,centerY,1,1).data),
+      imageSmoothing:ctx.imageSmoothingEnabled};
+  });
+  assert.deepEqual(live.player,[215,245,255,255],'in-game player must be the original white block');
+  assert.equal(live.imageSmoothing,false,'pixel art should never be interpolated');
+  const design=await page.evaluate(()=>{
+    const css=(selector)=>getComputedStyle(document.querySelector(selector));
+    return {background:css('body').backgroundColor,
+      bodyGradient:css('body').backgroundImage,
+      headerGradient:css('.topbar').backgroundImage,
+      modalGradient:css('.modal').backgroundImage,
+      layout:css('.layout').display,
+      pixelScaling:css('#game-canvas').imageRendering,
+      extrasInitiallyClosed:!document.querySelector('.utility-details').open,
+      font:css('body').fontFamily};
+  });
+  assert.equal(design.background,'rgb(10, 10, 18)');
+  assert.equal(design.bodyGradient,'none');
+  assert.equal(design.headerGradient,'none');
+  assert.equal(design.modalGradient,'none');
+  assert.equal(design.layout,'block');
+  assert.equal(design.pixelScaling,'pixelated');
+  assert.equal(design.extrasInitiallyClosed,true);
+  assert.ok(!design.font.toLowerCase().includes('rajdhani'));
   assert.ok((await page.locator('#explored-text').textContent()).includes('탐색'));
   assert.match(await page.locator('#save-status').textContent(),/저장됨/);
   await page.click('#help-toggle');
