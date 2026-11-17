@@ -1,14 +1,17 @@
 /* 타이틀 v2: 그라데이션 로고 + 지나가는 빛줄기 + 글자를 감싸고 도는 궤도(혜성). 예전 타이틀(텍스트 두 줄)은 draw-ui.js 에 그대로 있다 */
 import { G, V, g } from './state.js';
-import { PI, TAU, FONT } from './util.js';
+import { PI, TAU, FONT, W0 } from './util.js';
 import { reducedMotion, txt } from './gfx.js';
 
 const WORD = [...'SWINGBY'];
 
 export function drawTitle2() {
   const { VW, VH } = V, still = reducedMotion(), T = still ? 0 : G.T, cx = VW / 2, cy = VH * .22;
-  const size = Math.min(62, VW * .145);
   g.save();
+  g.font = 'italic 900 62px ' + FONT;
+  const naturalWidth = WORD.reduce((w, c) => w + g.measureText(c).width, 0) + 62 * .09 * (WORD.length - 1);
+  // 가운데 정렬을 유지하면서 왼쪽 메뉴 라벨 바깥에 글자가 오도록 한다.
+  const size = 62 * Math.min(1, (W0 - 148) / naturalWidth);
   g.font = 'italic 900 ' + size + 'px ' + FONT; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
   const track = size * .09;
   const widths = WORD.map(c => g.measureText(c).width);
