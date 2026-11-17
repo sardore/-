@@ -21,6 +21,10 @@ export const popText = (x, y, s, c, sz) => G.texts.push({ x, y, t: 0, s, c, sz: 
 /** 점수 추가 + 떠오르는 숫자. 능력치·바이옴 배율이 여기서 한 번에 적용된다 */
 export function addScore(n, x, y, c, label, big) {
   n = Math.round(n * scoreMul()); G.score += n;
+  if (n > 0) {
+    const cue = G.scoreCue;
+    G.scoreCue = { gain: n + (cue && G.T - cue.at < .24 ? cue.gain : 0), at: G.T };
+  }
   popText(x, y, (label ? label + '  ' : '') + '+' + n, c || '#fff', big);
   return n;
 }

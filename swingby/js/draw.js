@@ -40,9 +40,9 @@ export function draw() {
   drawFloorWarn();
   drawLowO2();
   drawHud();
-  drawMuteButton();
   drawOverlays();
   drawScreens();
+  drawMuteButton();
   if (G.st === 'pick') drawPick();
   drawTutoScreen();
 }

@@ -4,7 +4,7 @@ import { W0, TAU, FONT, clamp, easeOut } from './util.js';
 import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
-import { rr, txt, GFX } from './gfx.js';
+import { rr, txt, GFX, reducedMotion, telemetry } from './gfx.js';
 import { drawTitle2 } from './draw-title2.js';
 import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
 import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
@@ -16,9 +16,22 @@ export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 
 export function drawHud() {
   const { VW, OX } = V, b = G.boss;
   if (G.st !== 'play' && G.st !== 'pick') return;
-  if (b) txt(String(G.score), OX + 14, 74, 20, '#fff', 'left', 800);   // 보스전: 점수를 작게 왼쪽으로 옮겨 가운데 위쪽을 보스에게 내준다
-  else txt(String(G.score), VW / 2, 54, 40, '#fff', 'center', 800);
-  if (G.combo > 1 && !b) txt('x' + G.combo + ' 콤보', VW / 2, 78, 15, '#7dd3ff');
+  const age = G.scoreCue ? G.T - G.scoreCue.at : Infinity, motion = !reducedMotion();
+  if (b) telemetry(String(G.score), OX + 14, 74, 18, age < .22 ? '#ffb46f' : '#f1f1e9', 'left', 72);
+  else {
+    const settle = motion ? 1 - easeOut(age / .24) : 0;
+    telemetry(String(G.score), VW / 2, 54, 38 + 5 * settle, '#f1f1e9', 'center', 158);
+    if (age < .72) {
+      g.globalAlpha = motion ? 1 - easeOut(Math.max(0, age - .36) / .36) : 1;
+      telemetry('+' + G.scoreCue.gain, VW / 2, 77 - (motion ? easeOut(age / .72) * 4 : 0), 13, '#ffb46f');
+      g.globalAlpha = 1;
+    }
+    if (G.combo > 1) {
+      const comboY = 96;
+      telemetry('×' + G.combo, VW / 2 - 5, comboY, 15, '#99e1f0', 'right');
+      txt('콤보', VW / 2 + 3, comboY, 11, '#b5c7ce', 'left', 700);
+    }
+  }
   const sd = SHIPS[G.shipId];
   txt('Lv ' + G.tier + '  ' + sd.n, OX + 14, 30, 14, 'hsl(' + sd.L.h + ',90%,75%)', 'left', 700);
   if (!b) {
@@ -40,10 +53,17 @@ function drawBossHud() {
   const b = G.boss, { VW, VH, OX } = V, T = G.T, bw = 240, bx = VW / 2 - bw / 2, by = 52;   // 보스전 HUD: 이름·체력·예고 칩을 위쪽에 촘촘히
   txt(b.d.n, VW / 2 - 6, by - 8, 14, '#fff', 'center', 800);
   g.font = '800 14px ' + FONT; txt('공격 ' + b.d.atk + '초', VW / 2 + 6 + g.measureText(b.d.n).width / 2, by - 8, 11, 'rgba(255,150,130,.9)', 'left', 700);
-  g.fillStyle = 'rgba(255,255,255,.14)'; rr(bx, by, bw, 10, 5); g.fill();
-  const f = clamp(b.hp / b.max, 0, 1); g.fillStyle = b.hitT > 0 ? '#fff' : 'hsl(' + b.d.hue + ',90%,58%)'; rr(bx, by, Math.max(8, bw * f), 10, 5); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2; for (const q of (b.d.kind === 'quasar' ? [.66, .33] : [.5])) { g.beginPath(); g.moveTo(bx + bw * q, by); g.lineTo(bx + bw * q, by + 10); g.stroke(); }
-  txt(Math.max(0, Math.ceil(b.hp)) + ' / ' + b.max, VW / 2, by + 21, 10, 'rgba(255,255,255,.6)', 'center', 600);
+  const now = clamp(b.hp / b.max, 0, 1);
+  if (hpReadout.boss !== b || G.T < hpReadout.at) {
+    Object.assign(hpReadout, { boss: b, shown: now, at: G.T });
+  }
+  const elapsed = G.T - hpReadout.at;
+  const shown = reducedMotion() ? now : Math.max(now, hpReadout.shown - elapsed * .66);
+  hpReadout.shown = shown; hpReadout.at = G.T;
+  drawGauge(bx, by, bw, 8, now, b.hitT > 0 ? '#fff' : 'hsl(' + b.d.hue + ',70%,65%)', shown);
+  g.fillStyle = '#111821';
+  for (const q of (b.d.kind === 'quasar' ? [.66, .33] : [.5])) g.fillRect(bx + bw * q - 1, by, 2, 8);
+  telemetry(Math.max(0, Math.ceil(b.hp)) + ' / ' + b.max, VW / 2, by + 20, 10, '#c6d0da');
   if (b.state !== 'fight') return;
   const cy = by + 30;
   let x = VW / 2 - (b.q.length * 70) / 2 + 35;
@@ -54,18 +74,29 @@ function drawBossHud() {
   if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
   if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선  맵 ×2', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
   // 산소 게이지: 보스전에서는 회복되지 않는다
-  const ow = 280, ox = VW / 2 - ow / 2, oy = VH - 44, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
-  g.fillStyle = 'rgba(255,255,255,.14)'; rr(ox, oy, ow, 12, 6); g.fill();
-  g.fillStyle = low ? 'rgba(255,' + Math.floor(80 + 80 * Math.sin(T * 10)) + ',80,1)' : '#b8a8ff'; rr(ox, oy, Math.max(6, ow * of), 12, 6); g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 1.5; rr(ox, oy, ow, 12, 6); g.stroke();
-  txt('산소 ' + G.bo2.toFixed(1) + '초', VW / 2, oy - 8, 12, low ? '#ff9a9a' : 'rgba(220,210,255,.85)', 'center', 700);
+  const ow = 244, ox = VW / 2 - ow / 2, oy = VH - 38, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
+  const oxygen = low ? '#ff8a75' : '#90d9e7';
+  drawGauge(ox, oy, ow, 7, of, oxygen);
+  const warningX = ox + ow * clamp(6 / G.bo2max, 0, 1);
+  g.fillStyle = '#d0e0e6'; g.fillRect(warningX - 1, oy - 2, 1, 11);
+  txt(low ? '산소 부족' : '산소', ox, oy - 8, 12, oxygen, 'left', 800);
+  telemetry(Math.max(0, G.bo2).toFixed(1) + ' s', ox + ow, oy - 8, 14, oxygen, 'right');
+}
+
+const hpReadout = { boss: null, shown: 0, at: 0 };
+
+function drawGauge(x, y, w, h, fraction, color, trail = fraction) {
+  g.fillStyle = '#101923'; g.fillRect(x, y, w, h);
+  g.strokeStyle = '#6a7f8a'; g.lineWidth = 1; g.strokeRect(x - .5, y - .5, w + 1, h + 1);
+  if (trail > fraction) { g.fillStyle = '#b57e64'; g.fillRect(x, y, w * trail, h); }
+  g.fillStyle = color; g.fillRect(x, y, w * fraction, h);
 }
 
 /** 산소가 얼마 안 남았을 때 화면 가장자리가 붉게 */
 export function drawLowO2() {
   const b = G.boss, { VW, VH } = V;
   if (!(b && b.state === 'fight' && G.bo2 < 6)) return;
-  G.lowO2 = clamp(.5 + .5 * Math.sin(G.T * 9), 0, 1) * (1 - G.bo2 / 6);
+  G.lowO2 = (reducedMotion() ? .65 : .5 + .5 * Math.sin(G.T * 9)) * clamp(1 - G.bo2 / 6, 0, 1);
   const vg = g.createRadialGradient(VW / 2, VH / 2, VH * .3, VW / 2, VH / 2, VH * .8);
   vg.addColorStop(0, 'rgba(255,40,40,0)'); vg.addColorStop(1, 'rgba(255,40,40,' + (.45 * G.lowO2) + ')'); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
 }
@@ -108,13 +139,11 @@ export function drawScreens() {
     g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
     if (GFX.v >= 2) drawTitle2();
     else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
-    if (MODE.ops) { g.fillStyle = 'rgba(14,12,8,.34)'; g.fillRect(0, 0, VW, VH); txt('BLACK SHIP MODE', VW / 2, VH - 112, 14, '#e6dcc0', 'center', 800); }   // 모드 전환으로 블랙쉽을 골랐다는 표시
-    g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#fff'); g.globalAlpha = 1;
     drawTitleMenu();
-    if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);   // 어느 버전을 받았는지 확인용
-    if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 120, 14, '#ffd24a', 'center', 800);
+    if (window.__BUILD) telemetry('build ' + window.__BUILD, 10, VH - 10, 9, '#71828d', 'left');   // 어느 버전을 받았는지 확인용
+    if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 220, 14, '#ffd24a', 'center', 800);
     const rec = MODE.ops ? { best: OPSREC.best, boss: OPSREC.boss, n: OPS_BOSSES.length, extra: OPSREC.time > 0 ? '  ·  최단 ' + fmtTime(OPSREC.time) : '' } : { best: G.best, boss: G.bestBoss, n: STAGES.length, extra: '' };   // 고른 모드의 기록을 같은 표기로
-    if (rec.best > 0) txt('최고 기록 ' + rec.best + (rec.boss > 0 ? '  ·  보스 ' + Math.min(rec.boss, rec.n) + '/' + rec.n + (rec.boss >= rec.n ? ' 클리어' : '') : '') + rec.extra, VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
+    if (rec.best > 0) txt('최고 기록 ' + rec.best + (rec.boss > 0 ? '  ·  보스 ' + Math.min(rec.boss, rec.n) + '/' + rec.n + (rec.boss >= rec.n ? ' 클리어' : '') : '') + rec.extra, VW / 2, VH - 192, 13, '#c2cdd3', 'center', 500);
   }
   if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
@@ -126,7 +155,7 @@ export function drawScreens() {
   } else if (G.st === 'clear') {
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('TON 618 격파', VW / 2, VH * .28, 44, '#ffe27a', 'center', 900); txt('우주의 끝에서 살아 돌아왔다', VW / 2, VH * .28 + 32, 15, 'rgba(255,255,255,.8)', 'center', 500);
-    txt(String(G.score), VW / 2, VH * .28 + 112, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
+    telemetry(String(G.score), VW / 2, VH * .28 + 112, 64, '#f1f1e9', 'center', 360); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .28 + 142, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .28 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
     if (G.shardGain > 0) txt('별 조각 +' + G.shardGain, VW / 2, VH * .28 + 198, 14, '#ffe27a', 'center', 800);
     txt('이제부터 무한 모드 — 궤도가 점점 빨리 무너지고 보스는 끝없이 강해져', VW / 2, VH * .28 + 218, 12, 'rgba(255,255,255,.55)', 'center', 500);
@@ -142,7 +171,7 @@ export function drawScreens() {
     const a = clamp(G.deadT * 2, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.72 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('항해 종료', VW / 2, VH * .3, 40, '#fff', 'center', 900); txt(G.deadWhy, VW / 2, VH * .3 + 30, 15, '#ff8f8f', 'center', 500);
     const b = G.boss; if (b && b.state === 'fight') txt(b.d.n + ' 남은 체력 ' + Math.max(1, Math.round(b.hp / b.max * 100)) + '%', VW / 2, VH * .3 + 52, 13, 'rgba(255,200,170,.85)', 'center', 600);
-    txt(String(G.score), VW / 2, VH * .3 + 110, 64, '#fff', 'center', 900); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .3 + 140, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
+    telemetry(String(G.score), VW / 2, VH * .3 + 110, 64, '#f1f1e9', 'center', 360); txt(G.newBest ? '★ 신기록 ★' : '최고 ' + G.best, VW / 2, VH * .3 + 140, 16, G.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
     txt('행성 ' + G.hops + '개  ·  최대 콤보 x' + G.maxCombo + '  ·  보스 ' + G.kills + '회 격파', VW / 2, VH * .3 + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
     txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : '별 조각 +' + G.shardGain, VW / 2, VH * .3 + 198, 14, '#ffe27a', 'center', 800);
     if (G.deadT > .7) { drawDeadShopBtn(); g.globalAlpha = .6 + .4 * Math.sin(T * 4); txt('터치해서 다시 출발', VW / 2, VH - 80, 19, '#fff'); }

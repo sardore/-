@@ -1,11 +1,11 @@
 /* 선택 화면: 기체 진화(상위 기체 비교 + 능력치 다각형) · 강화 카드 */
 import { G, V, g } from './state.js';
-import { PI, TAU, clamp } from './util.js';
+import { PI, TAU, clamp, easeOut } from './util.js';
 import { STAT_INFO } from './data.js';
 import { SHIPS, statsAfter } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
 import { drawRadar } from './radar.js';
-import { rr, txt, chip, chipWidth } from './gfx.js';
+import { txt, chip, chipWidth, flightPanel, reducedMotion, telemetry } from './gfx.js';
 import { statsFor } from './ops-fleet.js';
 import { OPS } from './ops-data.js';
 
@@ -42,12 +42,25 @@ export function pickLayout() {
 }
 
 export function drawPick() {
-  g.fillStyle = G.pickMode === 'rescue' ? 'rgba(5,6,15,.93)' : 'rgba(5,6,15,.82)'; g.fillRect(0, 0, V.VW, V.VH);
+  g.fillStyle = G.pickMode === 'rescue' ? 'rgba(5,6,15,.93)' : 'rgba(7,12,18,.87)'; g.fillRect(0, 0, V.VW, V.VH);
   if (G.pickMode === 'rescue') drawRescue(); else if (G.pickMode === 'evo') drawEvo(); else drawCards();
   g.globalAlpha = 1;
 }
 
-const fade = i => clamp(G.pickT * 3 - i * .25, 0, 1);
+function enterChoice(i) {
+  if (reducedMotion()) return;
+  // 마지막 카드까지 입력 잠금(.45초)이 풀리기 전에 제자리에 닿는다.
+  const p = easeOut((G.pickT - i * .06) / .27);
+  g.globalAlpha *= p;
+  g.translate(0, (1 - p) * 16);
+}
+
+function choicePanel(r, color) {
+  flightPanel(r.x, r.y, r.w, r.h, 12);
+  g.fillStyle = '#141e29'; g.fill();
+  g.strokeStyle = '#435767'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = color; g.fillRect(r.x, r.y, 3, r.h);
+}
 const shipHsl = d => 'hsl(' + d.L.h + ',90%,68%)';
 
 function drawEvo() {
@@ -60,12 +73,13 @@ function drawEvo() {
 
   G.evoOpts.forEach((o, i) => {
     const r = rects[i], col = shipHsl(o), after = statsAfter(G.stats, o);
-    g.globalAlpha = fade(i);
-    rr(r.x, r.y, r.w, r.h, 14); g.fillStyle = 'rgba(22,24,48,.96)'; g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+    g.save();
+    enterChoice(i);
+    choicePanel(r, col);
     const gg = g.createRadialGradient(r.x + 42, r.y + 52, 4, r.x + 42, r.y + 52, 40);
     gg.addColorStop(0, 'hsla(' + o.L.h + ',90%,60%,.28)'); gg.addColorStop(1, 'hsla(' + o.L.h + ',90%,60%,0)'); g.fillStyle = gg; g.fillRect(r.x + 2, r.y + 2, 82, r.h - 4);
-    g.save(); g.translate(r.x + 44, r.y + 54); g.rotate(-.35 + .1 * Math.sin(G.T * 2 + i)); g.shadowColor = col; g.shadowBlur = 10; drawShip(g, o, .7, G.T, 2.25 / SHIP_SC[o.t]); g.restore();
-    txt(String(i + 1), r.x + 12, r.y + 18, 12, 'rgba(255,255,255,.4)', 'left', 800);
+    g.save(); g.translate(r.x + 44, r.y + 54); g.rotate(-.35 + (reducedMotion() ? 0 : .06 * Math.sin(G.T * 2 + i))); g.shadowColor = col; g.shadowBlur = 10; drawShip(g, o, .7, G.T, 2.25 / SHIP_SC[o.t]); g.restore();
+    telemetry(String(i + 1), r.x + 12, r.y + 18, 12, '#aabcc6', 'left');
     txt(o.n, r.x + 86, r.y + 27, 18, '#fff', 'left', 800);
     txt(o.d, r.x + 86, r.y + 45, 11, 'rgba(255,255,255,.65)', 'left', 500);
     // 바뀌는 능력치: 새 퍼센트 값
@@ -77,6 +91,7 @@ function drawEvo() {
       x += chip(t, x, y, c) + 5;
     }
     drawRadar(r.x + r.w - 54, r.y + 54, 36, [{ stats: G.stats, color: 'rgba(255,255,255,.7)', dash: true, w: 1.2 }, { stats: after, color: col, fill: .28 }]);
+    g.restore();
   });
 }
 
@@ -87,15 +102,17 @@ function drawCards() {
   G.cards.forEach((c, i) => {
     const r = rects[i], info = STAT_INFO[c.k], now = G.stats[c.k], next = Math.min(c.cap, now + c.step);
     const after = Object.assign({}, G.stats, { [c.k]: next });
-    g.globalAlpha = fade(i);
-    rr(r.x, r.y, r.w, r.h, 14); g.fillStyle = 'rgba(22,24,48,.95)'; g.fill(); g.strokeStyle = info.c; g.lineWidth = 2; g.stroke();
-    g.fillStyle = info.c; g.beginPath(); g.arc(r.x + 34, r.y + 42, 17, 0, TAU); g.fill();
-    txt(String(i + 1), r.x + 34, r.y + 48, 17, '#0b0c1c', 'center', 800);
+    g.save();
+    enterChoice(i);
+    choicePanel(r, info.c);
+    g.strokeStyle = info.c; g.lineWidth = 1; g.strokeRect(r.x + 21, r.y + 29, 25, 25);
+    telemetry(String(i + 1), r.x + 33.5, r.y + 47, 15, info.c);
     txt(c.n, r.x + 64, r.y + 34, 18, '#fff', 'left', 800);
     txt(c.d, r.x + 64, r.y + 56, 12, 'rgba(255,255,255,.7)', 'left', 500);
-    const label = c.k === 'shield' ? now + ' → ' + next : now + '% → ' + next + '%';
-    txt(label, r.x + r.w - 84, r.y + 35, 14, info.c, 'right', 800);
+    const label = c.k === 'shield' ? now + ' > ' + next : now + '% > ' + next + '%';
+    telemetry(label, r.x + r.w - 84, r.y + 35, 13, info.c, 'right');
     drawRadar(r.x + r.w - 42, r.y + 44, 24, [{ stats: G.stats, color: 'rgba(255,255,255,.7)', dash: true, w: 1.1 }, { stats: after, color: info.c, fill: .3 }]);
+    g.restore();
   });
 }
 
