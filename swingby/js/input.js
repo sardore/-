@@ -8,7 +8,8 @@ import { startTutorial, tutoPress } from './tutorial.js';
 import { startOps, MODE, toggleMode } from './ops.js';
 import { pickLayout } from './draw-pick.js';
 import { MUTE_HIT } from './draw-ui.js';
-import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, titleMenuHit, deadShopHit, deadModeHit } from './shop-ui.js';
+import { moveTitlePointer, titleMenuHit } from './draw-title2.js';
+import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, deadShopHit, deadModeHit } from './shop-ui.js';
 
 /** 눌렀을 때. screen 좌표(px,py)는 화면 픽셀, key 가 true 면 키보드 입력 */
 export function pointerDown(px, py, key) {
@@ -42,7 +43,11 @@ export function bindInput() {
   cv.addEventListener('pointerdown', e => { e.preventDefault(); pointerDown(e.clientX, e.clientY, false); });
   cv.addEventListener('pointerup', e => pointerUp(e.clientX, e.clientY));
   cv.addEventListener('pointercancel', () => pointerUp());
-  cv.addEventListener('pointermove', e => { if (G.st === 'shop') shopMove(e.clientY / V.S); });
+  cv.addEventListener('pointermove', e => {
+    if (G.st === 'shop') shopMove(e.clientY / V.S);
+    if (G.st === 'title' && e.pointerType === 'mouse') moveTitlePointer(e.clientX / V.S, e.clientY / V.S);
+  });
+  cv.addEventListener('pointerleave', () => moveTitlePointer(-1, -1));
   cv.addEventListener('wheel', e => { if (G.st === 'shop') shopWheel(e.deltaY); }, { passive: true });
   cv.addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('blur', () => pointerUp());

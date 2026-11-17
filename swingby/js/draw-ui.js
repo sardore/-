@@ -1,14 +1,12 @@
 /* 화면 위 UI: HUD, 보스 체력·산소, 배너·시전 문구·토스트, 타이틀/사망/클리어 화면, 음소거 버튼 */
 import { G, V, g } from './state.js';
 import { W0, TAU, FONT, clamp, easeOut } from './util.js';
-import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
+import { STAGES, ATK, BIOMES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
-import { rr, txt, GFX, reducedMotion, telemetry } from './gfx.js';
-import { drawTitle2 } from './draw-title2.js';
-import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
+import { rr, txt, reducedMotion, telemetry } from './gfx.js';
+import { drawDeadShopBtn } from './shop-ui.js';
 import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
-import { OPSREC, fmtTime, MODE } from './ops.js';
 import { OPS_BOSSES } from './ops-data.js';
 
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
@@ -131,20 +129,10 @@ export function drawOverlays() {
   }
 }
 
-/** 타이틀 · 클리어 · 사망 화면 */
+/** 클리어 · 사망 화면 */
 export function drawScreens() {
   const { VW, VH } = V, T = G.T;
   if (G.ops && (G.st === 'clear' || G.st === 'dead')) { drawOpsEnd(); return; }
-  if (G.st === 'title') {
-    g.fillStyle = 'rgba(5,6,15,.55)'; g.fillRect(0, 0, VW, VH);
-    if (GFX.v >= 2) drawTitle2();
-    else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
-    drawTitleMenu();
-    if (window.__BUILD) telemetry('build ' + window.__BUILD, 10, VH - 10, 9, '#71828d', 'left');   // 어느 버전을 받았는지 확인용
-    if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - 220, 14, '#ffd24a', 'center', 800);
-    const rec = MODE.ops ? { best: OPSREC.best, boss: OPSREC.boss, n: OPS_BOSSES.length, extra: OPSREC.time > 0 ? '  ·  최단 ' + fmtTime(OPSREC.time) : '' } : { best: G.best, boss: G.bestBoss, n: STAGES.length, extra: '' };   // 고른 모드의 기록을 같은 표기로
-    if (rec.best > 0) txt('최고 기록 ' + rec.best + (rec.boss > 0 ? '  ·  보스 ' + Math.min(rec.boss, rec.n) + '/' + rec.n + (rec.boss >= rec.n ? ' 클리어' : '') : '') + rec.extra, VW / 2, VH - 192, 13, '#c2cdd3', 'center', 500);
-  }
   if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('튜토리얼 완료', VW / 2, VH * .3, 40, '#ffe27a', 'center', 900);
