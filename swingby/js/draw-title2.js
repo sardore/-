@@ -1,204 +1,99 @@
-/* 타이틀 전용 장면. 화면 비율에 따라 행성과 조작부를 따로 배치한다. */
+/* 타이틀 v2: 그라데이션 로고 + 지나가는 빛줄기 + 글자를 감싸고 도는 궤도(혜성). 예전 타이틀(텍스트 두 줄)은 draw-ui.js 에 그대로 있다 */
 import { G, V, g } from './state.js';
-import { clamp, PI, TAU } from './util.js';
-import { reducedMotion, shardIcon, telemetry, txt } from './gfx.js';
-import { BOSSES, STAGES } from './data.js';
-import { MODE, OPSREC, fmtTime } from './ops.js';
-import { OPS_BOSSES } from './ops-data.js';
-import { SHOP } from './shop.js';
-import { SHIPS } from './ships.js';
-import { drawShip } from './ship-art.js';
+import { PI, TAU, FONT } from './util.js';
+import { reducedMotion, txt } from './gfx.js';
 
-const planet = new Image();
-planet.src = new URL('../art/ringed-world.webp', import.meta.url).href;
+const WORD = [...'SWINGBY'];
 
-const PAPER = '#f4ead8';
-const MENU = [{ key: 'shop', label: '상점' }, { key: 'tuto', label: '튜토리얼' }, { key: 'ops', label: '블랙쉽' }];
-const LETTERS = [
-  [28, [[28, 0], [5, 0], [0, 5], [0, 15], [5, 20], [23, 20], [28, 25], [28, 35], [23, 40], [0, 40]]],
-  [44, [[0, 0], [7, 40], [14, 40], [22, 15], [30, 40], [37, 40], [44, 0]]],
-  [11, [[0, 0], [11, 0]], [[5.5, 0], [5.5, 40]], [[0, 40], [11, 40]]],
-  [29, [[0, 40], [0, 0], [3, 0], [26, 40], [29, 40], [29, 0]]],
-  [30, [[30, 0], [6, 0], [0, 6], [0, 34], [6, 40], [24, 40], [30, 34], [30, 21], [16, 21]]],
-  [28, [[0, 40], [0, 0], [23, 0], [28, 5], [28, 14], [23, 20], [0, 20]], [[23, 20], [28, 26], [28, 35], [23, 40], [0, 40]]],
-  [30, [[0, 0], [15, 22], [30, 0]], [[15, 22], [15, 40]]]
-];
-const GAP = 11;
-const MARK_W = LETTERS.reduce((width, [w]) => width + w, 0) + GAP * (LETTERS.length - 1) + 19;
-
-let seed = 312;
-function nextStar() {
-  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-  return seed / 4294967296;
-}
-const stars = Array.from({ length: 148 }, () => [nextStar(), nextStar(), nextStar(), nextStar()]);
-let hoverX = -1, hoverY = -1;
-export function moveTitlePointer(x, y) { hoverX = x; hoverY = y; }
-
-function layout() {
-  const { VW, VH } = V;
-  const wide = VW / VH > 1.14;
-  const margin = wide ? Math.max(44, (VW - 1050) / 2) : 27;
-  const area = wide ? Math.min(500, VW * .48) : Math.min(VW - margin * 2, 480);
-  const x = wide ? margin : (VW - area) / 2;
-  const y = wide ? VH * .27 : clamp(VH * .17, 85, 150);
-  const button = { x, y: wide ? VH * .66 : VH - 154, w: wide ? 222 : area, h: 52 };
-  const menu = MENU.map(({ key, label }, i) => ({ key, label, x: x + i * 102, y: button.y + 67, w: 97, h: 38 }));
-  const art = wide
-    ? { x: VW * .785, y: VH * .50, w: Math.min(VH * 1.72, VW * .93) }
-    : { x: VW / 2 + VW * .08, y: VH * .544, w: Math.min(VW * 1.61, VH * 1.19) };
-  return { wide, x, y, area, button, menu, art };
-}
-
-const inside = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
-export function titleMenuHit(x, y) {
-  return layout().menu.find(r => inside(r, x, y))?.key || null;
-}
-
-function drawBackdrop({ wide, art }, time) {
-  const { VW, VH } = V;
-  g.fillStyle = '#0a0c13';
-  g.fillRect(0, 0, VW, VH);
-  const atmosphere = g.createRadialGradient(art.x, art.y, 0, art.x, art.y, art.w * .62);
-  atmosphere.addColorStop(0, '#2b272b');
-  atmosphere.addColorStop(.55, '#161822');
-  atmosphere.addColorStop(1, '#0a0c1300');
-  g.fillStyle = atmosphere; g.fillRect(0, 0, VW, VH);
-
-  for (const [x, y, size, tone] of stars) {
-    g.globalAlpha = .18 + tone * .45;
-    g.fillStyle = tone > .8 ? '#e9ccac' : '#b0b9c8';
-    const radius = size > .95 ? 2 : .6 + size * .85;
-    g.fillRect(x * VW, y * VH, radius, radius);
-    if (size > .977) {
-      g.globalAlpha *= .6;
-      g.fillRect(x * VW - 3, y * VH + .5, 8, 1);
-      g.fillRect(x * VW + .5, y * VH - 3, 1, 8);
-    }
-  }
-  g.globalAlpha = 1;
-
-  if (planet.complete && planet.naturalWidth) {
-    const h = art.w * planet.naturalHeight / planet.naturalWidth;
-    g.drawImage(planet, art.x - art.w / 2, art.y - h / 2, art.w, h);
-  }
-
-  // 항로는 화면 가장자리에서 들어와 고리 위를 스쳐 지나간다.
-  drawFlyby(art, time);
-
-  const shade = g.createLinearGradient(0, 0, wide ? VW * .65 : 0, wide ? 0 : VH);
-  if (wide) {
-    shade.addColorStop(0, '#090b129e');
-    shade.addColorStop(.55, '#090b1260');
-    shade.addColorStop(1, '#090b1200');
-  } else {
-    shade.addColorStop(0, '#0a0c1290');
-    shade.addColorStop(.27, '#0a0c1230');
-    shade.addColorStop(.43, '#0a0c1200');
-    shade.addColorStop(.75, '#0a0c1200');
-    shade.addColorStop(1, '#0a0c12ed');
-  }
-  g.fillStyle = shade; g.fillRect(0, 0, VW, VH);
-}
-
-function drawFlyby(art, time) {
-  const scale = art.w / 1320;
-  const flight = reducedMotion() ? -.82 : -.82 + (time % 12) / 12 * TAU;
-  const rx = 531, ry = 183;
+export function drawTitle2() {
+  const { VW, VH } = V, still = reducedMotion(), T = still ? 0 : G.T, cx = VW / 2, cy = VH * .22;
+  const size = Math.min(62, VW * .145);
   g.save();
-  g.translate(art.x, art.y);
-  g.scale(scale, scale);
-  g.rotate(-.41);
-  g.strokeStyle = '#e4c9aa59';
-  g.lineWidth = 1.5;
-  g.setLineDash([4, 11]);
-  g.beginPath(); g.ellipse(0, 0, rx, ry, 0, PI + .58, TAU + .53); g.stroke();
-  g.setLineDash([]);
+  g.font = 'italic 900 ' + size + 'px ' + FONT; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  const track = size * .09;
+  const widths = WORD.map(c => g.measureText(c).width);
+  const total = widths.reduce((a, b) => a + b, 0) + track * (WORD.length - 1);
+  let x = cx - total / 2;
+  const base = cy + size * .34;
+  const glyphs = WORD.map((letter, i) => {
+    const glyph = { letter, x, y: base + (still ? 0 : Math.sin(T * 1.6 + i * .55) * 1.35) };
+    x += widths[i] + track;
+    return glyph;
+  });
+  const orbit = { x: cx, y: cy - size * .3, rx: Math.min(total * .64, VW * .47), ry: size * .44, rot: -.2 };
 
-  // 행성 뒤로 가려지는 구간에서는 기체와 꼬리를 숨긴다.
-  if (Math.sin(flight) < -.18 || Math.abs(Math.cos(flight)) > .57) {
-    g.lineWidth = 2.8;
-    g.strokeStyle = '#facb8eaf';
-    g.beginPath(); g.ellipse(0, 0, rx, ry, 0, flight - .19, flight - .025); g.stroke();
-    g.translate(Math.cos(flight) * rx, Math.sin(flight) * ry);
-    g.rotate(Math.atan2(Math.cos(flight) * ry, -Math.sin(flight) * rx));
-    drawShip(g, SHIPS.base, .8, time, 1.38);
+  const halo = g.createRadialGradient(cx, orbit.y, 0, cx, orbit.y, total * .72);
+  halo.addColorStop(0, 'rgba(103,157,239,.25)');
+  halo.addColorStop(.51, 'rgba(88,115,213,.12)');
+  halo.addColorStop(1, 'rgba(88,115,213,0)');
+  g.fillStyle = halo; g.fillRect(0, orbit.y - total, VW, total * 2);
+
+  drawOrbit(orbit, false, T);
+  const body = g.createLinearGradient(0, base - size * .74, 0, base + 1);
+  body.addColorStop(0, '#f9fcff');
+  body.addColorStop(.43, '#caefff');
+  body.addColorStop(.73, '#b3d5ff');
+  body.addColorStop(1, '#a295ff');
+  g.lineJoin = 'round'; g.lineWidth = 4;
+  g.strokeStyle = '#11172f';
+  g.shadowColor = 'rgba(116,180,255,.84)'; g.shadowBlur = 15;
+  for (const c of glyphs) g.strokeText(c.letter, c.x, c.y);
+  g.shadowBlur = 0;
+  g.fillStyle = body;
+  for (const c of glyphs) g.fillText(c.letter, c.x, c.y);
+
+  // 빛이 로고를 가로지를 때만 얇은 반사를 얹는다.
+  const beam = (T * .37) % 1.7 - .3;
+  if (!still && beam > -.11 && beam < 1.11) {
+    const left = cx - total / 2;
+    const sheen = g.createLinearGradient(left + total * (beam - .11), 0, left + total * (beam + .11), size * .36);
+    sheen.addColorStop(0, '#ffffff00'); sheen.addColorStop(.5, '#ffffffa0'); sheen.addColorStop(1, '#ffffff00');
+    g.fillStyle = sheen;
+    for (const c of glyphs) g.fillText(c.letter, c.x, c.y);
+  }
+  drawOrbit(orbit, true, T);
+
+  // 부제
+  const sy = cy + size * .34 + 28;
+  for (const sg of [-1, 1]) { const lg = g.createLinearGradient(cx + sg * 62, 0, cx + sg * 150, 0); lg.addColorStop(0, 'rgba(125,211,255,.7)'); lg.addColorStop(1, 'rgba(125,211,255,0)'); g.fillStyle = lg; g.fillRect(Math.min(cx + sg * 62, cx + sg * 150), sy - 5, 88, 1.5); }
+  txt('스 윙 바 이', cx, sy, 15, '#bde6ff', 'center', 700);
+  txt('행성을 휘감아, 우주 끝까지', cx, sy + 24, 13, '#b7c4dc', 'center', 500);
+  // 반짝임
+  for (const [dx, dy, ph] of [[-.52, -.55, 0], [.5, -.62, 1.7], [.36, .5, 3.1], [-.42, .42, 4.4], [.05, -.78, 2.2]]) {
+    const k = still ? .48 : .53 + .26 * Math.sin(T * 2.4 + ph), x = cx + dx * total, y = orbit.y + dy * size * 1.2, L = 3 + 7 * k;
+    g.strokeStyle = 'rgba(220,240,255,' + (.25 + .6 * k) + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(x - L, y); g.lineTo(x + L, y); g.moveTo(x, y - L); g.lineTo(x, y + L); g.stroke();
   }
   g.restore();
 }
 
-function wordmark(x, y, width) {
-  const scale = width / MARK_W;
-  g.save();
-  g.translate(x + 6 * scale, y + 8 * scale);
-  g.scale(scale, scale);
-  g.transform(1, 0, -.16, 1, 7, 0);
-  const face = g.createLinearGradient(0, -5, 0, 45);
-  face.addColorStop(0, '#fff7e8'); face.addColorStop(1, '#e9d1ae');
-  g.strokeStyle = face;
-  g.lineWidth = 7.8; g.lineJoin = 'bevel'; g.lineCap = 'square';
-  for (const [w, ...lines] of LETTERS) {
-    g.beginPath();
-    for (const [first, ...rest] of lines) {
-      g.moveTo(...first);
-      for (const point of rest) g.lineTo(...point);
+/** 로고를 감싸는 타원 궤도와 그 위를 도는 혜성. front=false 는 글자 뒤(위쪽 반), true 는 글자 앞(아래쪽 반) */
+function drawOrbit(o, front, T) {
+  g.save(); g.translate(o.x, o.y); g.rotate(o.rot);
+  const a0 = front ? 0 : PI, a1 = front ? PI : TAU;
+  g.strokeStyle = front ? 'rgba(150,215,255,.63)' : 'rgba(150,215,255,.25)';
+  g.lineWidth = front ? 1.6 : 1.1;
+  g.beginPath(); g.ellipse(0, 0, o.rx, o.ry, 0, a0, a1); g.stroke();
+
+  const phase = (T * 1.05 + .65) % TAU, count = 20, segment = .048;
+  g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+  for (let k = count; k > 0; k--) {
+    const start = phase - k * segment, end = start + segment;
+    const f = 1 - (k - 1) / count;
+    // 앞뒤 반원을 각각 그리되 경계에서 꼬리가 글자를 뚫지 않도록 자른다.
+    for (const shift of [-TAU, 0]) {
+      const from = Math.max(start, a0 + shift), to = Math.min(end, a1 + shift);
+      if (to <= from) continue;
+      g.lineWidth = 1 + f * 2.2;
+      g.strokeStyle = 'rgba(142,198,255,' + f * f * .6 + ')';
+      g.beginPath(); g.ellipse(0, 0, o.rx, o.ry, 0, from, to); g.stroke();
     }
-    g.stroke();
-    g.translate(w + GAP, 0);
+  }
+  if ((phase < PI) === front) {
+    const x = Math.cos(phase) * o.rx, y = Math.sin(phase) * o.ry;
+    const glow = g.createRadialGradient(x, y, 0, x, y, 14);
+    glow.addColorStop(0, '#d8f8ff'); glow.addColorStop(.25, '#a7e7ff85'); glow.addColorStop(1, '#8ccaff00');
+    g.fillStyle = glow; g.beginPath(); g.arc(x, y, 14, 0, TAU); g.fill();
+    g.fillStyle = '#edfaff'; g.beginPath(); g.arc(x, y, 1.9, 0, TAU); g.fill();
   }
   g.restore();
-}
-
-function drawControls({ button: b, menu }, accent, time) {
-  const hovered = inside(b, hoverX, hoverY);
-  const step = hovered && !reducedMotion() ? 2 * Math.sin(time * 7) : 0;
-  const edge = 13;
-  g.beginPath();
-  g.moveTo(b.x, b.y); g.lineTo(b.x + b.w, b.y); g.lineTo(b.x + b.w, b.y + b.h - edge);
-  g.lineTo(b.x + b.w - edge, b.y + b.h); g.lineTo(b.x, b.y + b.h); g.closePath();
-  g.fillStyle = hovered ? '#fff8eb' : accent; g.fill();
-  txt(MODE.ops ? '블랙쉽 출항' : '항해 시작', b.x + 19, b.y + 33, 18, '#191714', 'left', 800);
-  const arrowX = b.x + b.w - 29 + step, arrowY = b.y + b.h / 2;
-  g.strokeStyle = '#312921'; g.lineWidth = 1.6;
-  g.beginPath(); g.moveTo(arrowX - 16, arrowY); g.lineTo(arrowX, arrowY);
-  g.moveTo(arrowX - 5, arrowY - 5); g.lineTo(arrowX, arrowY); g.lineTo(arrowX - 5, arrowY + 5); g.stroke();
-
-  for (const r of menu) {
-    const active = r.key === 'ops' && MODE.ops;
-    const over = inside(r, hoverX, hoverY);
-    if (active || over) {
-      g.fillStyle = active ? accent : '#dbc4a9';
-      g.fillRect(r.x + 1, r.y + 34, 71, 1);
-    }
-    txt(r.label, r.x + 2, r.y + 24, 14, active ? accent : over ? PAPER : '#bfc0c7', 'left', active || over ? 800 : 600);
-  }
-}
-
-export function drawTitle() {
-  const L = layout(), { VW, VH } = V;
-  const time = reducedMotion() ? 0 : G.T;
-  const accent = MODE.ops ? '#d3e0de' : '#f2ba83';
-  drawBackdrop(L, time);
-
-  const { x, y, area } = L;
-  const wordHeight = area / MARK_W * 53;
-  txt('스윙바이', x, y, 17, accent, 'left', 800);
-  wordmark(x, y + 16, area);
-  txt('행성을 휘감아, 우주 끝까지', x, y + wordHeight + 44, 15, '#d1c7bc', 'left', 500);
-  drawControls(L, accent, time);
-
-  const right = VW - x;
-  const balance = telemetry(String(SHOP.shards), right, 39, 15, '#e8c28d', 'right');
-  shardIcon(right - balance - 12, 34, 6);
-
-  const best = MODE.ops ? OPSREC.best : G.best;
-  const boss = MODE.ops ? OPSREC.boss : G.bestBoss;
-  const total = MODE.ops ? OPS_BOSSES.length : STAGES.length;
-  if (best > 0) {
-    const info = '최고 기록 ' + best + (boss > 0 ? '   ·   보스 ' + Math.min(boss, total) + '/' + total : '');
-    txt(info, x, L.button.y - 17, 12, '#c8beb4', 'left', 600);
-    if (MODE.ops && OPSREC.time > 0) txt('최단 ' + fmtTime(OPSREC.time), x, L.button.y - 35, 11, '#c8beb4', 'left', 600);
-  }
-  if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, x, 39, 12, '#e8c28d', 'left', 700);
-  if (window.__BUILD) telemetry(window.__BUILD, x, VH - 14, 9, '#777981', 'left');
 }

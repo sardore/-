@@ -10,7 +10,6 @@ import { drawWorld, drawPlayer, drawFx } from './draw-world.js';
 import { drawBoss, drawTele, drawHaz, drawFloorWarn } from './draw-boss.js';
 import { drawHud, drawLowO2, drawMuteButton, drawOverlays, drawScreens } from './draw-ui.js';
 import { drawPick } from './draw-pick.js';
-import { drawTitle } from './draw-title2.js';
 import { drawShop } from './shop-ui.js';
 import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
 import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
@@ -18,7 +17,6 @@ import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
 export function draw() {
   const { VW, VH, S, DPR } = V;
   g.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
-  if (G.st === 'title') { drawTitle(); drawMuteButton(); return; }
   (GFX.v >= 2 ? drawBackdrop2 : drawBackdrop)();
   if (G.st === 'shop') { drawShop(); drawMuteButton(); return; }   // 상점은 배경 위에 화면 전체를 덮는다
   g.save();

@@ -4,7 +4,7 @@ import { G, V, g } from './state.js';
 import { TAU, rnd, clamp } from './util.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { rr, txt, shardIcon } from './gfx.js';
+import { rr, txt, shardIcon, reducedMotion, telemetry } from './gfx.js';
 import { TABS, SLOTS, LIST, ITEMS, GLOW_LEVELS, UPGRADES, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, paintedOn, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, colorAt, isDuo, emitDecor, drawShipCos } from './cos.js';
@@ -289,7 +289,45 @@ function drawSpecSummary(R) {
   });
 }
 
-/* ---------- 사망 화면의 버튼 ---------- */
+/* ---------- 시작·사망 화면의 버튼 ---------- */
+/** 튜토리얼 버튼 그림: 궤도를 도는 점과 눌리는 손가락 점 */
+function drawTutoIcon(x, y) {
+  g.save(); g.strokeStyle = GOLD; g.lineWidth = 1.6; g.beginPath(); g.ellipse(x, y, 13, 7, -.5, 0, TAU); g.stroke();
+  g.fillStyle = GOLD; g.beginPath(); g.arc(x + 9, y - 8 * .9, 2.6, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x - 2, y + 2, 4.2, 0, TAU); g.stroke(); g.restore();
+}
+/** 블랙쉽 버튼 그림: 하양·검정 선체의 해방선이 비스듬히 떠 있다 */
+function drawOpsIcon(x, y) { g.save(); g.translate(x, y); g.rotate(-.55); drawShip(g, SHIPS.os2, .8, reducedMotion() ? 0 : G.T, .62); g.restore(); }
+/** 시작화면 왼쪽 위 아이콘 메뉴 (앞으로 도감·기록 같은 메뉴를 같은 줄에 더 놓을 수 있다) */
+const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }];
+const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼, 그 아래에 블랙쉽 모드)
+let menuX = -1, menuY = -1;
+export function moveTitlePointer(x, y) { menuX = x; menuY = y; }
+function titleMenuContains(r, x, y) {
+  // 화면에 보이는 버튼과 바로 아래 라벨을 함께 누를 수 있다.
+  return inRect({ x: r.x - 5, y: r.y - 4, w: r.w + 10, h: r.h + 22 }, x, y);
+}
+export function drawTitleMenu() {
+  MENU.forEach((m, i) => {
+    const r = menuRect(i);
+    const on = m.k === 'ops' && MODE.ops;   // 블랙쉽 버튼은 모드 전환 스위치: 켜져 있으면 테두리가 밝고 ON 표시가 붙는다
+    const hover = titleMenuContains(r, menuX, menuY);
+    const face = g.createLinearGradient(0, r.y, 0, r.y + r.h);
+    face.addColorStop(0, on ? '#343237' : hover ? '#292e48' : '#202539');
+    face.addColorStop(1, on ? '#191c29' : '#0e1425');
+    rr(r.x, r.y, r.w, r.h, 12);
+    g.fillStyle = face; g.fill();
+    g.lineWidth = on ? 1.8 : 1;
+    g.strokeStyle = on || hover ? '#ffe7a4' : '#93815c'; g.stroke();
+    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
+    txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, on || hover ? '#ffe8b0' : '#c9d4e7', 'center', 700);
+    if (on) { rr(r.x + r.w - 20, r.y - 6, 26, 14, 7); g.fillStyle = '#e6dcc0'; g.fill(); txt('ON', r.x + r.w - 7, r.y + 5, 10, '#14110a', 'center', 900); }
+  });
+  const balanceX = V.OX + 420 - 14;
+  const w = telemetry(String(SHOP.shards), balanceX, 38, 15, GOLD, 'right'); shard(balanceX - w - 12, 33, 7);   // 보유 별 조각
+}
+export function titleMenuHit(x, y) { const i = MENU.findIndex((m, j) => titleMenuContains(menuRect(j), x, y)); return i < 0 ? null : MENU[i].k; }
+
 const deadBtn = () => ({ x: V.VW / 2 - 148, y: V.VH - 156, w: 140, h: 38 });
 const modeBtn = () => ({ x: V.VW / 2 + 8, y: V.VH - 156, w: 140, h: 38 });
 /** 사망 화면의 두 버튼: 별 조각 상점 · 모드 전환(다른 모드를 고른 채로 타이틀로) */

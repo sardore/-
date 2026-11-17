@@ -8,8 +8,7 @@ import { startTutorial, tutoPress } from './tutorial.js';
 import { startOps, MODE, toggleMode } from './ops.js';
 import { pickLayout } from './draw-pick.js';
 import { MUTE_HIT } from './draw-ui.js';
-import { moveTitlePointer, titleMenuHit } from './draw-title2.js';
-import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, deadShopHit, deadModeHit } from './shop-ui.js';
+import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, moveTitlePointer, titleMenuHit, deadShopHit, deadModeHit } from './shop-ui.js';
 
 /** 눌렀을 때. screen 좌표(px,py)는 화면 픽셀, key 가 true 면 키보드 입력 */
 export function pointerDown(px, py, key) {
