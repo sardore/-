@@ -1,11 +1,13 @@
 /* 화면 위 UI: HUD, 보스 체력·산소, 배너·시전 문구·토스트, 타이틀/사망/클리어 화면, 음소거 버튼 */
 import { G, V, g } from './state.js';
 import { W0, TAU, FONT, clamp, easeOut } from './util.js';
-import { STAGES, ATK, BIOMES, EVOLVE_AT } from './data.js';
+import { STAGES, ATK, BIOMES, BOSSES, EVOLVE_AT } from './data.js';
 import { SHIPS } from './ships.js';
 import { isMuted } from './audio.js';
-import { rr, txt, reducedMotion, telemetry } from './gfx.js';
-import { drawDeadShopBtn } from './shop-ui.js';
+import { rr, txt, GFX, reducedMotion, telemetry } from './gfx.js';
+import { drawTitleMenu, drawDeadShopBtn } from './shop-ui.js';
+import { drawTitle2 } from './draw-title2.js';
+import { OPSREC, fmtTime, MODE } from './ops.js';
 import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
 import { OPS_BOSSES } from './ops-data.js';
 
@@ -129,10 +131,32 @@ export function drawOverlays() {
   }
 }
 
-/** 클리어 · 사망 화면 */
+/** 타이틀 · 클리어 · 사망 화면 */
 export function drawScreens() {
   const { VW, VH } = V, T = G.T;
   if (G.ops && (G.st === 'clear' || G.st === 'dead')) { drawOpsEnd(); return; }
+  if (G.st === 'title') {
+    const shade = g.createLinearGradient(0, 0, 0, VH);
+    shade.addColorStop(0, 'rgba(5,6,15,.56)');
+    shade.addColorStop(.36, 'rgba(5,6,15,.48)');
+    shade.addColorStop(.65, 'rgba(5,6,15,.31)');
+    shade.addColorStop(1, 'rgba(5,6,15,.68)');
+    g.fillStyle = shade; g.fillRect(0, 0, VW, VH);
+    if (MODE.ops) { g.fillStyle = 'rgba(14,12,8,.19)'; g.fillRect(0, 0, VW, VH); }
+    if (GFX.v >= 2) drawTitle2();
+    else { txt('스윙바이', VW / 2, VH * .22, 58, '#fff', 'center', 900); txt('S W I N G B Y', VW / 2, VH * .22 + 30, 16, '#7dd3ff', 'center', 600); }
+    if (MODE.ops) telemetry('BLACK SHIP MODE', VW / 2, VH - 115, 12, '#e6dcc0');
+    g.save();
+    g.globalAlpha = reducedMotion() ? 1 : .9 + .1 * Math.sin(T * 2.8);
+    g.shadowBlur = 12; g.shadowColor = 'rgba(125,211,255,.52)';
+    txt('화면을 터치해서 출발', VW / 2, VH - 86, 19, '#eef7ff');
+    g.restore();
+    drawTitleMenu();
+    if (window.__BUILD) txt('build ' + window.__BUILD, 10, VH - 10, 10, 'rgba(255,255,255,.32)', 'left', 600);   // 어느 버전을 받았는지 확인용
+    if (G.debug && BOSSES[G.nextBi]) txt('DEBUG · ' + BOSSES[G.nextBi].n, VW / 2, VH - (MODE.ops ? 138 : 116), 12, '#ffd24a', 'center', 800);
+    const rec = MODE.ops ? { best: OPSREC.best, boss: OPSREC.boss, n: OPS_BOSSES.length, extra: OPSREC.time > 0 ? '  ·  최단 ' + fmtTime(OPSREC.time) : '' } : { best: G.best, boss: G.bestBoss, n: STAGES.length, extra: '' };   // 고른 모드의 기록을 같은 표기로
+    if (rec.best > 0) txt('최고 기록 ' + rec.best + (rec.boss > 0 ? '  ·  보스 ' + Math.min(rec.boss, rec.n) + '/' + rec.n + (rec.boss >= rec.n ? ' 클리어' : '') : '') + rec.extra, VW / 2, VH - 52, 14, 'rgba(255,255,255,.6)', 'center', 500);
+  }
   if (G.st === 'clear' && G.tuto) { // 튜토리얼 클리어: 태양 격파와 보상
     const a = clamp(G.clearT * 1.5, 0, 1); g.fillStyle = 'rgba(5,6,15,' + (.7 * a) + ')'; g.fillRect(0, 0, VW, VH); g.globalAlpha = a;
     txt('튜토리얼 완료', VW / 2, VH * .3, 40, '#ffe27a', 'center', 900);
