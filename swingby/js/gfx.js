@@ -5,6 +5,27 @@ import { FONT } from './util.js';
 /** 그래픽 버전. 기본 2(새 렌더러: draw-*2.js). 주소에 ?gfx=1 을 붙이면 예전 렌더러로 돌아간다 — 예전 코드는 롤백용으로 남겨 두었다 */
 export const GFX = { v: typeof location !== 'undefined' && /[?&]gfx=1\b/.test(location.search) ? 1 : 2 };
 
+const TELEMETRY_FONT = '"Swingby Telemetry", ui-monospace, monospace';
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+export const reducedMotion = () => motionPreference.matches;
+
+/** 숫자와 영문 계기판 표기는 같은 폭을 유지한다 */
+export function telemetry(text, x, y, size, color, align = 'center', maxWidth) {
+  g.font = `700 ${size}px ${TELEMETRY_FONT}`;
+  const width = g.measureText(text).width;
+  g.textAlign = align;
+  g.fillStyle = color;
+  g.fillText(text, x, y, maxWidth ?? width);
+  return width;
+}
+
+/** 모서리를 한쪽만 깎은 계기판 외곽선 */
+export function flightPanel(x, y, w, h, cut = 8) {
+  g.beginPath();
+  g.moveTo(x, y); g.lineTo(x + w - cut, y); g.lineTo(x + w, y + cut);
+  g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.closePath();
+}
+
 /** 둥근 사각형 경로 */
 export function rr(x, y, w, h, r) {
   g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();

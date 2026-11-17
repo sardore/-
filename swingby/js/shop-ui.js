@@ -4,7 +4,7 @@ import { G, V, g } from './state.js';
 import { TAU, rnd, clamp } from './util.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { rr, txt, shardIcon } from './gfx.js';
+import { rr, txt, shardIcon, flightPanel, reducedMotion, telemetry } from './gfx.js';
 import { TABS, SLOTS, LIST, ITEMS, GLOW_LEVELS, UPGRADES, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, paintedOn, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, colorAt, isDuo, emitDecor, drawShipCos } from './cos.js';
@@ -298,21 +298,42 @@ function drawTutoIcon(x, y) {
 }
 /** 블랙쉽 버튼 그림: 하양·검정 선체의 해방선이 비스듬히 떠 있다 */
 function drawOpsIcon(x, y) { g.save(); g.translate(x, y); g.rotate(-.55); drawShip(g, SHIPS.os2, .8, G.T, .62); g.restore(); }
-/** 시작화면 왼쪽 위 아이콘 메뉴 (앞으로 도감·기록 같은 메뉴를 같은 줄에 더 놓을 수 있다) */
+/* 시작 화면의 조작부. 메뉴는 입력과 같은 사각형을 쓴다. 배경 탭 출발도 계속 지원한다. */
 const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }];
-const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼, 그 아래에 블랙쉽 모드)
+const menuRect = i => ({ x: V.VW / 2 - 176 + i * 120, y: V.VH - 108, w: 112, h: 46 });
+
 export function drawTitleMenu() {
+  const { VW, VH, OX } = V, cx = VW / 2, top = VH - 172;
+  const accent = MODE.ops ? '#e6dcc0' : '#ffb46f';
+  const width = telemetry(String(SHOP.shards), OX + 398, 36, 15, GOLD, 'right');
+  shard(OX + 386 - width, 31, 7);
+
+  flightPanel(cx - 176, top, 352, 54, 13);
+  g.fillStyle = MODE.ops ? '#292823' : '#10242b'; g.fill();
+  g.strokeStyle = accent; g.lineWidth = 1.4; g.stroke();
+  g.fillStyle = accent; g.fillRect(cx - 176, top, 4, 54);
+  txt(MODE.ops ? '블랙쉽 출항' : '항해 시작', cx - 151, top + 33, 20, '#f6f3e8', 'left', 800);
+  const arrowX = cx + 142 + (reducedMotion() ? 0 : 3 * Math.sin(G.T * 3.5));
+  g.strokeStyle = accent; g.lineWidth = 1.8;
+  g.beginPath(); g.moveTo(arrowX - 19, top + 27); g.lineTo(arrowX, top + 27);
+  g.moveTo(arrowX - 7, top + 20); g.lineTo(arrowX, top + 27); g.lineTo(arrowX - 7, top + 34); g.stroke();
+
   MENU.forEach((m, i) => {
-    const r = menuRect(i);
-    const on = m.k === 'ops' && MODE.ops;   // 블랙쉽 버튼은 모드 전환 스위치: 켜져 있으면 테두리가 밝고 ON 표시가 붙는다
-    rr(r.x, r.y, r.w, r.h, 12); g.fillStyle = on ? 'rgba(230,220,192,.2)' : 'rgba(255,255,255,.08)'; g.fill(); g.strokeStyle = on ? '#e6dcc0' : 'rgba(255,226,122,.55)'; g.lineWidth = on ? 2.4 : 1.4; g.stroke();
-    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
-    txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, on ? '#e6dcc0' : 'rgba(255,255,255,.7)', 'center', 700);
-    if (on) { rr(r.x + r.w - 20, r.y - 6, 26, 14, 7); g.fillStyle = '#e6dcc0'; g.fill(); txt('ON', r.x + r.w - 7, r.y + 5, 10, '#14110a', 'center', 900); }
+    const r = menuRect(i), on = m.k === 'ops' && MODE.ops;
+    flightPanel(r.x, r.y, r.w, r.h);
+    g.fillStyle = on ? '#302d23' : '#101a24'; g.fill();
+    g.strokeStyle = on ? accent : '#425968'; g.lineWidth = 1; g.stroke();
+    if (on) { g.fillStyle = accent; g.fillRect(r.x, r.y + r.h - 2, r.w, 2); }
+    if (m.k === 'shop') shard(r.x + 20, r.y + 23, 8);
+    else if (m.k === 'ops') drawOpsIcon(r.x + 20, r.y + 23);
+    else drawTutoIcon(r.x + 20, r.y + 23);
+    txt(m.n, r.x + 42, r.y + 28, 13, on ? '#fff2d6' : '#d2dee4', 'left', 700);
   });
-  const w = txt0(String(SHOP.shards), V.OX + 420 - 14, 38, 15); shard(V.OX + 420 - 14 - w - 12, 33, 7);   // 보유 별 조각
 }
-export function titleMenuHit(x, y) { const i = MENU.findIndex((m, j) => inRect(menuRect(j), x, y)); return i < 0 ? null : MENU[i].k; }
+export function titleMenuHit(x, y) {
+  const i = MENU.findIndex((m, j) => inRect(menuRect(j), x, y));
+  return i < 0 ? null : MENU[i].k;
+}
 
 const deadBtn = () => ({ x: V.VW / 2 - 148, y: V.VH - 156, w: 140, h: 38 });
 const modeBtn = () => ({ x: V.VW / 2 + 8, y: V.VH - 156, w: 140, h: 38 });

@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { OPS, OPS_BOSSES, fleetBonus } from './ops-data.js';
 import { SHIPS } from './ships.js';
 import { viewTop, viewBot } from './camera.js';
-import { txt } from './gfx.js';
+import { txt, telemetry } from './gfx.js';
 import { drawWallList } from './ops-walls.js';
 import { drawMookList } from './ops-mook-art.js';
 import { drawFleet, hasBay } from './ops-fleet.js';
@@ -49,7 +49,7 @@ export function drawOpsEnd() {
     txt('항해 종료', VW / 2, y, 40, '#fff', 'center', 900); txt(G.deadWhy, VW / 2, y + 30, 15, '#ff8f8f', 'center', 500);
     const b = G.boss; if (b && b.state === 'fight') txt(b.d.n + ' 남은 체력 ' + Math.max(1, Math.round(b.hp / b.max * 100)) + '%', VW / 2, y + 52, 13, 'rgba(255,200,170,.85)', 'center', 600);
   }
-  txt(String(sc), VW / 2, y + (clear ? 112 : 110), 64, '#fff', 'center', 900);
+  telemetry(String(sc), VW / 2, y + (clear ? 112 : 110), 64, '#f1f1e9', 'center', 360);
   txt(o.newBest ? '★ 신기록 ★' : '최고 ' + OPSREC.best, VW / 2, y + (clear ? 142 : 140), 16, o.newBest ? '#ffe27a' : 'rgba(255,255,255,.6)', 'center', 700);
   txt('행성 ' + G.hops + '개  ·  최대 콤보 x' + G.maxCombo + '  ·  보스 ' + G.kills + '회 격파', VW / 2, y + 172, 14, 'rgba(255,255,255,.75)', 'center', 500);
   txt(G.debug ? '(디버그판: 별 조각 저장 안 함)' : '별 조각 +' + G.shardGain, VW / 2, y + 198, 14, '#ffe27a', 'center', 800);

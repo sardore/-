@@ -28,7 +28,7 @@ export function drawRadar(cx, cy, R, series, opt = {}) {
   ring(100, 'rgba(255,255,255,.4)', [3, 3]);
   for (const sr of series) {
     g.beginPath(); STATS.forEach((s, i) => { const [x, y] = pt(i, sr.stats[s.k] || 0); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath();
-    if (sr.fill) { g.globalAlpha = sr.fill; g.fillStyle = sr.color; g.fill(); g.globalAlpha = 1; }
+    if (sr.fill) { g.save(); g.globalAlpha *= sr.fill; g.fillStyle = sr.color; g.fill(); g.restore(); }
     g.strokeStyle = sr.color; g.lineWidth = sr.w || 1.6; g.setLineDash(sr.dash ? [3, 3] : []); g.stroke(); g.setLineDash([]);
   }
   const top = series[series.length - 1];
