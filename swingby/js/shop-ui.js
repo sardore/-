@@ -4,7 +4,7 @@ import { G, V, g } from './state.js';
 import { TAU, rnd, clamp } from './util.js';
 import { SHIPS } from './ships.js';
 import { drawShip, SHIP_SC } from './ship-art.js';
-import { rr, txt, shardIcon, flightPanel, reducedMotion, telemetry } from './gfx.js';
+import { rr, txt, shardIcon } from './gfx.js';
 import { TABS, SLOTS, LIST, ITEMS, GLOW_LEVELS, UPGRADES, SPEC_STATS, SPEC_STEP, SPEC_PRICE, PAINT_TARGETS, PAINT_GROUPS, TARGET_NAMES } from './shop-data.js';
 import { SHOP, priceOf, owned, equipped, paintedOn, specLv, buy, equip, unequip } from './shop.js';
 import { cfgFor, paintDef, shipOpts, glowOf, hslOf, colorAt, isDuo, emitDecor, drawShipCos } from './cos.js';
@@ -289,52 +289,7 @@ function drawSpecSummary(R) {
   });
 }
 
-/* ---------- 시작·사망 화면의 버튼 ---------- */
-/** 튜토리얼 버튼 그림: 궤도를 도는 점과 눌리는 손가락 점 */
-function drawTutoIcon(x, y) {
-  g.save(); g.strokeStyle = GOLD; g.lineWidth = 1.6; g.beginPath(); g.ellipse(x, y, 13, 7, -.5, 0, TAU); g.stroke();
-  g.fillStyle = GOLD; g.beginPath(); g.arc(x + 9, y - 8 * .9, 2.6, 0, TAU); g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x - 2, y + 2, 4.2, 0, TAU); g.stroke(); g.restore();
-}
-/** 블랙쉽 버튼 그림: 하양·검정 선체의 해방선이 비스듬히 떠 있다 */
-function drawOpsIcon(x, y) { g.save(); g.translate(x, y); g.rotate(-.55); drawShip(g, SHIPS.os2, .8, G.T, .62); g.restore(); }
-/* 시작 화면의 조작부. 메뉴는 입력과 같은 사각형을 쓴다. 배경 탭 출발도 계속 지원한다. */
-const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }];
-const menuRect = i => ({ x: V.VW / 2 - 176 + i * 120, y: V.VH - 108, w: 112, h: 46 });
-
-export function drawTitleMenu() {
-  const { VW, VH, OX } = V, cx = VW / 2, top = VH - 172;
-  const accent = MODE.ops ? '#e6dcc0' : '#ffb46f';
-  const width = telemetry(String(SHOP.shards), OX + 398, 36, 15, GOLD, 'right');
-  shard(OX + 386 - width, 31, 7);
-
-  flightPanel(cx - 176, top, 352, 54, 13);
-  g.fillStyle = MODE.ops ? '#292823' : '#10242b'; g.fill();
-  g.strokeStyle = accent; g.lineWidth = 1.4; g.stroke();
-  g.fillStyle = accent; g.fillRect(cx - 176, top, 4, 54);
-  txt(MODE.ops ? '블랙쉽 출항' : '항해 시작', cx - 151, top + 33, 20, '#f6f3e8', 'left', 800);
-  const arrowX = cx + 142 + (reducedMotion() ? 0 : 3 * Math.sin(G.T * 3.5));
-  g.strokeStyle = accent; g.lineWidth = 1.8;
-  g.beginPath(); g.moveTo(arrowX - 19, top + 27); g.lineTo(arrowX, top + 27);
-  g.moveTo(arrowX - 7, top + 20); g.lineTo(arrowX, top + 27); g.lineTo(arrowX - 7, top + 34); g.stroke();
-
-  MENU.forEach((m, i) => {
-    const r = menuRect(i), on = m.k === 'ops' && MODE.ops;
-    flightPanel(r.x, r.y, r.w, r.h);
-    g.fillStyle = on ? '#302d23' : '#101a24'; g.fill();
-    g.strokeStyle = on ? accent : '#425968'; g.lineWidth = 1; g.stroke();
-    if (on) { g.fillStyle = accent; g.fillRect(r.x, r.y + r.h - 2, r.w, 2); }
-    if (m.k === 'shop') shard(r.x + 20, r.y + 23, 8);
-    else if (m.k === 'ops') drawOpsIcon(r.x + 20, r.y + 23);
-    else drawTutoIcon(r.x + 20, r.y + 23);
-    txt(m.n, r.x + 42, r.y + 28, 13, on ? '#fff2d6' : '#d2dee4', 'left', 700);
-  });
-}
-export function titleMenuHit(x, y) {
-  const i = MENU.findIndex((m, j) => inRect(menuRect(j), x, y));
-  return i < 0 ? null : MENU[i].k;
-}
-
+/* ---------- 사망 화면의 버튼 ---------- */
 const deadBtn = () => ({ x: V.VW / 2 - 148, y: V.VH - 156, w: 140, h: 38 });
 const modeBtn = () => ({ x: V.VW / 2 + 8, y: V.VH - 156, w: 140, h: 38 });
 /** 사망 화면의 두 버튼: 별 조각 상점 · 모드 전환(다른 모드를 고른 채로 타이틀로) */
