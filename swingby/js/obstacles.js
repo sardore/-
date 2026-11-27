@@ -19,7 +19,7 @@ import { fs, spd, shipR } from './stats.js';
 import { mkPlanet } from './planets.js';
 import { die } from './death.js';
 import { beep, thump, noise, sweep, vibe } from './audio.js';
-import { burst, sparks, ringFx, flashScreen, shakeAdd, punch, toast } from './fx.js';
+import { burst, sparks, ringFx, flashScreen, shakeAdd, punch } from './fx.js';
 
 /** 구간 종류: from 열리는 행성 번호(genI) · w 뽑힐 비중 */
 const PIECES = [
@@ -217,7 +217,7 @@ export function hitObstacles(dt, py0) {
       case 'portal': {
         if (!o.used && py0 > o.y && s.y <= o.y) {   // 아래에서 위로 지나갔다
           o.used = true;
-          if (G.flip !== o.to) { G.flip = o.to; toast(o.to < 0 ? '반전! 아래로' : '원래대로', '#c79bff'); }
+          if (G.flip !== o.to) G.flip = o.to;   // 반전/복귀 문구는 띄우지 않는다(화면이 뒤집히는 것으로 충분)
           flashScreen(.35, '#c79bff'); shakeAdd(6); punch(.04); sweep(900, 200, .5, .12, 'sine'); noise(.5, .15, 4000, 300);
           burst(s.x, s.y, '#c79bff', 24, 260);
         }
