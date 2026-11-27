@@ -6,6 +6,9 @@ import { pressStart, pressEnd } from './player.js';
 import { choose, offer, startRun } from './progress.js';
 import { startTutorial, tutoPress } from './tutorial.js';
 import { startOps, MODE, toggleMode } from './ops.js';
+import { SONGS } from './track-songs.js';
+import { startTrack, retryTrack, backToSongs, openSongs, exitSongs } from './track.js';
+import { songsHit, trackEndHit } from './track-draw.js';
 import { pickLayout } from './draw-pick.js';
 import { MUTE_HIT } from './draw-ui.js';
 import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, moveTitlePointer, titleMenuHit, deadShopHit, deadModeHit } from './shop-ui.js';
@@ -18,7 +21,8 @@ export function pointerDown(px, py, key) {
   if (G.st === 'play') G.held = true;
   if (!key && x > V.VW - MUTE_HIT && y > V.VH - MUTE_HIT) { toggleMute(); return; }
   switch (G.st) {
-    case 'title': { const mk = key ? null : titleMenuHit(x, y); if (mk === 'shop') openShop(); else if (mk === 'tuto') startTutorial(); else if (mk === 'ops') toggleMode(); else if (MODE.ops) startOps(); else { G.st = 'play'; beep(520, .1); } break; }
+    case 'title': { const mk = key ? null : titleMenuHit(x, y); if (mk === 'shop') openShop(); else if (mk === 'tuto') startTutorial(); else if (mk === 'ops') toggleMode(); else if (mk === 'track') openSongs(); else if (MODE.ops) startOps(); else { G.st = 'play'; beep(520, .1); } break; }
+    case 'songs': { if (key) break; const h = songsHit(x, y); if (h && h.back) exitSongs(); else if (h) startTrack(SONGS[h.song]); break; }
     case 'shop': if (!key) shopDown(x, y); break;
     case 'play': pressStart(); break;
     case 'pick': {
@@ -27,8 +31,8 @@ export function pointerDown(px, py, key) {
       pickLayout().rects.forEach((r, i) => { if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) choose(i); });
       break;
     }
-    case 'clear': if (G.clearT > 1) { if (G.tuto || G.ops) startRun(); else { offer(); if (G.st === 'clear') G.st = 'play'; } } break;
-    case 'dead': if (G.deadT > .7) { if (G.tuto) startTutorial(); else if (!key && deadShopHit(x, y)) openShop(); else if (!key && deadModeHit(x, y)) { startRun(); toggleMode(); G.st = 'title'; } else if (G.ops) { if (!startOps()) startRun(); } else { startRun(); G.st = 'play'; } } break;
+    case 'clear': if (G.trk) { if (G.clearT > .7) { if (!key && trackEndHit(x, y) === 'songs') backToSongs(); else retryTrack(); } break; } if (G.clearT > 1) { if (G.tuto || G.ops) startRun(); else { offer(); if (G.st === 'clear') G.st = 'play'; } } break;
+    case 'dead': if (G.trk) { if (G.deadT > .7) { if (!key && trackEndHit(x, y) === 'songs') backToSongs(); else retryTrack(); } break; } if (G.deadT > .7) { if (G.tuto) startTutorial(); else if (!key && deadShopHit(x, y)) openShop(); else if (!key && deadModeHit(x, y)) { startRun(); toggleMode(); G.st = 'title'; } else if (G.ops) { if (!startOps()) startRun(); } else { startRun(); G.st = 'play'; } } break;
   }
 }
 /** 뗐을 때. 상점에서는 탭·드래그 판정에 위치가 필요하다 (위치가 없으면 취소) */
@@ -54,6 +58,8 @@ export function bindInput() {
     if (e.repeat) return;
     if (e.key === 'm' || e.key === 'M') { toggleMute(); return; }
     if (G.st === 'shop') { if (e.key === 'Escape') closeShop(); return; }
+    if (G.st === 'songs') { if (e.key === 'Escape') exitSongs(); return; }
+    if (e.key === 'Escape' && G.trk && G.st === 'play') { backToSongs(); return; }   // 플레이 중 ESC: 곡 고르기로
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); pointerDown(0, 0, true); }
     else if (G.st === 'pick' && G.pickT > .45 && '123'.includes(e.key)) choose(+e.key - 1);
   });

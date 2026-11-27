@@ -13,11 +13,13 @@ import { drawPick } from './draw-pick.js';
 import { drawShop } from './shop-ui.js';
 import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
 import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
+import { drawTrackWorld, drawSongSelect } from './track-draw.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
   g.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
   (GFX.v >= 2 ? drawBackdrop2 : drawBackdrop)();
+  if (G.st === 'songs') { drawSongSelect(); drawMuteButton(); return; }   // 곡 고르기는 배경 위에 화면 전체를 덮는다
   if (G.st === 'shop') { drawShop(); drawMuteButton(); return; }   // 상점은 배경 위에 화면 전체를 덮는다
   g.save();
   const sx = G.shake > 0 ? rnd(-G.shake, G.shake) : 0, sy = G.shake > 0 ? rnd(-G.shake, G.shake) : 0;
@@ -28,6 +30,7 @@ export function draw() {
   if (GFX.v >= 2) drawWalls2();
   drawWorld();
   if (G.ops) drawOpsWorld();   // 블랙쉽: 벽·소형함·포탄
+  if (G.trk) drawTrackWorld();   // 음악 스테이지: 신호선(인디케이터)·도착 행성·남은 시간 링
   const b = G.boss;
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }
   if (G.ops && G.st !== 'dead') drawOpsFleet();   // 동행 함선은 본체 뒤에

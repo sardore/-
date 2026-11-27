@@ -33,6 +33,6 @@ export function die(why) {
   burst(s.x, s.y, '#fff', 34, 280); burst(s.x, s.y, '#ff6a6a', 24, 200); ringFx(s.x, s.y, '#fff', 6, 140, .6, 4); ringFx(s.x, s.y, '#ff6a6a', 6, 100, .5, 3);
   beep(110, .5, 'sawtooth', .14); thump(120, 30, .6, .4); noise(.7, .3, 4000, 100); vibe([60, 40, 120]);
   if (G.ops) { if (!G.debug) { if (G.score > OPSREC.best) { OPSREC.best = G.score; G.ops.newBest = true; save('swingby_ops_best', G.score); } } }   // 블랙쉽은 일반 항해의 최고 기록과 따로 센다
-  else if (G.score > G.best && !G.debug && !G.tuto) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
+  else if (G.score > G.best && !G.debug && !G.tuto && !G.trk) { G.best = G.score; G.newBest = true; save('swingby_best', G.best); }
   settleRun();
 }

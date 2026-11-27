@@ -6,6 +6,7 @@ import { draw } from './draw.js';
 import { bindInput } from './input.js';
 import { installDebug } from './debug.js';
 import { startOpsFromUrl } from './ops.js';
+import { bindTrackVisibility, startTrackFromUrl } from './track.js';
 
 window.addEventListener('resize', resize);
 resize();
@@ -13,6 +14,8 @@ startRun();
 bindInput();
 installDebug();
 startOpsFromUrl(new URLSearchParams(location.search));   // ?ops 로 블랙쉽 바로 시작
+bindTrackVisibility();
+startTrackFromUrl(new URLSearchParams(location.search));   // ?track=곡id 로 음악 스테이지 바로 시작
 
 let last = 0;
 const seen = new Set();
