@@ -94,7 +94,7 @@ export function drawTele(a, b) {
     g.strokeStyle = urgent ? '#ff6a6a' : c; g.lineWidth = 2; g.stroke();
     txt(String(a.t), x, y + r * .42, r * 1.2, urgent ? '#ff8a8a' : '#fff', 'center', 800); g.globalAlpha = 1;
   };
-  const warn = (x, y, sz) => { if (!urgent) return; g.globalAlpha = .5 + .5 * pul; txt('⚠', x, y + sz * .35, sz, c, 'center', 800); g.globalAlpha = 1; };
+  const warn = () => {};   // ⚠ 글자 표식은 쓰지 않는다(영역 자체가 깜박인다)
   switch (a.k) {
     case 'meteor': a.zs.forEach(z => { shape(circ(z.x, z.y, z.r)); warn(z.x, z.y - 2, 26); cnt(z.x, z.y + z.r * .62, 11); }); break;
     case 'comet': { a.zs.forEach(z => shape(circ(z.x, z.y, z.r))); const z = a.zs[0]; if (z) cnt(z.x, z.y, 11); break; }
@@ -118,7 +118,9 @@ export function drawTele(a, b) {
       const gg = g.createLinearGradient(x, 0, x + a.dir * bw, 0);
       gg.addColorStop(0, hexA(c, .22)); gg.addColorStop(1, hexA(c, 0));
       g.fillStyle = gg; g.fillRect(a.dir > 0 ? 0 : G.w - bw, G.arenaTop, bw, G.arenaBot - G.arenaTop);
-      txt(a.dir > 0 ? '▶▶▶' : '◀◀◀', tx, mid, 24 * fs(), c, 'center', 800); cnt(tx, mid - 30 * fs()); break;
+      g.strokeStyle = c; g.lineWidth = 4 * fs(); g.lineCap = 'round'; g.lineJoin = 'round';   // 바람 방향: 글자 대신 그린 꺾쇠 셋
+      for (let i = -1; i <= 1; i++) { const cx = tx + i * 20 * fs() * a.dir, h = 9 * fs(); g.beginPath(); g.moveTo(cx - h * .6 * a.dir, mid - h); g.lineTo(cx + h * .6 * a.dir, mid); g.lineTo(cx - h * .6 * a.dir, mid + h); g.stroke(); }
+      cnt(tx, mid - 30 * fs()); break;
     }
     case 'dump': { // 무단 투하: 쓰레기가 떨어질 길만 붉게 보여 준다. 다른 패턴처럼 안전한 길은 따로 표시하지 않는다(글자 없음)
       const top = G.arenaTop, bot = G.arenaBot, fk = fs();
@@ -322,5 +324,4 @@ export function drawFloorWarn() {
   const gr = g.createLinearGradient(0, VH - h, 0, VH);
   gr.addColorStop(0, 'rgba(255,60,60,0)'); gr.addColorStop(1, 'rgba(255,60,60,' + (.1 + d * (.18 + .4 * pul)) + ')');
   g.fillStyle = gr; g.fillRect(0, VH - h, VW, h);
-  if (d > .2) { g.globalAlpha = clamp(d * 1.4, 0, 1) * (.6 + .4 * pul); txt('▼ 추락 위험 ▼', VW / 2, VH - 78, 15, '#ff8a8a', 'center', 800); g.globalAlpha = 1; }
 }

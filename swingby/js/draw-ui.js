@@ -16,16 +16,10 @@ export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 
 export function drawHud() {
   const { VW, OX } = V, b = G.boss;
   if (G.st !== 'play' && G.st !== 'pick') return;
-  const age = G.scoreCue ? G.T - G.scoreCue.at : Infinity, motion = !reducedMotion();
-  if (b) telemetry(String(G.score), OX + 14, 74, 18, age < .22 ? '#ffb46f' : '#f1f1e9', 'left', 72);
+  // 점수는 그대로 보여 주기만 한다(획득량 '+n' 표시·숫자 튀기기 같은 글자 연출 없음)
+  if (b) telemetry(String(G.score), OX + 14, 74, 18, '#f1f1e9', 'left', 72);
   else {
-    const settle = motion ? 1 - easeOut(age / .24) : 0;
-    telemetry(String(G.score), VW / 2, 54, 38 + 5 * settle, '#f1f1e9', 'center', 158);
-    if (age < .72) {
-      g.globalAlpha = motion ? 1 - easeOut(Math.max(0, age - .36) / .36) : 1;
-      telemetry('+' + G.scoreCue.gain, VW / 2, 77 - (motion ? easeOut(age / .72) * 4 : 0), 13, '#ffb46f');
-      g.globalAlpha = 1;
-    }
+    telemetry(String(G.score), VW / 2, 54, 38, '#f1f1e9', 'center', 158);
     if (G.combo > 1) {
       const comboY = 96;
       telemetry('×' + G.combo, VW / 2 - 5, comboY, 15, '#99e1f0', 'right');
@@ -72,7 +66,6 @@ function drawBossHud() {
     txt((b.d.endless ? '???' : at.n) + ' ' + a.t, x, cy + 14, 11, a.t <= 1 ? '#ff9a9a' : at.c, 'center', 700); x += 70;
   }
   if (G.bcombo > 0) txt('연속 x' + G.bcombo, OX + 14, 92, 12, '#ff9d7a', 'left', 700);
-  if (G.haz.some(h => h.k === 'horizon')) { g.globalAlpha = .65 + .35 * Math.sin(T * 5); txt('▼ 사건의 지평선  맵 ×2', VW / 2, cy + 38, 11, '#c090ff', 'center', 800); g.globalAlpha = 1; }
   // 산소 게이지: 보스전에서는 회복되지 않는다
   const ow = 244, ox = VW / 2 - ow / 2, oy = VH - 38, of = clamp(G.bo2 / G.bo2max, 0, 1), low = G.bo2 < 6;
   const oxygen = low ? '#ff8a75' : '#90d9e7';
@@ -113,22 +106,7 @@ export function drawMuteButton() {
 
 /** 토스트 · 큰 배너 · 보스 공격 시전 문구 */
 export function drawOverlays() {
-  const { VW, VH } = V, t = G.toastO, bn = G.banner, co = G.castO;
-  if (t) { const k = t.t; g.globalAlpha = clamp(1.6 - k, 0, 1) * clamp(k * 8, 0, 1); txt(t.s, VW / 2, VH * .5 - k * 6, 18, t.c, 'center', 800); g.globalAlpha = 1; }
-  if (bn) {
-    const k = bn.t / bn.dur, a = clamp(Math.min(k * 6, (1 - k) * 3), 0, 1), y = VH * .34;
-    g.globalAlpha = a; g.fillStyle = 'rgba(5,6,15,' + (.55 * a) + ')'; g.fillRect(0, y - 52, VW, 128);
-    txt(bn.a, VW / 2, y - 22, 14, 'rgba(255,255,255,.7)', 'center', 700);
-    txt(bn.b, VW / 2, y + 22, bn.b.length > 6 ? 34 : 44, bn.c, 'center', 900);
-    if (bn.sub) txt(bn.sub, VW / 2, y + 52, 13, 'rgba(255,255,255,.75)', 'center', 500);
-    g.globalAlpha = 1;
-  }
-  if (co) {
-    const k = co.t / co.dur, a = clamp(Math.min(k * 9, (1 - k) * 3.5), 0, 1), pop = 1 + (1 - easeOut(Math.min(k * 6, 1))) * .7, y = VH * .43;
-    g.globalAlpha = a * .85; g.fillStyle = 'rgba(8,4,16,.6)'; const bh = 46 * easeOut(k * 8); g.fillRect(0, y - bh / 2 - 6, VW, bh);
-    g.fillStyle = co.c; g.globalAlpha = a; g.fillRect(0, y - bh / 2 - 6, VW * easeOut(k * 5), 2); g.fillRect(VW - VW * easeOut(k * 5), y + bh / 2 + 4, VW * easeOut(k * 5), 2);
-    g.save(); g.translate(VW / 2, y); g.scale(pop, pop); g.shadowColor = co.c; g.shadowBlur = 18; g.globalAlpha = a; txt(co.name, 0, 10, 30, co.c, 'center', 900); g.shadowBlur = 0; g.restore(); g.globalAlpha = 1;
-  }
+  /* 토스트·배너·공격 이름 같은 글자 연출은 쓰지 않는다 */
 }
 
 /** 타이틀 · 클리어 · 사망 화면 */

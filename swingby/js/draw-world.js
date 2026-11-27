@@ -159,9 +159,5 @@ export function drawFx() {
       else { g.fillStyle = p.c; const sz = p.s || 3; g.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz); }
     }
   }
-  for (const t of G.texts) {
-    const pop = t.t < .12 ? 1 + (1 - t.t / .12) * .5 : 1;
-    g.globalAlpha = 1 - t.t * t.t; uprightText(t.s, clamp(t.x, 60, G.w - 60), t.y - t.t * 42 * G.flipK, (t.sz || 15) * pop, t.c);   // 뒤집힌 화면에서도 글자는 바로, 위로 떠오른다
-  }
   g.globalAlpha = 1;
 }

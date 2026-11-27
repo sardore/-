@@ -68,7 +68,6 @@ export function ram() {
   sparks(s.x, s.y, '#fff', 16, 480, ang, .9); sparks(s.x, s.y, col, 14, 380, ang, 1.2); burst(b.x + nx * b.hr, b.y + ny * b.hr, col, 18, 240);
   ringFx(b.x + nx * b.hr, b.y + ny * b.hr, '#fff', 4, 70, .35, 4); ringFx(b.x, b.y, col, b.hr, b.hr + 60, .5, 3);
   thump(190, 38, .3, .42); noise(.22, .3, 6000, 300); beep(820 + Math.min(G.bcombo, 6) * 60, .05, 'square', .07);
-  G.texts.push({ x: b.x + nx * (b.hr + 22), y: b.y + ny * (b.hr + 22), t: 0, s: '-' + dmg, c: '#ffe27a', sz: clamp(18 + dmg * .45, 20, 40) });
   addScore(dmg * 3, s.x, s.y - 14, '#ffe27a', dashing ? '돌격!' : '충돌', 16);
   afterHit(b);
 }

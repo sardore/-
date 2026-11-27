@@ -15,8 +15,8 @@ export const punch = z => { G.zoom = Math.max(G.zoom, z); };
 export const shakeAdd = a => { G.shake = Math.max(G.shake, a); };
 export const flashScreen = (a, c) => { G.flashA = Math.max(G.flashA, a); G.flashC = c || '#fff'; };
 export const slowmo = (f, t) => { G.ts = f; G.tsT = t; };
-export const toast = (s, c) => { G.toastO = { t: 0, s, c: c || '#fff' }; };
-export const popText = (x, y, s, c, sz) => G.texts.push({ x, y, t: 0, s, c, sz: sz || 15 });
+export const toast = () => {};   // 글자 연출 없음
+export const popText = () => {};   // 글자 연출 없음(떠오르는 점수·문구)
 
 /** 점수 추가 + 떠오르는 숫자. 능력치·바이옴 배율이 여기서 한 번에 적용된다 */
 export function addScore(n, x, y, c, label, big) {
