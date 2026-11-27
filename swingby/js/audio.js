@@ -13,42 +13,9 @@ export function audioUnlock() {
     musicInit();
   } else if (AC.state === 'suspended') AC.resume();
 }
-/** 탭이 가려지면 오디오를 멈춘다: 오디오 시계가 멈춰 음악 스테이지의 인디케이터도 곡과 같이 멈춘다. 다시 터치하면 audioUnlock 이 이어서 재생 */
-export function audioSuspend() { try { if (AC && AC.state === 'running') AC.suspend(); } catch (e) { /* 무시 */ } }
-export const audioPaused = () => !!AC && AC.state !== 'running';
-/** 음악 파일(ArrayBuffer)을 디코딩한다. 오디오가 없으면 null */
-export async function decodeAudio(ab) {
-  audioUnlock(); if (!AC) return null;
-  return await new Promise((ok, no) => { const r = AC.decodeAudioData(ab, ok, no); if (r && r.then) r.then(ok, no); });
-}
-
-/* ---------- 음악 스테이지의 곡 재생 ----------
- * 곡 시계 = AudioContext 시계 − 재생 시작 시각 − 출력 지연: 실제로 귀에 들리는 위치와 같다. 음소거는 볼륨만 0 이라 시계는 돈다 */
-const SONG = { src: null, g: null, t0: 0 };
-const SONG_VOL = .9;
-export function songPlay(buf, lead) {
-  songStop(0); audioUnlock(); if (!AC || !buf) return false;
-  try {
-    const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = buf;
-    g.gain.value = muted ? 0 : SONG_VOL; src.connect(g); g.connect(AC.destination);
-    SONG.t0 = AC.currentTime + (lead || 0); src.start(SONG.t0); SONG.src = src; SONG.g = g; return true;
-  } catch (e) { SONG.src = null; return false; }
-}
-/** 곡을 멈춘다(fade 초 동안 줄이며) */
-export function songStop(fade) {
-  const { src, g } = SONG; SONG.src = null; if (!src || !AC) return;
-  try { const n = AC.currentTime, f = fade == null ? .35 : fade; g.gain.cancelScheduledValues(n); g.gain.setValueAtTime(g.gain.value, n); g.gain.linearRampToValueAtTime(0, n + f + .01); src.stop(n + f + .02); } catch (e) { /* 이미 멈춤 */ }
-}
-/** 재생 중인 곡의 위치(초). 재생 중이 아니면 null */
-export function songClock() {
-  if (!AC || !SONG.src) return null;
-  return AC.currentTime - (AC.outputLatency || AC.baseLatency || 0) - SONG.t0;
-}
-
 export function toggleMute() {
   muted = !muted; save('swingby_mute', muted ? '1' : '0');
   if (MU.g) MU.g.gain.value = muted ? 0 : .65;
-  if (SONG.g) SONG.g.gain.value = muted ? 0 : SONG_VOL;
   if (!muted) audioUnlock();
 }
 

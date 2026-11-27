@@ -16,6 +16,7 @@ import { drawPlanet } from './draw-planet.js';
 import { drawSpecialGuide } from './draw-special.js';
 import { drawPlanet2 } from './draw-planet2.js';
 import { drawTrail2, drawFxLayers2, drawStar2, drawCoin } from './draw-fx2.js';
+import { uprightText } from './obstacles-draw.js';
 
 
 function drawHole(h) {
@@ -160,7 +161,7 @@ export function drawFx() {
   }
   for (const t of G.texts) {
     const pop = t.t < .12 ? 1 + (1 - t.t / .12) * .5 : 1;
-    g.globalAlpha = 1 - t.t * t.t; txt(t.s, clamp(t.x, 60, G.w - 60), t.y - t.t * 42, (t.sz || 15) * pop, t.c);
+    g.globalAlpha = 1 - t.t * t.t; uprightText(t.s, clamp(t.x, 60, G.w - 60), t.y - t.t * 42 * G.flipK, (t.sz || 15) * pop, t.c);   // 뒤집힌 화면에서도 글자는 바로, 위로 떠오른다
   }
   g.globalAlpha = 1;
 }

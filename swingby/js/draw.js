@@ -13,24 +13,23 @@ import { drawPick } from './draw-pick.js';
 import { drawShop } from './shop-ui.js';
 import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
 import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
-import { drawTrackWorld, drawSongSelect } from './track-draw.js';
+import { drawObstacles } from './obstacles-draw.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
   g.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
   (GFX.v >= 2 ? drawBackdrop2 : drawBackdrop)();
-  if (G.st === 'songs') { drawSongSelect(); drawMuteButton(); return; }   // 곡 고르기는 배경 위에 화면 전체를 덮는다
   if (G.st === 'shop') { drawShop(); drawMuteButton(); return; }   // 상점은 배경 위에 화면 전체를 덮는다
   g.save();
   const sx = G.shake > 0 ? rnd(-G.shake, G.shake) : 0, sy = G.shake > 0 ? rnd(-G.shake, G.shake) : 0;
   const z = (1 + G.zoom) * G.vz;
-  g.translate(VW / 2, VH / 2); g.scale(z, z); g.translate(-G.w / 2 + sx, -VH / 2 - G.camY + sy);
+  g.translate(VW / 2, VH / 2); g.scale(z, z * G.flipK); g.translate(-G.w / 2 + sx, -VH / 2 - G.camY + sy);   // flipK: 반전 포탈을 지나면 -1 로 넘어가 화면이 위아래로 뒤집힌다
   const wc = G.biome === 'normal' ? 'rgba(125,211,255,.16)' : BIOMES[G.biome].c + '55'; g.strokeStyle = wc; g.lineWidth = G.biome === 'normal' ? 2 : 3;
   g.beginPath(); g.moveTo(0, viewTop() - 20); g.lineTo(0, viewBot() + 20); g.moveTo(G.w, viewTop() - 20); g.lineTo(G.w, viewBot() + 20); g.stroke();
   if (GFX.v >= 2) drawWalls2();
   drawWorld();
   if (G.ops) drawOpsWorld();   // 블랙쉽: 벽·소형함·포탄
-  if (G.trk) drawTrackWorld();   // 음악 스테이지: 신호선(인디케이터)·도착 행성·남은 시간 링
+  if (G.obs.length || G.planets.some(p => p.unk)) drawObstacles();   // 장애물 구간
   const b = G.boss;
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }
   if (G.ops && G.st !== 'dead') drawOpsFleet();   // 동행 함선은 본체 뒤에

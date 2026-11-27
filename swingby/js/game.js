@@ -12,7 +12,7 @@ import { musicSet } from './audio.js';
 import { orbSpd } from './stats.js';
 import { updateTutorial } from './tutorial.js';
 import { updateOps, cullOps } from './ops.js';
-import { trackTick, updateTrack, trackPaused } from './track.js';
+import { updateFlip, cullObstacles } from './obstacles.js';
 
 /** 플레이 중 한 틱 */
 function update(dt) {
@@ -21,7 +21,6 @@ function update(dt) {
   if (!stepShip(dt)) return;
   updateCamera(dt);
   if (G.ops) updateOps(dt);
-  if (G.trk) { updateTrack(dt); return; }   // 음악 스테이지: 월드는 미리 만들어 둔 고정 코스, 진화·보스·무한 생성 없음
   if (!G.boss) { growField(dt); gen(); updateMonsters(dt); cull(); }
   if (!G.boss && G.ship.mode === 'orb') checkProgress();
 }
@@ -34,12 +33,12 @@ function cull() {
   if (G.mons.length > 4) G.mons = G.mons.filter(m => m.y < lim);
   if (G.holes.length > 12) G.holes = G.holes.filter(h => h.y < lim);
   if (G.ops) cullOps(lim);
+  if (G.obs.length) cullObstacles(lim);
 }
 
 /** 곡 상태: 보스전엔 보스곡, 평소엔 잔잔한 곡, 사망·격파 중엔 끈다 */
 function musicWant() {
   if (G.st === 'dead') return { mode: 'off', bi: 0, phase: 0 };
-  if (G.trk) return { mode: 'off', bi: 0, phase: 0 };   // 음악 스테이지: 배경음악 대신 고른 곡 파일이 흐른다(track.js)
   const b = G.boss;
   if (b) return b.state === 'dying' ? { mode: 'off', bi: 0, phase: 0 } : { mode: 'boss', bi: b.stage, phase: b.phase };
   return { mode: 'calm', bi: 0, phase: 0 };
@@ -47,8 +46,7 @@ function musicWant() {
 
 /** 한 프레임의 논리 갱신. 그리기에 쓸 dt(G.gdt)도 여기서 정한다 */
 export function step(dt) {
-  G.T += dt; musicSet(musicWant());
-  if (G.trk) trackTick(dt);   // 곡 시계는 히트스톱·슬로모션과 무관한 실제 시간
+  G.T += dt; musicSet(musicWant()); updateFlip(dt);
   if (G.ops && G.st === 'play') G.ops.t += dt;   // 블랙쉽의 작전 시간(스피드런 기록)은 실제 시간. 진화·강화 선택 중에는 멈춘다
   if (G.freeze > 0) { G.freeze -= dt; G.gdt = dt * .1; updateFx(dt, G.gdt); return; }
   const sd = dt * G.ts; G.gdt = sd;
@@ -59,7 +57,7 @@ export function step(dt) {
       const s = G.ship; s.a += sd * orbSpd() / s.r; s.x = s.p.x + Math.cos(s.a) * s.r; s.y = s.p.y + Math.sin(s.a) * s.r;
       s.trail.push(s.x, s.y); if (s.trail.length > 48) s.trail.splice(0, 2); break;
     }
-    case 'play': if (G.trk && trackPaused()) break; update(sd / 2); if (G.st === 'play') update(sd / 2); break;
+    case 'play': update(sd / 2); if (G.st === 'play') update(sd / 2); break;
     case 'pick': G.pickT += dt; break;
     case 'shop': break;   // 상점 화면은 입력과 그리기(shop-ui.js)만 쓴다
     case 'dead': G.deadT += dt; if (G.boss) G.boss.st += sd; break;

@@ -20,10 +20,10 @@ function freshRun() {
   return {
     debug: false,                      // 디버그판(?debug)이면 기록을 저장하지 않는다
     tuto: null,                        // 튜토리얼 중이면 진행 상태(tutorial.js). 점수·기록·별 조각 정산을 하지 않는다
-    trk: null,                         // 음악 스테이지 중이면 그 상태(track.js): 곡·곡 시계·신호선·도착 행성
     ops: null,                         // 블랙쉽 모드 중이면 그 상태(ops.js): 작전 시간·선단·벽·소형함 …
-    st: 'title',                       // title · songs(곡 고르기) · shop · play · pick · clear · dead
+    st: 'title',                       // title · shop · play · pick · clear · dead
     // 월드
+    obs: [], flip: 1, flipK: 1, piece: null, portalBack: null,   // 장애물 구간(obstacles.js) · 화면 위아래 뒤집힘(반전 포탈)
     planets: [], stars: [], holes: [], mons: [], genY: 0, genI: 0, biome: 'normal', fork: null, pat: { k: '', left: 0, side: 1, gap: false },
     w: W0, camY: 0, camTop: null, safeGen: 0, vz: 1,             // w: 지금 필드 폭(진행할수록 넓어짐) · vz: 카메라 줌(필드가 넓어지면 줌아웃, 갈림길에서 더)
     // 진행

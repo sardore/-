@@ -9,6 +9,7 @@ import { addStars, maybeHole } from './scatter.js';
 import { buildFork } from './fork.js';
 import { maybeMonster } from './monsters.js';
 import { opsGen, opsSqueeze } from './ops.js';
+import { maybePiece, squeezeObstacles } from './obstacles.js';
 
 /* ---------- 필드 폭 ----------
  * 진행할수록 필드가 점점 넓어지고(카메라는 줌아웃) 행성·간격도 같이 커진다. 보스 아레나는 항상 기본 폭. */
@@ -27,6 +28,7 @@ function squeeze(r) {
   for (const L of [G.stars, G.holes]) for (const o of L) o.x *= r;
   for (const m of G.mons) { m.x *= r; if (m.x0 != null) m.x0 *= r; }
   if (G.ops) opsSqueeze(r);
+  squeezeObstacles(r);
   if (G.ship && G.ship.mode === 'free') G.ship.x *= r;
 }
 
@@ -80,6 +82,7 @@ export function gen() {
   while (G.genY > viewTop() - 320) {
     const prev = G.planets[G.planets.length - 1];
     if (F && F.state === 'queued' && G.genI >= F.at) { buildFork(prev); return; }
+    if (maybePiece()) continue;   // 장애물 구간: 그 구간이 행성을 직접 놓는다
     const { x, dy, mod } = place(prev);
     G.genY -= dy;
     const gt = G.ops && opsGen.type();   // 블랙쉽: 거대 행성 기믹이 나올 차례인가

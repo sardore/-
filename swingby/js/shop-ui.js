@@ -296,16 +296,10 @@ function drawTutoIcon(x, y) {
   g.fillStyle = GOLD; g.beginPath(); g.arc(x + 9, y - 8 * .9, 2.6, 0, TAU); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x - 2, y + 2, 4.2, 0, TAU); g.stroke(); g.restore();
 }
-/** 음악 스테이지 버튼 그림: 음표와 그 뒤로 올라오는 신호선 */
-function drawNoteIcon(x, y) {
-  g.save(); g.strokeStyle = GOLD; g.fillStyle = GOLD; g.lineWidth = 2; g.lineCap = 'round';
-  g.beginPath(); g.ellipse(x - 4, y + 7, 5, 3.6, -.4, 0, TAU); g.fill(); g.beginPath(); g.moveTo(x + .6, y + 6); g.lineTo(x + .6, y - 10); g.lineTo(x + 8, y - 6); g.stroke();
-  g.globalAlpha = .55; g.lineWidth = 1.4; g.beginPath(); g.moveTo(x - 13, y + 12); g.lineTo(x + 13, y + 12); g.stroke(); g.restore();
-}
 /** 블랙쉽 버튼 그림: 하양·검정 선체의 해방선이 비스듬히 떠 있다 */
 function drawOpsIcon(x, y) { g.save(); g.translate(x, y); g.rotate(-.55); drawShip(g, SHIPS.os2, .8, reducedMotion() ? 0 : G.T, .62); g.restore(); }
 /** 시작화면 왼쪽 위 아이콘 메뉴 (앞으로 도감·기록 같은 메뉴를 같은 줄에 더 놓을 수 있다) */
-const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }, { k: 'track', n: '음악' }];
+const MENU = [{ k: 'shop', n: '상점' }, { k: 'tuto', n: '튜토리얼' }, { k: 'ops', n: '블랙쉽' }];
 const menuRect = i => ({ x: V.OX + 14, y: 14 + i * 76, w: 46, h: 46 });   // 세로로 쌓는다(상점 아래에 튜토리얼, 그 아래에 블랙쉽 모드)
 let menuX = -1, menuY = -1;
 export function moveTitlePointer(x, y) { menuX = x; menuY = y; }
@@ -325,7 +319,7 @@ export function drawTitleMenu() {
     g.fillStyle = face; g.fill();
     g.lineWidth = on ? 1.8 : 1;
     g.strokeStyle = on || hover ? '#ffe7a4' : '#93815c'; g.stroke();
-    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else if (m.k === 'track') drawNoteIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
+    if (m.k === 'shop') shard(r.x + r.w / 2, r.y + r.h / 2 - 1, 11); else if (m.k === 'ops') drawOpsIcon(r.x + r.w / 2, r.y + r.h / 2); else drawTutoIcon(r.x + r.w / 2, r.y + r.h / 2);
     txt(m.n, r.x + r.w / 2, r.y + r.h + 13, 11, on || hover ? '#ffe8b0' : '#c9d4e7', 'center', 700);
     if (on) { rr(r.x + r.w - 20, r.y - 6, 26, 14, 7); g.fillStyle = '#e6dcc0'; g.fill(); txt('ON', r.x + r.w - 7, r.y + 5, 10, '#14110a', 'center', 900); }
   });

@@ -1,4 +1,5 @@
 /* 보스 아레나: 서 있던 행성을 기준으로 전투장을 만들고(행성 배치·보스 등장), 부서진 행성을 되살린다 */
+import { clearObstacles } from './obstacles.js';
 import { freezeSpecial } from './special.js';
 import { G, V } from './state.js';
 import { W0, TAU, rnd, clamp, pickOf } from './util.js';
@@ -37,6 +38,7 @@ const arenaGrow = stage => 1 + ARENA_GROW * clamp(stage, 0, STAGES.length - 1) /
 
 /** 지금 서 있는 행성을 기준으로 보스 아레나를 만든다 */
 export function startBoss() {
+  clearObstacles();   // 장애물·화면 뒤집힘은 보스전에 가져가지 않는다
   G.planets.forEach(freezeSpecial);   // 움직이는 특수 행성은 보스전에 가져가지 않는다: 서 있던 행성도 평범한 행성으로 굳는다
   const s = G.ship, P = s.p, tuto = !!G.tuto, ops = !!G.ops, endless = !tuto && !ops && endlessNext(), n = G.kills - STAGES.length;   // endless: TON 618 이후의 무한 모드 보스(카탈로그 이름, 무작위 패턴) · tuto: 튜토리얼의 태양
   const bi = tuto ? -2 : ops ? -3 : endless ? -1 : G.nextBi, d0 = tuto ? makeSunBoss() : ops ? OPS_BOSSES[G.kills] : endless ? makeEndlessBoss(n) : BOSSES[bi];   // ops: 블랙쉽의 적 함선(OPS_BOSSES)

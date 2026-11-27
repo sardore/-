@@ -19,6 +19,7 @@ import { DASH_MIN } from './impact.js';
 import { heatUp, heatReset, heatMul, emitFlames } from './heat.js';
 import { cfg, shipHue, emitDecor, starHsl } from './cos.js';
 import { spawnLand } from './land-fx.js';
+import { hitObstacles } from './obstacles.js';
 
 const CHARGE_T = .8;      // 돌진 세기 1.0 인 기체의 차지가 가득 차는 시간(초). 세기에 반비례한다(강한 돌진일수록 빨리 찬다)
 const chargeTime = () => CHARGE_T / curDef().dash;
@@ -52,7 +53,7 @@ function release(charge) {
   const back = Math.atan2(-s.vy, -s.vx);
   beep(620, .04); noise(.22, .16, 5000, 400);
   sparks(s.x, s.y, '#bfeaff', 9, 260, back, .5); ringFx(s.x, s.y, 'rgba(190,235,255,.8)', 4, 26, .3, 2); shakeAdd(2.2);
-  s.gd = 0; s.gSkip = null; s.net = false; s.bumped = false;
+  s.gd = 0; s.gSkip = null; s.net = false; s.bumped = false; s.pull = null; s.btau = null; s.lastBoost = null; s.thru = null;
   if (boost > DASH_MIN) { // 돌격!
     const f = boost - 1;
     if (G.ops) batteryStart();   // 블랙쉽: 돌진 포대가 있는 기체는 비행 중 포탄을 쏜다
@@ -75,6 +76,7 @@ function latch(p, dx, dy, d) {
   const s = G.ship;
   s.mode = 'orb'; s.p = p; s.r = Math.max(d, minOrbit(p)); s.a = Math.atan2(dy, dx); s.dir = (dx * s.vy - dy * s.vx) >= 0 ? 1 : -1;
   const quick = s.swept < TAU * 1.05;
+  s.pull = null; s.btau = null; s.thru = null;   // 화살표 오브의 중력·부스트 오브는 행성에 닿으면 끝
   s.swept = 0; s.air = 0; s.last = null; s.boost = 1; s.charging = false; s.charge = 0; s.gd = 0; s.net = false; s.bumped = false; heatReset();
   p.pulse = 1; p.sq = .55;
   spawnLand(G.fxr, G.parts, p.x, p.y, p.R, capOf(p), shipHue(), cfg().landshape);   // 착지 링: 색은 늘 기체 색, 모양은 상점 상품
@@ -122,6 +124,7 @@ export function stepShip(dt) {
     if (s.net && bf) netAssist(dt);
     else if (!boss && (s.net || forkWait)) rescueAssist(dt);
     if (!boss && s.bumped) netAssist(dt);   // 독 행성·소형함·넉백에 튕겼으면 보스를 때렸을 때처럼 바닥이 가까워질수록 행성 쪽으로 서서히 끌려간다   // 격파 직후 · 갈림길 대기 중(월드 생성이 멈춰 있어 놓치면 갈 곳이 없다)
+    const py0 = s.y;
     s.x += s.vx * dt; s.y += s.vy * dt; s.air += dt;
     if (s.gd > 0) s.gd -= Math.hypot(s.vx, s.vy) * dt;
     if (Math.random() < dt * 60 * .7) G.parts.push({ x: s.x, y: s.y, vx: rnd(-12, 12), vy: rnd(-12, 12), t: 0, l: .28, c: 'rgba(160,220,255,.9)', s: 2 });
@@ -135,11 +138,17 @@ export function stepShip(dt) {
     if (s.last && Math.hypot(s.x - s.last.x, s.y - s.last.y) > capOf(s.last) + 8) s.last = null;
     if (bf && s.ramT <= 0 && Math.hypot(s.x - boss.x, s.y - boss.y) < boss.hr + shipR() + 3) { ram(); G.ship.net = true; if (G.st !== 'play' || !G.boss || G.boss.state !== 'fight') return false; }
     if (!boss) hitMonsters();
+    if (!boss && G.obs.length && !hitObstacles(dt, py0)) return false;   // 플라즈마 전류·오브, 화살표·부스트 오브, 반전 포탈
     if (G.ops) hitOps();
     for (const p of G.planets) {
-      if (p === s.last || p.dead || p.ghost || p.lock) continue;   // lock: 음악 스테이지에서 아직 열리지 않은 행성(track.js)은 그냥 지나간다
+      if (p === s.last || p.dead || p.ghost) continue;
       const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy);
-      if (d >= capOf(p)) continue;
+      if (d >= capOf(p)) { if (s.thru === p) s.thru = null; continue; }
+      if (p.unk) {   // 미지 행성: 한가운데로 뚫고 가면 붙지 않고 그대로 통과한다. 스치면(가장 가까워진 순간) 붙는다
+        if (d < p.R + 4 * fs()) s.thru = p;
+        if (s.thru === p || dx * s.vx + dy * s.vy < 0) continue;
+        latch(p, dx, dy, d); break;
+      }
       if (d < p.R * .4) { burst(s.x, s.y, '#ffb070', 16, 200); die('행성에 정면충돌'); break; }
       if (s.gd > 0 && d > p.R + 10 && s.gSkip && s.gSkip.includes(p)) continue;   // 몸체에 닿을 만큼 박으면 그대로 붙잡힌다
       if (dx * s.vx + dy * s.vy >= 0 || d < p.R + 10) { latch(p, dx, dy, d); break; }
@@ -164,7 +173,7 @@ export function stepShip(dt) {
 
 /** 옆 벽에 튕김. 보스전에서는 열기가 쌓인다 */
 function wallHit(x, y, dir, bf) {
-  G.ship.gd = 0;
+  G.ship.gd = 0; G.ship.pull = null;   // 화살표 오브의 중력은 벽에 닿으면 끝
   if (bf) { heatUp(x, y, dir); return; }
   beep(170, .05); sparks(x, y, '#bfeaff', 7, 220, dir, .8); shakeAdd(2.5);
 }
@@ -173,7 +182,7 @@ function wallHit(x, y, dir, bf) {
 function regulateSpeed(dt, base) {
   const s = G.ship, m = Math.hypot(s.vx, s.vy);
   if (s.boost > 1.003) {
-    s.boost = 1 + (s.boost - 1) * Math.exp(-dt / DASH_TAU);
+    s.boost = 1 + (s.boost - 1) * Math.exp(-dt / (s.btau || DASH_TAU));   // btau: 부스트 오브는 더 오래 간다
     if (m > 0) { const k = base * s.boost * heatMul() / m; s.vx *= k; s.vy *= k; }
   } else if (G.boss) {
     const mx = base * 1.25 * heatMul(); if (m > mx) { s.vx *= mx / m; s.vy *= mx / m; }

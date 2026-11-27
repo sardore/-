@@ -10,14 +10,12 @@ import { drawTitle2 } from './draw-title2.js';
 import { OPSREC, fmtTime, MODE } from './ops.js';
 import { drawOpsHud, drawOpsEnd } from './ops-draw.js';
 import { OPS_BOSSES } from './ops-data.js';
-import { drawTrackHud, drawTrackEnd } from './track-draw.js';
 
 export const MUTE_HIT = 58;      // 오른쪽 아래 음소거 버튼의 터치 영역(월드 단위)
 
 export function drawHud() {
   const { VW, OX } = V, b = G.boss;
   if (G.st !== 'play' && G.st !== 'pick') return;
-  if (G.trk) { drawTrackHud(); return; }
   const age = G.scoreCue ? G.T - G.scoreCue.at : Infinity, motion = !reducedMotion();
   if (b) telemetry(String(G.score), OX + 14, 74, 18, age < .22 ? '#ffb46f' : '#f1f1e9', 'left', 72);
   else {
@@ -137,7 +135,6 @@ export function drawOverlays() {
 export function drawScreens() {
   const { VW, VH } = V, T = G.T;
   if (G.ops && (G.st === 'clear' || G.st === 'dead')) { drawOpsEnd(); return; }
-  if (G.trk && (G.st === 'clear' || G.st === 'dead')) { drawTrackEnd(); return; }
   if (G.st === 'title') {
     const shade = g.createLinearGradient(0, 0, 0, VH);
     shade.addColorStop(0, 'rgba(5,6,15,.56)');
