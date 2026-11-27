@@ -32,7 +32,7 @@ const PIECES = [
   { k: 'portal', from: 24, w: .8 }
 ];
 const GAP = [5, 8];   // 구간 사이에 끼우는 보통 행성 수
-/** 시험용: 주소에 ?piece=maze(또는 gate·slalom·unk·boost·pull·portal) 를 붙이면 그 구간만 처음부터 자주 나온다 */
+/** 시험용: 주소에 ?piece=maze(또는 gate·slalom·unk·boost·pull·portal) 를 붙이면 그 구간만, ?piece=all 이면 모든 구간이 차례로 처음부터 자주 나온다 */
 const FORCE = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('piece') : null;
 export const PULL_ACC = [0, 300, 470, 660];   // 화살표 오브 세기별 가속(px/s², 지형 배율 곱)
 const BOOST = 2.1, BOOST_TAU = 1.3;          // 부스트 오브: 속도 배율 · 원래 속도로 돌아오는 시간 상수
@@ -48,7 +48,8 @@ export function maybePiece() {
   if (G.piece == null) G.piece = { at: FORCE ? 2 : PIECES[0].from + rint(0, 2), last: '' };
   if (G.portalBack != null && G.genI >= G.portalBack) { portalBack(); return true; }
   if (G.genI < G.piece.at || G.portalBack != null) return false;
-  const open = FORCE ? PIECES.filter(p => p.k === FORCE) : PIECES.filter(p => G.genI >= p.from && p.k !== G.piece.last && (p.k !== 'maze' || G.w >= 440));
+  if (FORCE === 'all') G.piece.n = G.piece.n || 0;   // 체험판: 모든 구간을 정해진 순서대로 한 번씩
+  const open = FORCE === 'all' ? [PIECES[G.piece.n++ % PIECES.length]] : FORCE ? PIECES.filter(p => p.k === FORCE) : PIECES.filter(p => G.genI >= p.from && p.k !== G.piece.last && (p.k !== 'maze' || G.w >= 440));
   if (!open.length) return false;
   let r = Math.random() * open.reduce((a, p) => a + p.w, 0), pick = open[0];
   for (const p of open) if ((r -= p.w) <= 0) { pick = p; break; }
