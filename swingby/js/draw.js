@@ -13,7 +13,7 @@ import { drawPick } from './draw-pick.js';
 import { drawShop } from './shop-ui.js';
 import { drawTutoWorld, drawTutoScreen } from './tutorial-draw.js';
 import { drawOpsWorld, drawOpsFleet } from './ops-draw.js';
-import { drawObstacles } from './obstacles-draw.js';
+import { drawObstacles, drawObstaclesFront } from './obstacles-draw.js';
 
 export function draw() {
   const { VW, VH, S, DPR } = V;
@@ -34,6 +34,7 @@ export function draw() {
   if (b) { if (b.state === 'fight') for (const a of b.q) drawTele(a, b); drawBoss(b); for (const h of G.haz) drawHaz(h); }
   if (G.ops && G.st !== 'dead') drawOpsFleet();   // 동행 함선은 본체 뒤에
   if (G.st !== 'dead') drawPlayer();
+  if (G.obs.length) drawObstaclesFront();   // 포탈의 앞쪽 반은 기체 위에(기체가 고리를 통과)
   drawFx();
   drawTutoWorld();
   g.restore();

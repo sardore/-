@@ -23,31 +23,50 @@ function lightning(o, T, still) {
   g.shadowBlur = 0; g.strokeStyle = '#fff'; g.lineWidth = 1 * fs(); path(); g.stroke();
 }
 
-/** 반전 포탈: 지오메트리 대시식 중력 포탈. 가로폭을 채우는 납작한 타원 고리 + 안쪽 흐름 화살표 + 테두리를 도는 불꽃.
- *  내려가기(to<0)는 파랑 ▼, 되돌리기(to>0)는 노랑 ▲. 지나간 포탈은 흐려진다. */
-function drawPortal(o, T, still, k, top, bot) {
-  if (o.y < top - 60 || o.y > bot + 60) return;
-  const down = o.to < 0, hue = down ? 200 : 48, cx = G.w / 2, rx = G.w / 2 + 26, ry = 26 * k, dirY = down ? 1 : -1;
-  const col = l => 'hsl(' + hue + ',100%,' + l + '%)', al = o.used ? .3 : 1, pulse = still ? 1 : .85 + .15 * Math.sin(T * 7);
-  g.save(); g.globalAlpha = al; g.translate(cx, o.y);
-  // 안쪽: 위아래로 흐르는 빛
-  g.save(); g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.clip();
-  const fill = g.createRadialGradient(0, 0, 0, 0, 0, rx); fill.addColorStop(0, 'hsla(' + hue + ',100%,70%,.55)'); fill.addColorStop(.6, 'hsla(' + hue + ',100%,55%,.28)'); fill.addColorStop(1, 'hsla(' + hue + ',100%,50%,.12)');
-  g.fillStyle = fill; g.fillRect(-rx, -ry, rx * 2, ry * 2);
-  g.strokeStyle = 'hsla(' + hue + ',100%,92%,.95)'; g.lineWidth = 3.4; g.lineCap = 'round'; g.lineJoin = 'round';
-  for (let x = -rx + 26; x < rx - 10; x += 38) {   // 진행 방향으로 흐르는 ▼/▲ 화살표(chevron)
-    const m = still ? .5 : ((T * 1.4 + x * .013) % 1), y = (m - .5) * ry * 2 * dirY;
-    g.globalAlpha = al * Math.sin(m * Math.PI);
-    g.beginPath(); g.moveTo(x - 11, y - 7 * dirY); g.lineTo(x, y + 5 * dirY); g.lineTo(x + 11, y - 7 * dirY); g.stroke();
+/* 반전 포탈: 지오메트리 대시의 중력 포탈처럼 — 납작하게 누운 굵은 고리, 검은 외곽선, 단색 + 밝은 줄 한 가닥.
+ * 고리의 뒤쪽 반(위)은 기체 뒤에, 앞쪽 반(아래)은 기체 앞에 그려 기체가 고리를 "통과"한다. 주변의 네모 입자가 고리로 빨려든다.
+ * 아래로 반전(to<0)은 노랑, 되돌림(to>0)은 파랑 (GD 의 중력 포탈 색). 지나간 포탈은 흐려진다. */
+const PORTAL_COL = { flip: ['#ffd51f', '#fff38a', '#a87c00'], back: ['#1fb7ff', '#a6ecff', '#0a5f9e'] };
+const OUTLINE = '#0a0a12';
+function portalGeom(o, k) { return { cx: G.w / 2, rx: G.w / 2 + 34, ry: 30 * k, c: PORTAL_COL[o.to < 0 ? 'flip' : 'back'] }; }
+/** 고리 반쪽: from~to 각도(라디안)의 굵은 띠 */
+function ringHalf(cx, y, rx, ry, a0, a1, c, w) {
+  const arc = (dr, lw, col) => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.ellipse(cx, y, rx + dr, ry + dr * .35, 0, a0, a1); g.stroke(); };
+  g.lineCap = 'butt';
+  arc(0, w + 5, OUTLINE);       // 검은 외곽선
+  arc(0, w, c[0]);              // 단색 몸체
+  arc(-w * .28, w * .3, c[2]);  // 안쪽 어두운 띠
+  arc(w * .18, w * .22, c[1]);  // 바깥쪽 밝은 줄
+}
+function portalParticles(o, y, g0, T, k, still) {
+  if (still || o.used) return;
+  for (let i = 0; i < 22; i++) {   // 위아래에서 고리 쪽으로 빨려드는 네모
+    const ph = (i * .618) % 1, m = (T * .9 + ph) % 1, side = i % 2 ? 1 : -1;
+    const x = g0.cx + (((i * 97) % 100) / 100 - .5) * (g0.rx * 2 - 30), py = y + side * (1 - m) * 70 * k, s = (3 + (i % 3)) * k * (1 - m * .5);
+    g.save(); g.globalAlpha *= Math.min(1, m * 3) * (1 - m * .4); g.translate(x, py); g.rotate(T * 3 + i);
+    g.fillStyle = i % 4 ? g0.c[1] : '#fff'; g.fillRect(-s / 2, -s / 2, s, s); g.restore();
   }
-  g.restore(); g.globalAlpha = al;
-  // 테두리: 바깥 번짐 → 색 고리 → 흰 속테두리
-  g.shadowColor = col(60); g.shadowBlur = 22 * pulse; g.strokeStyle = 'hsla(' + hue + ',100%,60%,.55)'; g.lineWidth = 11; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.stroke();
-  g.shadowBlur = 10; g.strokeStyle = col(68); g.lineWidth = 5; g.stroke();
-  g.shadowBlur = 0; g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.ellipse(0, 0, rx - 2, ry - 2, 0, 0, TAU); g.stroke();
-  // 테두리를 도는 불꽃
-  if (!still) for (let i = 0; i < 14; i++) { const a = T * (down ? 1.6 : -1.6) + i * TAU / 14, px = Math.cos(a) * rx, py = Math.sin(a) * ry, r = 2.2 + 1.6 * Math.sin(T * 9 + i); g.fillStyle = i % 3 ? col(80) : '#fff'; g.beginPath(); g.arc(px, py, r, 0, TAU); g.fill(); }
+}
+/** 뒤쪽 반(기체 뒤): 안쪽 면 + 위쪽 고리 + 입자 */
+function drawPortalBack(o, T, still, k) {
+  const P = portalGeom(o, k);
+  g.save(); g.globalAlpha = o.used ? .3 : 1;
+  g.fillStyle = P.c[0]; g.globalAlpha *= .16; g.beginPath(); g.ellipse(P.cx, o.y, P.rx, P.ry, 0, 0, TAU); g.fill(); g.globalAlpha = o.used ? .3 : 1;
+  ringHalf(P.cx, o.y, P.rx, P.ry, Math.PI, TAU, [P.c[2], P.c[0], OUTLINE], 10 * k);   // 뒤쪽은 어둡고 얇게
+  portalParticles(o, o.y, P, T, k, still);
   g.restore();
+}
+/** 앞쪽 반(기체 앞) */
+function drawPortalFront(o, k) {
+  const P = portalGeom(o, k);
+  g.save(); g.globalAlpha = o.used ? .3 : 1;
+  ringHalf(P.cx, o.y, P.rx, P.ry, 0, Math.PI, P.c, 16 * k);
+  g.restore();
+}
+/** 기체를 그린 뒤에 부른다: 포탈의 앞쪽 반 */
+export function drawObstaclesFront() {
+  const top = viewTop() - 80, bot = viewBot() + 80, k = fs();
+  for (const o of G.obs) if (o.k === 'portal' && o.y > top && o.y < bot) drawPortalFront(o, k);
 }
 
 export function drawObstacles() {
@@ -100,7 +119,7 @@ export function drawObstacles() {
         g.restore();
         break;
       }
-      case 'portal': drawPortal(o, T, still, k, top, bot); break;
+      case 'portal': if (o.y > top && o.y < bot) drawPortalBack(o, T, still, k); break;
     }
   }
 }
