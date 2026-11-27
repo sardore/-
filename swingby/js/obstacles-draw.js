@@ -23,6 +23,33 @@ function lightning(o, T, still) {
   g.shadowBlur = 0; g.strokeStyle = '#fff'; g.lineWidth = 1 * fs(); path(); g.stroke();
 }
 
+/** 반전 포탈: 지오메트리 대시식 중력 포탈. 가로폭을 채우는 납작한 타원 고리 + 안쪽 흐름 화살표 + 테두리를 도는 불꽃.
+ *  내려가기(to<0)는 파랑 ▼, 되돌리기(to>0)는 노랑 ▲. 지나간 포탈은 흐려진다. */
+function drawPortal(o, T, still, k, top, bot) {
+  if (o.y < top - 60 || o.y > bot + 60) return;
+  const down = o.to < 0, hue = down ? 200 : 48, cx = G.w / 2, rx = G.w / 2 + 26, ry = 26 * k, dirY = down ? 1 : -1;
+  const col = l => 'hsl(' + hue + ',100%,' + l + '%)', al = o.used ? .3 : 1, pulse = still ? 1 : .85 + .15 * Math.sin(T * 7);
+  g.save(); g.globalAlpha = al; g.translate(cx, o.y);
+  // 안쪽: 위아래로 흐르는 빛
+  g.save(); g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.clip();
+  const fill = g.createRadialGradient(0, 0, 0, 0, 0, rx); fill.addColorStop(0, 'hsla(' + hue + ',100%,70%,.55)'); fill.addColorStop(.6, 'hsla(' + hue + ',100%,55%,.28)'); fill.addColorStop(1, 'hsla(' + hue + ',100%,50%,.12)');
+  g.fillStyle = fill; g.fillRect(-rx, -ry, rx * 2, ry * 2);
+  g.strokeStyle = 'hsla(' + hue + ',100%,92%,.95)'; g.lineWidth = 3.4; g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let x = -rx + 26; x < rx - 10; x += 38) {   // 진행 방향으로 흐르는 ▼/▲ 화살표(chevron)
+    const m = still ? .5 : ((T * 1.4 + x * .013) % 1), y = (m - .5) * ry * 2 * dirY;
+    g.globalAlpha = al * Math.sin(m * Math.PI);
+    g.beginPath(); g.moveTo(x - 11, y - 7 * dirY); g.lineTo(x, y + 5 * dirY); g.lineTo(x + 11, y - 7 * dirY); g.stroke();
+  }
+  g.restore(); g.globalAlpha = al;
+  // 테두리: 바깥 번짐 → 색 고리 → 흰 속테두리
+  g.shadowColor = col(60); g.shadowBlur = 22 * pulse; g.strokeStyle = 'hsla(' + hue + ',100%,60%,.55)'; g.lineWidth = 11; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.stroke();
+  g.shadowBlur = 10; g.strokeStyle = col(68); g.lineWidth = 5; g.stroke();
+  g.shadowBlur = 0; g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.ellipse(0, 0, rx - 2, ry - 2, 0, 0, TAU); g.stroke();
+  // 테두리를 도는 불꽃
+  if (!still) for (let i = 0; i < 14; i++) { const a = T * (down ? 1.6 : -1.6) + i * TAU / 14, px = Math.cos(a) * rx, py = Math.sin(a) * ry, r = 2.2 + 1.6 * Math.sin(T * 9 + i); g.fillStyle = i % 3 ? col(80) : '#fff'; g.beginPath(); g.arc(px, py, r, 0, TAU); g.fill(); }
+  g.restore();
+}
+
 export function drawObstacles() {
   const top = viewTop() - 80, bot = viewBot() + 80, T = G.T, still = reducedMotion(), k = fs();
   // 미지 행성: 검은 몸체와 물음표
@@ -73,18 +100,7 @@ export function drawObstacles() {
         g.restore();
         break;
       }
-      case 'portal': {
-        if (o.y < top || o.y > bot) break;
-        const al = o.used ? .25 : 1, h = 14 * k;
-        g.globalAlpha = al;
-        const gr = g.createLinearGradient(0, o.y - h * 2, 0, o.y + h * 2); gr.addColorStop(0, 'rgba(170,110,255,0)'); gr.addColorStop(.5, 'rgba(190,130,255,.55)'); gr.addColorStop(1, 'rgba(170,110,255,0)');
-        g.fillStyle = gr; g.fillRect(-300, o.y - h * 2, G.w + 600, h * 4);
-        g.strokeStyle = '#e3ccff'; g.lineWidth = 2; g.setLineDash([10, 8]); g.lineDashOffset = still ? 0 : -T * 60 * (o.to < 0 ? 1 : -1);
-        g.beginPath(); g.moveTo(-300, o.y - h * .5); g.lineTo(G.w + 300, o.y - h * .5); g.moveTo(-300, o.y + h * .5); g.lineTo(G.w + 300, o.y + h * .5); g.stroke(); g.setLineDash([]);
-        for (let x = G.w * .2; x < G.w; x += G.w * .3) uprightText(o.to < 0 ? '⇅ 반전' : '⇅ 복귀', x, o.y + 5, 13, '#f2e6ff', 'center', 900);
-        g.globalAlpha = 1;
-        break;
-      }
+      case 'portal': drawPortal(o, T, still, k, top, bot); break;
     }
   }
 }
