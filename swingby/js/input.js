@@ -6,9 +6,9 @@ import { pressStart, pressEnd } from './player.js';
 import { choose, offer, startRun } from './progress.js';
 import { startTutorial, tutoPress } from './tutorial.js';
 import { startOps, MODE, toggleMode } from './ops.js';
-import { SONGS } from './track-songs.js';
-import { startTrack, retryTrack, backToSongs, openSongs, exitSongs } from './track.js';
-import { songsHit, trackEndHit } from './track-draw.js';
+import { retryTrack, backToSongs, exitSongs } from './track.js';
+import { openSongs, songsPress, songsClick } from './track-menu.js';
+import { trackEndHit } from './track-draw.js';
 import { pickLayout } from './draw-pick.js';
 import { MUTE_HIT } from './draw-ui.js';
 import { openShop, closeShop, shopDown, shopMove, shopUp, shopWheel, moveTitlePointer, titleMenuHit, deadShopHit, deadModeHit } from './shop-ui.js';
@@ -22,7 +22,7 @@ export function pointerDown(px, py, key) {
   if (!key && x > V.VW - MUTE_HIT && y > V.VH - MUTE_HIT) { toggleMute(); return; }
   switch (G.st) {
     case 'title': { const mk = key ? null : titleMenuHit(x, y); if (mk === 'shop') openShop(); else if (mk === 'tuto') startTutorial(); else if (mk === 'ops') toggleMode(); else if (mk === 'track') openSongs(); else if (MODE.ops) startOps(); else { G.st = 'play'; beep(520, .1); } break; }
-    case 'songs': { if (key) break; const h = songsHit(x, y); if (h && h.back) exitSongs(); else if (h) startTrack(SONGS[h.song]); break; }
+    case 'songs': { if (key) break; if (songsPress(x, y) === 'back') exitSongs(); break; }
     case 'shop': if (!key) shopDown(x, y); break;
     case 'play': pressStart(); break;
     case 'pick': {
@@ -52,6 +52,7 @@ export function bindInput() {
   });
   cv.addEventListener('pointerleave', () => moveTitlePointer(-1, -1));
   cv.addEventListener('wheel', e => { if (G.st === 'shop') shopWheel(e.deltaY); }, { passive: true });
+  cv.addEventListener('click', e => songsClick(e.clientX / V.S, e.clientY / V.S));   // 파일 창은 브라우저가 click 에서만 열어 준다(음악 스테이지의 곡 불러오기)
   cv.addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('blur', () => pointerUp());
   window.addEventListener('keydown', e => {

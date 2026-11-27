@@ -12,7 +12,7 @@ import { musicSet } from './audio.js';
 import { orbSpd } from './stats.js';
 import { updateTutorial } from './tutorial.js';
 import { updateOps, cullOps } from './ops.js';
-import { trackTick, updateTrack, trackWant, trackPaused } from './track.js';
+import { trackTick, updateTrack, trackPaused } from './track.js';
 
 /** 플레이 중 한 틱 */
 function update(dt) {
@@ -21,7 +21,7 @@ function update(dt) {
   if (!stepShip(dt)) return;
   updateCamera(dt);
   if (G.ops) updateOps(dt);
-  if (G.trk) { updateTrack(); return; }   // 음악 스테이지: 월드는 미리 만들어 둔 고정 코스, 진화·보스·무한 생성 없음
+  if (G.trk) { updateTrack(dt); return; }   // 음악 스테이지: 월드는 미리 만들어 둔 고정 코스, 진화·보스·무한 생성 없음
   if (!G.boss) { growField(dt); gen(); updateMonsters(dt); cull(); }
   if (!G.boss && G.ship.mode === 'orb') checkProgress();
 }
@@ -39,7 +39,7 @@ function cull() {
 /** 곡 상태: 보스전엔 보스곡, 평소엔 잔잔한 곡, 사망·격파 중엔 끈다 */
 function musicWant() {
   if (G.st === 'dead') return { mode: 'off', bi: 0, phase: 0 };
-  if (G.trk) return G.st === 'play' ? trackWant() : { mode: 'off', bi: 0, phase: 0 };   // 곡은 플레이 중에만 흐른다
+  if (G.trk) return { mode: 'off', bi: 0, phase: 0 };   // 음악 스테이지: 배경음악 대신 고른 곡 파일이 흐른다(track.js)
   const b = G.boss;
   if (b) return b.state === 'dying' ? { mode: 'off', bi: 0, phase: 0 } : { mode: 'boss', bi: b.stage, phase: b.phase };
   return { mode: 'calm', bi: 0, phase: 0 };

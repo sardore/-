@@ -13,12 +13,42 @@ export function audioUnlock() {
     musicInit();
   } else if (AC.state === 'suspended') AC.resume();
 }
-/** 탭이 가려지면 오디오 시계도 멈춘다(음악 스테이지의 인디케이터가 곡과 어긋나지 않게). 다시 보이면 이어서 재생 */
+/** 탭이 가려지면 오디오를 멈춘다: 오디오 시계가 멈춰 음악 스테이지의 인디케이터도 곡과 같이 멈춘다. 다시 터치하면 audioUnlock 이 이어서 재생 */
 export function audioSuspend() { try { if (AC && AC.state === 'running') AC.suspend(); } catch (e) { /* 무시 */ } }
 export const audioPaused = () => !!AC && AC.state !== 'running';
+/** 음악 파일(ArrayBuffer)을 디코딩한다. 오디오가 없으면 null */
+export async function decodeAudio(ab) {
+  audioUnlock(); if (!AC) return null;
+  return await new Promise((ok, no) => { const r = AC.decodeAudioData(ab, ok, no); if (r && r.then) r.then(ok, no); });
+}
+
+/* ---------- 음악 스테이지의 곡 재생 ----------
+ * 곡 시계 = AudioContext 시계 − 재생 시작 시각 − 출력 지연: 실제로 귀에 들리는 위치와 같다. 음소거는 볼륨만 0 이라 시계는 돈다 */
+const SONG = { src: null, g: null, t0: 0 };
+const SONG_VOL = .9;
+export function songPlay(buf, lead) {
+  songStop(0); audioUnlock(); if (!AC || !buf) return false;
+  try {
+    const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = buf;
+    g.gain.value = muted ? 0 : SONG_VOL; src.connect(g); g.connect(AC.destination);
+    SONG.t0 = AC.currentTime + (lead || 0); src.start(SONG.t0); SONG.src = src; SONG.g = g; return true;
+  } catch (e) { SONG.src = null; return false; }
+}
+/** 곡을 멈춘다(fade 초 동안 줄이며) */
+export function songStop(fade) {
+  const { src, g } = SONG; SONG.src = null; if (!src || !AC) return;
+  try { const n = AC.currentTime, f = fade == null ? .35 : fade; g.gain.cancelScheduledValues(n); g.gain.setValueAtTime(g.gain.value, n); g.gain.linearRampToValueAtTime(0, n + f + .01); src.stop(n + f + .02); } catch (e) { /* 이미 멈춤 */ }
+}
+/** 재생 중인 곡의 위치(초). 재생 중이 아니면 null */
+export function songClock() {
+  if (!AC || !SONG.src) return null;
+  return AC.currentTime - (AC.outputLatency || AC.baseLatency || 0) - SONG.t0;
+}
+
 export function toggleMute() {
   muted = !muted; save('swingby_mute', muted ? '1' : '0');
   if (MU.g) MU.g.gain.value = muted ? 0 : .65;
+  if (SONG.g) SONG.g.gain.value = muted ? 0 : SONG_VOL;
   if (!muted) audioUnlock();
 }
 
@@ -73,16 +103,7 @@ export function noise(d, vol, f0, f1) {
 export const vibe = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* 무시 */ } };
 
 /* ---------- 배경음악 ---------- */
-const MU = { g: null, dry: null, send: null, next: 0, step: 0, mode: 'off', run: 0, t0: null, want: { mode: 'calm', bi: 0, phase: 0 } };
-/** 다른 파일이 등록하는 곡 모드(track-music.js). fn(시각, 16분음표 길이, want, 스텝 번호) */
-export const MUSIC_MODES = {};
-/** 합성 도구를 곡 모드에 빌려 준다 */
-export const SYNTH = { note: (...a) => mnote(...a), kick: (...a) => mkick(...a), noise: (...a) => mnoise(...a), get on() { return !!(AC && MU.g); } };
-/** 음악 스테이지의 곡 시계(초): 첫 스텝이 시작된 시각 기준. 소리가 실제로 나오는 시점에 맞춘다. 곡 모드가 아니거나 오디오가 없으면 null */
-export function musicClock() {
-  if (!AC || MU.mode !== 'track' || MU.t0 == null || AC.state !== 'running') return null;
-  return AC.currentTime - (AC.outputLatency || AC.baseLatency || 0) - MU.t0;
-}
+const MU = { g: null, dry: null, send: null, next: 0, step: 0, mode: 'off', want: { mode: 'calm', bi: 0, phase: 0 } };
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 const CH = { Dm: { r: 38, t: [50, 57, 62, 65, 69] }, Bb: { r: 34, t: [46, 53, 58, 62, 65] }, Gm: { r: 31, t: [43, 50, 55, 58, 62] }, A: { r: 33, t: [45, 52, 57, 61, 64] }, C: { r: 36, t: [48, 55, 60, 64, 67] }, Eb: { r: 39, t: [51, 58, 63, 67, 70] }, F: { r: 41, t: [53, 57, 60, 65, 69] } };
 const PROG = { calm: ['Dm', 'Bb', 'Gm', 'A'], boss: ['Dm', 'Bb', 'C', 'A'], boss2: ['Dm', 'Eb', 'Bb', 'A'], boss3: ['Dm', 'Dm', 'Eb', 'A'] };
@@ -127,12 +148,12 @@ function musicTick() {
   if (!AC || !MU.g) return;
   const now = AC.currentTime, w = MU.want;
   MU.g.gain.value = muted ? 0 : .65;
-  if (AC.state !== 'running' || (muted && w.mode !== 'track' && MU.mode !== 'track')) { MU.next = now + .1; return; }   // 곡 모드는 음소거여도 시계가 돌아야 해서 소리만 0 으로 계속 스케줄한다
+  if (muted || AC.state !== 'running') { MU.next = now + .1; return; }
   if (MU.next < now - .4) MU.next = now + .05;
   while (MU.next < now + .3) {
-    if (w.mode !== MU.mode || (w.mode === 'track' && w.run !== MU.run)) { MU.mode = w.mode; MU.step = 0; MU.run = w.run || 0; MU.t0 = w.mode === 'track' ? MU.next : null; }
-    const bpm = MU.mode === 'track' ? w.bpm : MU.mode === 'boss' ? 132 + w.phase * 10 + w.bi * 3 : 76, sd = 60 / bpm / 4;
-    if (MU.mode !== 'off') (MUSIC_MODES[MU.mode] || musicStep)(MU.next, sd, w, MU.step);
+    if (w.mode !== MU.mode) { MU.mode = w.mode; MU.step = 0; }
+    const bpm = MU.mode === 'boss' ? 132 + w.phase * 10 + w.bi * 3 : 76, sd = 60 / bpm / 4;
+    if (MU.mode !== 'off') musicStep(MU.next, sd, w);
     MU.step++; MU.next += sd;
   }
 }

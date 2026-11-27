@@ -1,62 +1,95 @@
-/* 음악 스테이지의 곡 정의. 곡은 파일이 아니라 데이터(BPM·마디 구성·코드 진행·시드)이고, 같은 데이터로
- *  - track-music.js 가 합성해 연주하고(길이가 마디 수로 정확히 정해진다)
- *  - track.js 가 맵(행성 배치)을 만든다 — 행성 하나하나가 "몇 번째 박자에 신호선이 닿는가"를 갖는다.
- * 곡을 새로 넣으려면 SONGS 에 항목 하나만 추가하면 된다. */
+/* 음악 스테이지의 곡 목록: 진짜 음악 파일을 쓴다.
+ *  - 내 곡: 플레이어가 기기에서 고른 음악 파일. IndexedDB 에 파일과 분석 결과를 저장해 다음에도 목록에 남는다
+ *  - 수록곡: 레포의 music/songs.json 에 적어 둔 파일 (music/README.md 참고. 저작권이 허락된 곡만 넣는다)
+ * 곡을 고르면 디코딩·분석(track-analyze.js)해서 { id, name, artist, buf, dur, bpm, beat0, env } 를 만든다. */
 import { load } from './util.js';
+import { decodeAudio } from './audio.js';
+import { analyzeBuffer } from './track-analyze.js';
 
-/** 섹션 종류: 곡의 층(track-music.js)과 맵의 분위기(행성 간격·종류)를 함께 정한다 */
-export const KINDS = {
-  intro: { n: '인트로', c: '#7dd3ff', gaps: [6, 6, 4], mix: { n: 70, g: 30 },        stars: 2 },
-  verse: { n: '벌스',   c: '#9dffb0', gaps: [4, 4, 4, 6], mix: { n: 70, g: 15, r: 15 }, stars: 2 },
-  build: { n: '빌드업', c: '#ffe27a', gaps: [4, 4, 2], mix: { n: 60, r: 40 },        stars: 2 },
-  drop:  { n: '드롭',   c: '#ff6a8a', gaps: [2, 2, 4, 2, 4], mix: { n: 45, r: 40, g: 15 }, stars: 3 },
-  break: { n: '브레이크', c: '#b8a8ff', gaps: [6, 8], mix: { n: 40, g: 60 },         stars: 1 },
-  outro: { n: '아웃트로', c: '#ffb46f', gaps: [6, 4, 6], mix: { n: 60, g: 40 },      stars: 2 }
-};
-
-/* 코드: [으뜸음 반음 오프셋, 'm' | 'M'] 이 마디마다 하나씩 돌아간다 (4마디 주기).
- * sec: [종류, 마디 수] 목록 — 곡 길이 = 마디 수 합 × 4박. 첫 행성은 8박째(2마디 카운트인), 도착 행성은 곡이 끝나는 박에 있다.
- * ramp/dec: 비행 속도 가산·궤도 붕괴 가산(난이도), gaps: 섹션 종류별 행성 간격(박) 덮어쓰기 */
-export const SONGS = [
-  { id: 'orbit', n: 'ORBIT', k: '잔잔한 궤도', bpm: 92, key: 50, diff: 1, hue: 205, biome: 'normal', seed: 7, ramp: 10, dec: 0,
-    prog: [[0, 'm'], [-4, 'M'], [-7, 'm'], [-5, 'M']], style: { bass: 1, hat: 1, arp: 1 },
-    gaps: { intro: [6, 6, 8], verse: [4, 6], build: [4, 6], drop: [4, 4, 6, 4], break: [6, 8], outro: [6, 8] },   // 입문곡: 드롭에서도 2박 간격(촘촘한 구간)이 없다
-    sec: [['intro', 4], ['verse', 8], ['build', 2], ['drop', 8], ['break', 4], ['verse', 6], ['outro', 4]] },
-  { id: 'perihelion', n: 'PERIHELION', k: '근일점 통과', bpm: 120, key: 52, diff: 2, hue: 275, biome: 'nebula', seed: 23, ramp: 30, dec: 0,
-    prog: [[0, 'm'], [-2, 'M'], [-4, 'M'], [-5, 'M']], style: { bass: 2, hat: 2, arp: 2 },
-    sec: [['intro', 4], ['verse', 8], ['build', 4], ['drop', 12], ['break', 4], ['build', 2], ['drop', 12], ['outro', 4]] },
-  { id: 'redshift', n: 'REDSHIFT', k: '적색편이', bpm: 140, key: 45, diff: 3, hue: 6, biome: 'redzone', seed: 41, ramp: 50, dec: 1,
-    prog: [[0, 'm'], [-4, 'M'], [-2, 'M'], [-7, 'm']], style: { bass: 2, hat: 3, arp: 3 },
-    gaps: { drop: [2, 2, 4, 4, 2], verse: [4, 4, 6] },
-    sec: [['intro', 4], ['drop', 8], ['break', 4], ['build', 4], ['drop', 16], ['break', 4], ['drop', 12], ['outro', 4]] },
-  { id: 'horizon', n: 'EVENT HORIZON', k: '사건의 지평선', bpm: 150, key: 47, diff: 4, hue: 262, biome: 'void', seed: 66, ramp: 75, dec: 2,
-    prog: [[0, 'm'], [-4, 'M'], [-5, 'M'], [-9, 'M']], style: { bass: 3, hat: 3, arp: 3 },
-    gaps: { drop: [3, 3, 2, 4, 2], verse: [4, 6, 4], build: [4, 3, 2] },
-    sec: [['intro', 4], ['verse', 8], ['build', 4], ['drop', 16], ['break', 8], ['build', 4], ['drop', 16], ['outro', 4]] }
-];
-
-export const BEATS_PER_BAR = 4;
-export const FIRST_BEAT = 8;   // 첫 행성에 신호선이 닿는 박(2마디): 카운트인
-
-export const songBars = s => s.sec.reduce((a, x) => a + x[1], 0);
-export const songBeats = s => songBars(s) * BEATS_PER_BAR;
-export const beatSec = s => 60 / s.bpm;
-/** 곡 길이(초) */
-export const songSec = s => songBeats(s) * beatSec(s);
+export const MAX_SEC = 10 * 60, MAX_BYTES = 80 * 1024 * 1024, MIN_SEC = 30;
 export const fmtMMSS = t => { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
-
-/** 박 번호가 속한 섹션 { kind, i, bar0, bars } */
-export function sectionAt(s, beat) {
-  let bar = 0; const b = beat / BEATS_PER_BAR;
-  for (let i = 0; i < s.sec.length; i++) { const [kind, n] = s.sec[i]; if (b < bar + n) return { kind, i, bar0: bar, bars: n }; bar += n; }
-  const last = s.sec[s.sec.length - 1]; return { kind: last[0], i: s.sec.length - 1, bar0: bar - last[1], bars: last[1] };
-}
+/** 곡 id 로 정해지는 색 */
+export const hueOf = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };
 
 /* ---------- 기록 ---------- */
-const key = id => 'swingby_trk_' + id;
+export const recKey = (id, hard) => 'swingby_trk_' + (hard ? 'h_' : '') + id;
 /** { clear: 0|1, best: 최고 점수, rate: 별 수집률(0~1) } */
-export function recOf(id) {
-  try { const r = JSON.parse(load(key(id), 'null')); if (r && typeof r === 'object') return { clear: r.clear ? 1 : 0, best: +r.best || 0, rate: +r.rate || 0 }; } catch (e) { /* 깨진 기록은 무시 */ }
+export function recOf(id, hard) {
+  try { const r = JSON.parse(load(recKey(id, hard), 'null')); if (r && typeof r === 'object') return { clear: r.clear ? 1 : 0, best: +r.best || 0, rate: +r.rate || 0 }; } catch (e) { /* 깨진 기록은 무시 */ }
   return { clear: 0, best: 0, rate: 0 };
 }
 export const gradeOf = (cleared, rate) => !cleared ? '' : rate >= .95 ? 'S' : rate >= .75 ? 'A' : rate >= .5 ? 'B' : 'C';
+
+/* ---------- IndexedDB (내 곡) ---------- */
+let dbp = null;
+function db() {
+  if (!dbp) dbp = new Promise((ok, no) => {
+    try {
+      const r = indexedDB.open('swingby_music', 1);
+      r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'id' }); if (!d.objectStoreNames.contains('data')) d.createObjectStore('data'); };
+      r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+    } catch (e) { no(e); }
+  });
+  return dbp;
+}
+async function tx(store, mode, fn) {
+  const d = await db();
+  return await new Promise((ok, no) => { const t = d.transaction(store, mode), r = fn(t.objectStore(store)); t.oncomplete = () => ok(r && r.result); t.onerror = () => no(t.error); t.onabort = () => no(t.error); });
+}
+
+/* ---------- 목록 ---------- */
+/** 곡 선택 화면이 읽는 상태. items: [{ id, name, artist, dur, bpm, kind:'mine'|'bundled', file? }] */
+export const LIB = { items: [], loaded: false, busy: '', err: '' };
+const MEM = {};   // 저장이 막힌 환경에서 이번 접속 동안만 기억하는 내 곡
+
+export async function refreshLibrary() {
+  const items = [];
+  try {
+    const r = await fetch('./music/songs.json', { cache: 'no-cache' });
+    if (r.ok) for (const s of await r.json()) if (s && s.file) items.push({ id: 'm_' + s.file, name: s.title || s.file, artist: s.artist || '', dur: +s.dur || 0, bpm: 0, kind: 'bundled', file: s.file, license: s.license || '' });
+  } catch (e) { /* 수록곡 목록이 없거나 오프라인 */ }
+  let mine = [];
+  try { mine = (await tx('meta', 'readonly', st => st.getAll())) || []; } catch (e) { /* 저장소를 쓸 수 없는 환경 */ }
+  for (const id in MEM) if (!mine.some(m => m.id === id)) mine.push(MEM[id].meta);
+  mine.sort((a, b) => b.added - a.added).forEach(m => items.push(Object.assign({ kind: 'mine' }, m)));
+  LIB.items = items; LIB.loaded = true;
+}
+
+/** 기기에서 고른 파일을 내 곡으로 추가한다. 실패하면 사용자에게 보여줄 메시지로 던진다 */
+export async function addMySong(file) {
+  if (file.size > MAX_BYTES) throw new Error('파일이 너무 커요 (80MB 이하)');
+  const ab = await file.arrayBuffer();
+  let buf = null; try { buf = await decodeAudio(ab.slice(0)); } catch (e) { buf = null; }
+  if (!buf) throw new Error('이 파일은 재생할 수 없어요');
+  if (buf.duration < MIN_SEC) throw new Error('30초보다 긴 곡이어야 해요');
+  if (buf.duration > MAX_SEC) throw new Error('10분 이하의 곡만 돼요');
+  const a = analyzeBuffer(buf), id = 'f_' + hueOf(file.name) + '_' + file.size;
+  const meta = { id, name: file.name.replace(/\.[^.]+$/, ''), artist: '내 파일', dur: a.dur, bpm: a.bpm, beat0: a.beat0, env: a.env, added: Date.now() };
+  try { await tx('data', 'readwrite', st => st.put(ab, id)); await tx('meta', 'readwrite', st => st.put(meta)); }
+  catch (e) { MEM[id] = { ab, meta }; }
+  CACHE.id = id; CACHE.buf = buf;
+  return meta;
+}
+export async function deleteMySong(id) {
+  try { await tx('data', 'readwrite', st => st.delete(id)); await tx('meta', 'readwrite', st => st.delete(id)); } catch (e) { /* 무시 */ }
+  delete MEM[id]; if (CACHE.id === id) { CACHE.id = null; CACHE.buf = null; }
+}
+
+/** 방금 쓴 곡 하나의 디코딩 결과를 들고 있다 (다시 하기에서 바로 쓰도록) */
+const CACHE = { id: null, buf: null };
+
+/** 목록 항목 → 플레이할 곡 객체 */
+export async function loadSong(item) {
+  let buf = CACHE.id === item.id ? CACHE.buf : null;
+  if (!buf) {
+    let ab;
+    if (item.kind === 'mine') ab = MEM[item.id] ? MEM[item.id].ab : await tx('data', 'readonly', st => st.get(item.id));
+    else { const r = await fetch('./music/' + encodeURIComponent(item.file)); if (!r.ok) throw new Error('곡 파일을 찾지 못했어요'); ab = await r.arrayBuffer(); }
+    if (!ab) throw new Error('저장된 곡을 찾지 못했어요');
+    try { buf = await decodeAudio(ab.slice(0)); } catch (e) { buf = null; }
+    if (!buf) throw new Error('이 곡을 재생할 수 없어요');
+    CACHE.id = item.id; CACHE.buf = buf;
+  }
+  const a = item.env ? item : analyzeBuffer(buf);
+  return { id: item.id, name: item.name, artist: item.artist, buf, dur: buf.duration, bpm: a.bpm, beat0: a.beat0, env: a.env, hue: hueOf(item.id) };
+}

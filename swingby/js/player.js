@@ -137,7 +137,7 @@ export function stepShip(dt) {
     if (!boss) hitMonsters();
     if (G.ops) hitOps();
     for (const p of G.planets) {
-      if (p === s.last || p.dead || p.ghost) continue;
+      if (p === s.last || p.dead || p.ghost || p.lock) continue;   // lock: 음악 스테이지에서 아직 열리지 않은 행성(track.js)은 그냥 지나간다
       const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy);
       if (d >= capOf(p)) continue;
       if (d < p.R * .4) { burst(s.x, s.y, '#ffb070', 16, 200); die('행성에 정면충돌'); break; }
